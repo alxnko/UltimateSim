@@ -1,7 +1,8 @@
 # Developer Knowledge Base: Internal Activity Log
 
 ## Current Phase / Task
-- **Phase 1: Initialization, Determinism, & ECS Bootstrapping** (from `docs/roadmap/01_foundation.md`)
+- **Phase 2: Geography & Headless World Generation** (from `docs/roadmap/02_geography.md`)
+- *Completed Phase 1: Initialization, Determinism, & ECS Bootstrapping*
 
 ## Active Component IDs & Data Structures
 *Note: All structs must follow strict flat memory rules for Data-Oriented Design (DOD) to ensure cache alignment.*
@@ -12,6 +13,13 @@
 - `Identity`: `ID uint64`
 - `Position`: `X, Y float32`
 - `Velocity`: `X, Y float32`
+
+**Implemented Structures (`internal/engine/map_grid.go`):**
+- `TileData`: `Elevation`, `Moisture`, `Temperature` (all `uint8`). Packed into 3 bytes.
+- `MapGrid`: Contiguous 1D array slice `Tiles []TileData` masquerading as a 2D matrix.
+
+**Design Decision Log (Phase 02):**
+- **Data Types & CPU Cache**: Using a 1D contiguous array `[]TileData` rather than `[][]TileData`. This bypasses pointer indirection across multiple slices, packing millions of grid tiles into tightly sequential memory blocks. When iterating across the map generation loops, this approach maximizes the L1/L2 cache hit rate, preventing cache misses common with 2D sliced pointers in Go. The `uint8` limits memory to 3 bytes per tile perfectly aligned for cache-lines.
 
 **Design Decision Log (Phase 01):**
 - **Data Types & CPU Cache**: `float32` was deliberately chosen over Go's default `float64` for `Position` and `Velocity` to strictly adhere to Data-Oriented Design (DOD) constraints. A `float32` takes 4 bytes instead of 8, doubling the density of our flat arrays. This tightly packed memory ensures significantly higher L1/L2 cache hit rates when the ECS iterates sequentially over 100,000+ entities, guaranteeing our 60 TPS performance goal is met.
