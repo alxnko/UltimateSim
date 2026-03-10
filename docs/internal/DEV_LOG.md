@@ -24,6 +24,9 @@
 ## Phase 01.3: ECS Core (arche-go) Setup
 - Implemented TickManager and System interface to manage arche-go World with 60 TPS cap and alpha calculation for rendering.
 - **Performance & Cache Locality**: We maintain flat memory arrays for all Entity ID queries using `arche-go`. `float32` vs `float64` is preferred to halve the byte size and double the L1/L2 cache hit rate during continuous loops inside Systems.
+- **MovementSystem Implementation**: Created `/internal/systems/movement.go` mapping `Velocity` to `Position` continuously.
+  - Traceability: `// Phase 01.3: ECS Core Setup - MovementSystem`
+  - DOD Alignment: We iterate strictly over matching entities sequentially accessing flat `float32` memory for X/Y coordinates directly via Arche pointers to limit OS-level caching jumps. E2E Deterministic tested in `movement_test.go` ensuring absolute identically repeatable states.
 
 ## Phase 01.4 & 01.6: Hardware Affinity, Telemetry & Profiling
 - Implemented the game entrypoint in `cmd/game/main.go`.
