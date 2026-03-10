@@ -24,3 +24,9 @@
 ## Phase 01.3: ECS Core (arche-go) Setup
 - Implemented TickManager and System interface to manage arche-go World with 60 TPS cap and alpha calculation for rendering.
 - **Performance & Cache Locality**: We maintain flat memory arrays for all Entity ID queries using `arche-go`. `float32` vs `float64` is preferred to halve the byte size and double the L1/L2 cache hit rate during continuous loops inside Systems.
+
+## Phase 01.4 & 01.6: Hardware Affinity, Telemetry & Profiling
+- Implemented the game entrypoint in `cmd/game/main.go`.
+- Created two primary goroutines: one for the core 60 TPS `TickManager` simulation loop, and another for the rendering context.
+- **DOD CPU Cache Protection**: Applied `runtime.LockOSThread()` to both the simulation and render goroutines. Pinning the threads to a specific OS thread prevents cache invalidation that happens when the Go runtime scheduler migrates a goroutine across multicore CPUs (e.g. Ryzen architectures). Maintaining CPU core locality guarantees our ECS tight-loops preserve L1/L2 data access performance.
+- Launched a `net/http/pprof` endpoint on `localhost:6060` for continuous profiling of goroutines and memory allocation overhead. Added automated E2E testing to verify deterministic consistency and tick orchestration in `cmd/game/main_test.go`.
