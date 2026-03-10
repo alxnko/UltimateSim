@@ -1,6 +1,8 @@
 package engine
 
 import (
+	"math/rand/v2"
+
 	"github.com/ALXNKO/UltimateSim/pkg/math"
 )
 
@@ -16,6 +18,9 @@ const (
 // It iterates sequentially over the 1D contiguous array `grid.Tiles` to maximize CPU L1/L2 cache hits.
 // It uses the provided seed to initialize distinct deterministic Perlin noise generators for each layer.
 func GenerateMap(grid *MapGrid, seed [32]byte) {
+	// Initialize a local PRNG for generating resources deterministically
+	localRNG := rand.New(rand.NewChaCha8(seed))
+
 	// Initialize separate deterministic generators for each layer.
 	// We modify the base seed slightly to ensure different noise patterns for Elevation, Moisture, etc.
 	elevSeed := seed
@@ -73,6 +78,22 @@ func GenerateMap(grid *MapGrid, seed [32]byte) {
 
 			// 4. Determine Biome
 			grid.Tiles[i].BiomeID = DetermineBiome(grid.Tiles[i].Elevation, grid.Tiles[i].Moisture, grid.Tiles[i].Temperature)
+
+			// 5. Phase 02.4: Static Resource Depots
+			// Initialize resources based on BiomeID to populate parallel array.
+			// This preserves cache lines and handles deterministic RNG inside the loop.
+			switch grid.Tiles[i].BiomeID {
+			case BiomeTemperateDeciduousForest, BiomeTemperateRainForest, BiomeTropicalSeasonalForest, BiomeTropicalRainForest:
+				// Base wood value (e.g., 50-150)
+				grid.Resources[i].WoodValue = uint8(50 + localRNG.IntN(101))
+			case BiomeMountain:
+				// Base stone value (e.g., 100-255)
+				grid.Resources[i].StoneValue = uint8(100 + localRNG.IntN(156))
+				// Secondary roll for Iron
+				if localRNG.IntN(100) < 30 { // 30% chance for Iron
+					grid.Resources[i].IronValue = uint8(20 + localRNG.IntN(81)) // 20-100 Iron
+				}
+			}
 		}
 	}
 }

@@ -54,6 +54,24 @@ func TestTileDataDOD(t *testing.T) {
 	if actualSize != expectedSize {
 		t.Errorf("DOD Violation: Expected TileData size to be %d bytes, got %d bytes. Check for compiler padding.", expectedSize, actualSize)
 	}
+
+	// Phase 02.4: Static Resource Depots
+	var resource ResourceDepot
+	expectedResourceSize := uintptr(3)
+	actualResourceSize := unsafe.Sizeof(resource)
+
+	if actualResourceSize != expectedResourceSize {
+		t.Errorf("DOD Violation: Expected ResourceDepot size to be %d bytes, got %d bytes. Check for compiler padding.", expectedResourceSize, actualResourceSize)
+	}
+
+	// Phase 02.5: The Infrastructure Layer
+	var state TileState
+	expectedStateSize := uintptr(4)
+	actualStateSize := unsafe.Sizeof(state)
+
+	if actualStateSize != expectedStateSize {
+		t.Errorf("DOD Violation: Expected TileState size to be %d bytes, got %d bytes. Check for compiler padding.", expectedStateSize, actualStateSize)
+	}
 }
 
 // TestMapGridOutOfBounds verifies that out-of-bounds access returns a zero-value tile safely.
