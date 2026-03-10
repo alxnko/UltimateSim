@@ -57,3 +57,12 @@ Negative feedback loops strictly punish unchecked growth or endless wealth.
 - **Price Normalization:** If grain prices skyrocket due to famine, Blacksmiths mathematically identify the profitability shift, emergentally switching jobs to farming, self-correcting the economy.
 - **The Biological Pulse:** Winter spikes metabolic food consumption and slows movement, transitioning the game into an indoor political/scheming season.
 - **Systemic Entropy (Plagues & Disasters):** Plagues spread along trade routes causing massive labor shortages. Surviving peasants demand higher wages, spontaneously forming revolutionary Trade Unions. Plagues leave behind _Immune Memory_, radically shifting global power balances the next time the algorithm triggers. Natural Disasters shift basic map parameters, forcing massive population resets.
+
+## 7. Future Expansion Slots (Infinite Extensibility)
+
+Because the mechanics operate on pure ECS Need Vectors rather than hardcoded scripts, the simulation supports infinite modular expansions. Planned expansions include:
+
+- **Naval Trade & Logistics:** Adding `ShipComponent` to `CaravanEntity` logic alongside oceanic pathfinding heuristics mapping entirely new supply chains.
+- **Dynamic Religion & Magic:** Adding `BeliefID` metadata to `SecretComponent`, modeling ideological infection, holy wars, or esoteric magic systems as pure data properties.
+- **Crime & Laws:** Adding `JurisdictionComponent` to `VillageEntity` clusters, spawning internal `JusticeSystem` arrays to track and punish illegal ECS executions.
+- **Advanced Genetics:** Expanding the `Crossover Logic` to track hidden recessive traits, disease immunities, or historical bloodline degradation over thousands of years.

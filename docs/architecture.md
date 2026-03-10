@@ -12,7 +12,14 @@ The extreme depth of the "Total Simulation" outlined in the `vision.md` and `mec
 - **Entity Component System (ECS):** Powered by the highly optimized `arche-go` library. All NPCs, Cities, and physical Items are simply integer IDs. Their attributes (Health, Hunger, Hooks, Beliefs, Language Profile) are "Components," and the active logic linking them are entirely standalone "Systems" (e.g., `InformationLeakageSystem`, `CaravanMovementSystem`, `SpoilageSystem`, `LinguisticDriftSystem`).
 - **Data-Oriented Design (DOD):** Traditional OOP classes (e.g., `NPC.Eat()`) are strictly banned. Data must be tightly packed in flat memory arrays within the ECS to maximize CPU L1/L2 Cache hits. This drastically boosts sequential iteration speed, guaranteeing 60+ simulation ticks per second.
 
-## 3. Rendering & Graphics
+## 3. Data-Driven Scalability (The "Lego" Principle)
+
+Because the engine is strictly constructed on ECS `arche-go` foundations, the codebase is infinitely scalable without risking "spaghetti code."
+
+- **Infinite Feature Plugs:** Adding a new feature never requires rewriting the core loop. To add "Disease," we simply create a new `ContagionComponent` and a `DiseaseSystem`. The existing `MetabolismSystem` remains entirely ignorant of it.
+- **Decoupled Logic:** The Headless Simulation (Data) is completely severed from Rendering (View). We can overhaul the entire 3D camera or add new visual layers without ever touching the logic for how a Clan tracks wealth or gossip. The architecture guarantees clean expansion slots.
+
+## 4. Rendering & Graphics
 
 The engine must handle shifting instantly between the grand strategic view and the granular individual view without dropping simulation state.
 
