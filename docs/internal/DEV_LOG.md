@@ -30,6 +30,7 @@
 
 **Design Decision Log (Phase 03):**
 - **Phase 03.1: Genesis Base Structs**: Expanded `basic.go` with `Identity`, `Genetics`, and `Legacy` components. Struct sizes enforce DOD flat memory limits. Verified 32-byte alignment for `Identity`, 4-byte for `Genetics`, and 8-byte for `Legacy` via `unsafe.Sizeof` unit tests.
+- **Phase 03.2: The Genesis Spawner**: Implemented `FamilySpawnerSystem` in `internal/systems/spawner.go`. It queries `MapGrid` to extract all valid habitable locations (Biome != Ocean) into a flat slice array to reduce redundant map lookups. It deterministically places 100 `arche.Entity` families, initializing all baseline Components (`Needs`, `Genetics`, `Identity`, etc). To maintain absolute determinism across simulation instances, we utilize `engine.GetRandomInt()` recursively via the `GlobalRNG` engine for map coordinates and a unified sum technique for approximating the bell curve of the `Genetics` stats.
 - **Phase 03.3: Metabolism & Death System**: Implemented `MetabolismSystem` (subtracts `Needs.Food` based on `Genetics.Health`) and `DeathSystem` (despawns entity if `Needs.Food <= 0`). Built E2E deterministic test suites. These iterate cleanly over arche-go arrays, maintaining `float32` variables to adhere to the Phase 1 DOD cache size constraints.
 
 **Design Decision Log (Phase 01):**
