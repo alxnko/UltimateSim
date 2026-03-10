@@ -1,7 +1,8 @@
 # Developer Knowledge Base: Internal Activity Log
 
 ## Current Phase / Task
-- **Phase 3: The Genesis Entities (Spawning & Genes)** (from `docs/roadmap/03_genesis.md`)
+- **Phase 4.1: Hierarchical Pathfinding (HPA\*) Implementation - Grid Abstractor** (from `docs/roadmap/04_autonomous_nodes.md`)
+- *Completed Phase 3: The Genesis Entities (Spawning & Genes)*
 - *Completed Phase 2: Geography & Headless World Generation*
 - *Completed Phase 1: Initialization, Determinism, & ECS Bootstrapping*
 
@@ -27,6 +28,9 @@
 - **Data Types & CPU Cache**: Using a 1D contiguous array `[]TileData` rather than `[][]TileData`. This bypasses pointer indirection across multiple slices, packing millions of grid tiles into tightly sequential memory blocks. When iterating across the map generation loops, this approach maximizes the L1/L2 cache hit rate, preventing cache misses common with 2D sliced pointers in Go. The `uint8` limits memory to 3 bytes per tile perfectly aligned for cache-lines.
 - **Phase 02.2: Procedural Generation Pipeline**: Implemented `GenerateMap` (`internal/engine/map_generator.go`) utilizing a custom deterministic `Perlin` noise generator (`pkg/math/noise.go`). The generation algorithm iterates sequentially over the `MapGrid.Tiles` 1D array, maintaining absolute L1/L2 cache locality and dodging memory fragmentation. By seeding `math/rand/v2`'s `ChaCha8` engine with distinct deterministic modifiers, Elevation, Moisture, and Temperature map layers are consistently reproducible across simulation instances while maximizing iteration speeds via DOD principles. Tested via End-to-End deterministic tests in `map_generator_test.go`.
 - **Phase 02.3: Biome Mapping**: Implemented a simplified Whittaker classification table algorithm in `internal/engine/biome_mapper.go` (`DetermineBiome`). Integrated it directly into the `GenerateMap` sequential pipeline. Adding `BiomeID` to `TileData` brought its total size from 3 bytes to 4 bytes, creating perfect 32-bit alignment and boosting sequential L1/L2 Cache hit rates because the Go compiler no longer inserts hidden padding.
+
+**Design Decision Log (Phase 04):**
+- **Phase 04.1: Hierarchical Pathfinding (HPA\*) Implementation**: Implemented the macro-level structure for HPA* (`pkg/math/hpa/grid.go`). To strictly adhere to Data-Oriented Design (DOD) guidelines, `AbstractGrid` handles regions by packing them into a flat `[]Cluster` array rather than a 2D slice or pointers. Struct components use `uint16` to maintain extremely small byte footprints and cache locality. `Cluster.X` and `Cluster.Y` use standard `int` to cleanly map into the 1D arrays of `MapGrid`, while `Node` structures representing tactical paths retain tightly packed arrays using `float32` for pathfinding movement costs. Tested edge case grid distributions and enforced a "Deterministic Check" verification.
 
 **Design Decision Log (Phase 03):**
 - **Phase 03.1: Genesis Base Structs**: Expanded `basic.go` with `Identity`, `Genetics`, and `Legacy` components. Struct sizes enforce DOD flat memory limits. Verified 32-byte alignment for `Identity`, 4-byte for `Genetics`, and 8-byte for `Legacy` via `unsafe.Sizeof` unit tests.
