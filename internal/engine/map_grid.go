@@ -9,6 +9,7 @@ type TileData struct {
 	Elevation   uint8
 	Moisture    uint8
 	Temperature uint8
+	BiomeID     uint8
 }
 
 // MapGrid represents the game world map.

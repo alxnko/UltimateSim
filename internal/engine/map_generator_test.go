@@ -42,6 +42,14 @@ func TestMapGeneration_Determinism(t *testing.T) {
 	if tile.Elevation == 0 && tile.Moisture == 0 && tile.Temperature == 0 {
 		t.Logf("Warning: Tile(50,50) is all zeros, map generation might be broken or seed produces exact 0. e=%d m=%d t=%d", tile.Elevation, tile.Moisture, tile.Temperature)
 	}
+
+	for i := 0; i < len(grid1.Tiles); i++ {
+		t1 := grid1.Tiles[i]
+		t2 := grid2.Tiles[i]
+		if t1.BiomeID != t2.BiomeID {
+			t.Fatalf("BiomeID mismatch at index %d: run1=%d, run2=%d", i, t1.BiomeID, t2.BiomeID)
+		}
+	}
 }
 
 func TestMapGeneration_DifferentSeeds(t *testing.T) {

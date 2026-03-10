@@ -15,12 +15,13 @@
 - `Velocity`: `X, Y float32`
 
 **Implemented Structures (`internal/engine/map_grid.go`):**
-- `TileData`: `Elevation`, `Moisture`, `Temperature` (all `uint8`). Packed into 3 bytes.
+- `TileData`: `Elevation`, `Moisture`, `Temperature`, `BiomeID` (all `uint8`). Packed precisely into 4 bytes for optimal cache alignment.
 - `MapGrid`: Contiguous 1D array slice `Tiles []TileData` masquerading as a 2D matrix.
 
 **Design Decision Log (Phase 02):**
 - **Data Types & CPU Cache**: Using a 1D contiguous array `[]TileData` rather than `[][]TileData`. This bypasses pointer indirection across multiple slices, packing millions of grid tiles into tightly sequential memory blocks. When iterating across the map generation loops, this approach maximizes the L1/L2 cache hit rate, preventing cache misses common with 2D sliced pointers in Go. The `uint8` limits memory to 3 bytes per tile perfectly aligned for cache-lines.
 - **Phase 02.2: Procedural Generation Pipeline**: Implemented `GenerateMap` (`internal/engine/map_generator.go`) utilizing a custom deterministic `Perlin` noise generator (`pkg/math/noise.go`). The generation algorithm iterates sequentially over the `MapGrid.Tiles` 1D array, maintaining absolute L1/L2 cache locality and dodging memory fragmentation. By seeding `math/rand/v2`'s `ChaCha8` engine with distinct deterministic modifiers, Elevation, Moisture, and Temperature map layers are consistently reproducible across simulation instances while maximizing iteration speeds via DOD principles. Tested via End-to-End deterministic tests in `map_generator_test.go`.
+- **Phase 02.3: Biome Mapping**: Implemented a simplified Whittaker classification table algorithm in `internal/engine/biome_mapper.go` (`DetermineBiome`). Integrated it directly into the `GenerateMap` sequential pipeline. Adding `BiomeID` to `TileData` brought its total size from 3 bytes to 4 bytes, creating perfect 32-bit alignment and boosting sequential L1/L2 Cache hit rates because the Go compiler no longer inserts hidden padding.
 
 **Design Decision Log (Phase 01):**
 - **Data Types & CPU Cache**: `float32` was deliberately chosen over Go's default `float64` for `Position` and `Velocity` to strictly adhere to Data-Oriented Design (DOD) constraints. A `float32` takes 4 bytes instead of 8, doubling the density of our flat arrays. This tightly packed memory ensures significantly higher L1/L2 cache hit rates when the ECS iterates sequentially over 100,000+ entities, guaranteeing our 60 TPS performance goal is met.
