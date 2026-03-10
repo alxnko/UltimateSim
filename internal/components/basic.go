@@ -5,8 +5,36 @@ package components
 // We use float32 instead of float64 for Position and Velocity to minimize memory overhead.
 
 // Identity component
+// Phase 03.1: Genesis Base Structs
 type Identity struct {
-	ID uint64
+	ID         uint64
+	Name       string
+	BaseTraits uint32
+}
+
+// Genetics component
+// Phase 03.1: Genesis Base Structs
+type Genetics struct {
+	Strength  uint8
+	Beauty    uint8
+	Health    uint8
+	Intellect uint8
+}
+
+// Legacy component
+// Phase 03.1: Genesis Base Structs
+type Legacy struct {
+	Prestige      uint32
+	InheritedDebt uint32
+}
+
+// Needs component
+// Phase 03.3: The Metabolic Engine
+type Needs struct {
+	Food   float32
+	Rest   float32
+	Safety float32
+	Wealth float32
 }
 
 // Position component

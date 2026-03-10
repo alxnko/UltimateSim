@@ -2,6 +2,7 @@ package components
 
 import (
 	"testing"
+	"unsafe"
 	"github.com/mlange-42/arche/ecs"
 	"github.com/mlange-42/arche/filter"
 )
@@ -47,5 +48,35 @@ func TestComponentSanity(t *testing.T) {
 
 	if count != 10 {
 		t.Errorf("Expected 10 entities, found %d", count)
+	}
+}
+
+// Phase 03.1 & 03.3: DOD Size Verification
+func TestComponentSizes(t *testing.T) {
+	// Verify sizes to enforce DOD flat memory limits
+
+	// Identity: uint64 (8) + string (16) + uint32 (4) = 28 bytes normally, but string can cause padding depending on order.
+	// Actually: uint64 (8), string (16), uint32 (4) -> 28 + 4 padding = 32 bytes on 64-bit architecture
+	idSize := unsafe.Sizeof(Identity{})
+	if idSize > 32 {
+		t.Errorf("Identity struct size too large: %d bytes (expected <= 32)", idSize)
+	}
+
+	// Genetics: 4 * uint8 (1) = 4 bytes
+	genSize := unsafe.Sizeof(Genetics{})
+	if genSize != 4 {
+		t.Errorf("Genetics struct size should be exactly 4 bytes, got %d", genSize)
+	}
+
+	// Legacy: 2 * uint32 (4) = 8 bytes
+	legSize := unsafe.Sizeof(Legacy{})
+	if legSize != 8 {
+		t.Errorf("Legacy struct size should be exactly 8 bytes, got %d", legSize)
+	}
+
+	// Needs: 4 * float32 (4) = 16 bytes
+	needsSize := unsafe.Sizeof(Needs{})
+	if needsSize != 16 {
+		t.Errorf("Needs struct size should be exactly 16 bytes, got %d", needsSize)
 	}
 }
