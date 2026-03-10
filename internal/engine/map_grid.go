@@ -12,21 +12,39 @@ type TileData struct {
 	BiomeID     uint8
 }
 
+// Phase 02.4: Static Resource Depots
+// ResourceDepot stores resource values. Kept parallel to TileData to avoid cache pollution.
+type ResourceDepot struct {
+	WoodValue  uint8
+	StoneValue uint8
+	IronValue  uint8
+}
+
+// Phase 02.5: The Infrastructure Layer
+// TileState tracks infrastructure logic like desire paths. Kept parallel to TileData.
+type TileState struct {
+	FootTraffic uint32
+}
+
 // MapGrid represents the game world map.
 // It uses a contiguous 1D array masquerading as a 2D matrix (Grid[y * width + x]).
 // This is dramatically faster for cache-lines than [][]Tile, adhering to Data-Oriented Design (DOD) principles.
 type MapGrid struct {
-	Width  int
-	Height int
-	Tiles  []TileData
+	Width      int
+	Height     int
+	Tiles      []TileData
+	Resources  []ResourceDepot
+	TileStates []TileState
 }
 
 // NewMapGrid initializes a new MapGrid with the specified width and height.
 func NewMapGrid(width, height int) *MapGrid {
 	return &MapGrid{
-		Width:  width,
-		Height: height,
-		Tiles:  make([]TileData, width*height),
+		Width:      width,
+		Height:     height,
+		Tiles:      make([]TileData, width*height),
+		Resources:  make([]ResourceDepot, width*height),
+		TileStates: make([]TileState, width*height),
 	}
 }
 

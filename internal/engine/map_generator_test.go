@@ -49,6 +49,46 @@ func TestMapGeneration_Determinism(t *testing.T) {
 		if t1.BiomeID != t2.BiomeID {
 			t.Fatalf("BiomeID mismatch at index %d: run1=%d, run2=%d", i, t1.BiomeID, t2.BiomeID)
 		}
+
+		// Phase 02.4: Validate deterministic resource generation
+		r1 := grid1.Resources[i]
+		r2 := grid2.Resources[i]
+		if r1.WoodValue != r2.WoodValue || r1.StoneValue != r2.StoneValue || r1.IronValue != r2.IronValue {
+			t.Fatalf("Resource mismatch at index %d: run1=%+v, run2=%+v", i, r1, r2)
+		}
+	}
+}
+
+func TestGenerateMap_ResourceDepots(t *testing.T) {
+	width := 100
+	height := 100
+	grid := NewMapGrid(width, height)
+	seed := [32]byte{1, 2, 3, 4, 5, 6, 7, 8, 9, 10}
+
+	GenerateMap(grid, seed)
+
+	for i, tile := range grid.Tiles {
+		resource := grid.Resources[i]
+
+		switch tile.BiomeID {
+		case BiomeTemperateDeciduousForest, BiomeTemperateRainForest, BiomeTropicalSeasonalForest, BiomeTropicalRainForest:
+			if resource.WoodValue < 50 || resource.WoodValue > 150 {
+				t.Errorf("Forest Biome (ID %d) expected WoodValue between 50 and 150, got %d", tile.BiomeID, resource.WoodValue)
+			}
+			if resource.StoneValue != 0 || resource.IronValue != 0 {
+				t.Errorf("Forest Biome (ID %d) expected no Stone or Iron, got Stone=%d, Iron=%d", tile.BiomeID, resource.StoneValue, resource.IronValue)
+			}
+		case BiomeMountain:
+			if resource.StoneValue < 100 || resource.StoneValue > 255 {
+				t.Errorf("Mountain Biome (ID %d) expected StoneValue between 100 and 255, got %d", tile.BiomeID, resource.StoneValue)
+			}
+			if resource.IronValue != 0 && (resource.IronValue < 20 || resource.IronValue > 100) {
+				t.Errorf("Mountain Biome (ID %d) expected IronValue either 0 or between 20 and 100, got %d", tile.BiomeID, resource.IronValue)
+			}
+			if resource.WoodValue != 0 {
+				t.Errorf("Mountain Biome (ID %d) expected no Wood, got Wood=%d", tile.BiomeID, resource.WoodValue)
+			}
+		}
 	}
 }
 
