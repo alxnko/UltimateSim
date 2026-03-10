@@ -45,10 +45,10 @@ func TestMapGridIntegrity(t *testing.T) {
 
 // TestTileDataDOD verifies that TileData strictly follows Data-Oriented Design constraints.
 func TestTileDataDOD(t *testing.T) {
-	// A struct with three uint8 fields should ideally take exactly 3 bytes.
+	// A struct with four uint8 fields should ideally take exactly 4 bytes.
 	// We use unsafe.Sizeof to verify the compiler is packing it tightly without padding.
 	var tile TileData
-	expectedSize := uintptr(3)
+	expectedSize := uintptr(4)
 	actualSize := unsafe.Sizeof(tile)
 
 	if actualSize != expectedSize {

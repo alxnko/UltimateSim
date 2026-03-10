@@ -70,6 +70,9 @@ func GenerateMap(grid *MapGrid, seed [32]byte) {
 				combinedTemp = 1.0
 			}
 			grid.Tiles[i].Temperature = uint8(combinedTemp * 255.0)
+
+			// 4. Determine Biome
+			grid.Tiles[i].BiomeID = DetermineBiome(grid.Tiles[i].Elevation, grid.Tiles[i].Moisture, grid.Tiles[i].Temperature)
 		}
 	}
 }
