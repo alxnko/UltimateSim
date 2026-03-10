@@ -20,3 +20,7 @@
 - **Seed Methodology**: A single, global singleton seed handles all stochastic events (terrain generation, birth systems, plague spawns, weather phenomena) to maintain absolute determinism across all simulation components.
 - **Implementation**: Utilizes Go's `math/rand/v2` with `ChaCha8` engine for deterministic pseudorandom number generation.
 - **Thread Safety**: Implemented behind a `sync.Mutex` in `internal/engine/rng.go` to prevent race conditions during highly parallelized ECS operations while maintaining strict sequencing.
+
+## Phase 01.3: ECS Core (arche-go) Setup
+- Implemented TickManager and System interface to manage arche-go World with 60 TPS cap and alpha calculation for rendering.
+- **Performance & Cache Locality**: We maintain flat memory arrays for all Entity ID queries using `arche-go`. `float32` vs `float64` is preferred to halve the byte size and double the L1/L2 cache hit rate during continuous loops inside Systems.
