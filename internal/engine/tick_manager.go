@@ -1,6 +1,7 @@
 package engine
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/mlange-42/arche/ecs"
@@ -56,6 +57,10 @@ func (tm *TickManager) Run(maxTicks int) {
 	ticks := 0
 	tm.lastTick = time.Now()
 
+	// Phase 01.6: Telemetry
+	var accumulatedTickTime time.Duration
+	var ticksLogged int
+
 	for {
 		if maxTicks != -1 && ticks >= maxTicks {
 			break
@@ -65,7 +70,21 @@ func (tm *TickManager) Run(maxTicks int) {
 		elapsed := now.Sub(tm.lastTick)
 
 		if elapsed >= tm.tickTime {
+			// Phase 01.6: Telemetry
+			tickStart := time.Now()
 			tm.Tick()
+			tickElapsed := time.Since(tickStart)
+
+			accumulatedTickTime += tickElapsed
+			ticksLogged++
+			if ticksLogged >= tm.TPS {
+				avgMs := float64(accumulatedTickTime.Microseconds()) / 1000.0 / float64(ticksLogged)
+				// Print average ticks processing time to fulfill telemetry requirement
+				fmt.Printf("Ticks Processing Time (ms): %.4f\n", avgMs)
+				accumulatedTickTime = 0
+				ticksLogged = 0
+			}
+
 			tm.lastTick = tm.lastTick.Add(tm.tickTime)
 			ticks++
 		} else {
