@@ -8,6 +8,22 @@ trigger: always_on
 
 ---
 
+## 📚 THE SINGLE SOURCE OF TRUTH (DOCUMENTATION)
+
+The definitive vision and technical blueprint for **Boundless Sovereigns** has been flawlessly consolidated into a comprehensive set of documentation files. All AI agents must reference these files to maintain context and ensure structural priorities:
+
+1. **`docs/vision.md`**: The High Concept and the 6 Pillars of the Total Simulation Closed Loop.
+2. **`docs/mechanics.md`**: The granular, unabstracted systems powering the 6 Pillars (Geography, Infrastructure, Social Fabric, Cognitive/Linguistic Engine, Justice/Power, and Logistics/Entropy).
+3. **`docs/architecture.md`**: The specific Go, ECS (`arche-go`), and Hybrid Rendering (`Ebitengine` / `raylib-go`) logic required to make the simulation run at 60+ TPS.
+4. **`docs/roadmap.md`**: The definitive 17-phase development pipeline.
+5. **`docs/roadmap/*.md`**: The individual phase-by-phase implementation blueprints (e.g., `01_foundation.md`, `02_geography.md`).
+6. **`docs/internal/DEV_LOG.md`**: The active developer log tracking current tasks, ECS Component IDs, and the singleton Seed strategy.
+7. **`docs/internal/CODING_STANDARDS.md`**: The project's rules for mandatory E2E testing, Arche-Go filter query constraints, and PR profiling checks.
+
+These files must be treated as the ultimate instruction set and single source of truth for all implementations and reasoning tasks.
+
+---
+
 ## CRITICAL: AGENT & SKILL PROTOCOL (START HERE)
 
 > **MANDATORY:** You MUST read the appropriate agent file and its skills BEFORE performing any implementation. This is the highest priority rule.
