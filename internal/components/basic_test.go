@@ -132,4 +132,17 @@ func TestComponentSizes(t *testing.T) {
 	if ruinSize > 24 {
 		t.Errorf("RuinComponent struct size too large: %d bytes (expected <= 24)", ruinSize)
 	}
+
+	// Phase 07.1: Secret Component Sizes
+	// Secret: uint64 (8) + uint32 (4) + uint8 (1) = 13 bytes -> 16 bytes padded
+	secretSize := unsafe.Sizeof(Secret{})
+	if secretSize > 16 {
+		t.Errorf("Secret struct size too large: %d bytes (expected <= 16)", secretSize)
+	}
+
+	// SecretComponent: []Secret (24 bytes for slice header)
+	secretCompSize := unsafe.Sizeof(SecretComponent{})
+	if secretCompSize > 24 {
+		t.Errorf("SecretComponent struct size too large: %d bytes (expected <= 24)", secretCompSize)
+	}
 }

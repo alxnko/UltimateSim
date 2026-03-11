@@ -1,7 +1,8 @@
 # Developer Knowledge Base: Internal Activity Log
 
 ## Current Phase / Task
-- **Phase 5.4: Birth & Genetics Math** (from `docs/roadmap/05_settlements_ruins.md`)
+- **Phase 07.1: Secret Registry (String Interning)** (from `docs/roadmap/07_cognitive_engine.md`)
+- *Completed Phase 5.4: Birth & Genetics Math*
 - *Completed Phase 5.3: Arche-Go Component Filters*
 - *Completed Phase 5.2: The Ruin Transformation*
 - *Completed Phase 5.1: Settlement Conversion System*
@@ -40,6 +41,9 @@
 - **Data Types & CPU Cache**: Using a 1D contiguous array `[]TileData` rather than `[][]TileData`. This bypasses pointer indirection across multiple slices, packing millions of grid tiles into tightly sequential memory blocks. When iterating across the map generation loops, this approach maximizes the L1/L2 cache hit rate, preventing cache misses common with 2D sliced pointers in Go. The `uint8` limits memory to 3 bytes per tile perfectly aligned for cache-lines.
 - **Phase 02.2: Procedural Generation Pipeline**: Implemented `GenerateMap` (`internal/engine/map_generator.go`) utilizing a custom deterministic `Perlin` noise generator (`pkg/math/noise.go`). The generation algorithm iterates sequentially over the `MapGrid.Tiles` 1D array, maintaining absolute L1/L2 cache locality and dodging memory fragmentation. By seeding `math/rand/v2`'s `ChaCha8` engine with distinct deterministic modifiers, Elevation, Moisture, and Temperature map layers are consistently reproducible across simulation instances while maximizing iteration speeds via DOD principles. Tested via End-to-End deterministic tests in `map_generator_test.go`.
 - **Phase 02.3: Biome Mapping**: Implemented a simplified Whittaker classification table algorithm in `internal/engine/biome_mapper.go` (`DetermineBiome`). Integrated it directly into the `GenerateMap` sequential pipeline. Adding `BiomeID` to `TileData` brought its total size from 3 bytes to 4 bytes, creating perfect 32-bit alignment and boosting sequential L1/L2 Cache hit rates because the Go compiler no longer inserts hidden padding.
+
+**Design Decision Log (Phase 07):**
+- **Phase 07.1: Secret Registry (String Interning)**: Added `SecretRegistry` to avoid duplicate string allocations across thousands of entities sharing secrets/gossip. It runs as a singleton and provides thread-safe access using `sync.RWMutex`, assigning unique `uint32` IDs to mapped strings. Designed `Secret` component struct (`OriginID uint64`, `SecretID uint32`, `Virality uint8`) carefully verifying its packed DOD alignment constraints size mapping to exactly 16 bytes. Used standard slice header in `SecretComponent` tracking arrays of information dynamically for flexibility without bloating the base ECS archetype allocation.
 
 **Design Decision Log (Phase 06):**
 - **Phase 06.1: Societal Hierarchies (`AffiliationComponent`)**: Added `Affiliation` struct containing `ClanID`, `GuildID`, `CityID`, and `CountryID`. These are packed strictly as `uint32` values, totaling exactly 16 bytes for 16-byte CPU cache alignment. This avoids traversing any pointers for political mapping, ensuring immediate O(1) array-index lookup speed during ECS iterations. Created `CityBinderSystem` running every 10,000 ticks to calculate spatial radii and bind migrating `FamilyCluster` entities to the nearest active `Village`.
