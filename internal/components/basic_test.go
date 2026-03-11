@@ -80,6 +80,26 @@ func TestComponentSizes(t *testing.T) {
 		t.Errorf("Needs struct size should be exactly 16 bytes, got %d", needsSize)
 	}
 
+	// Phase 06.1 & 06.2: Social Graph Component Sizes
+	// Affiliation: 4 * uint32 (4) = 16 bytes
+	affSize := unsafe.Sizeof(Affiliation{})
+	if affSize != 16 {
+		t.Errorf("Affiliation struct size should be exactly 16 bytes, got %d", affSize)
+	}
+
+	// MemoryEvent: uint64 (8) + uint64 (8) + uint8 (1) + int8 (1) + padding = 24 bytes on 64-bit
+	meSize := unsafe.Sizeof(MemoryEvent{})
+	if meSize > 24 {
+		t.Errorf("MemoryEvent struct size too large: %d bytes (expected <= 24)", meSize)
+	}
+
+	// Memory: [50]MemoryEvent (50 * 24) + uint8 (1) + padding
+	// 50 * 24 = 1200 + 1 = 1201 + 7 padding = 1208 bytes
+	memSize := unsafe.Sizeof(Memory{})
+	if memSize > 1208 {
+		t.Errorf("Memory struct size too large: %d bytes (expected <= 1208)", memSize)
+	}
+
 	// Phase 05.1: Settlement Component Sizes
 	// SettlementLogic: 1 * uint16 (2) = 2 bytes
 	slSize := unsafe.Sizeof(SettlementLogic{})
