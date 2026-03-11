@@ -13,6 +13,8 @@
 - *Completed Phase 2: Geography & Headless World Generation*
 - *Completed Phase 1: Initialization, Determinism, & ECS Bootstrapping*
 
+- **Phase 05.4: Birth & Genetics Math**: Implemented `BirthSystem` (`internal/systems/birth.go`) and expanded `PopulationComponent` with a dynamic `Citizens []CitizenData` array. `CitizenData` strictly follows DOD by embedding `Genetics` (four `uint8` fields) and `BaseTraits` (`uint32`). This creates a perfectly flat 8-byte structure, guaranteeing cache alignment and avoiding hidden compiler padding. The `BirthSystem` deterministically processes parent traits by sequentially iterating over arrays, maximizing CPU cache locality during the biological inheritance algorithms.
+
 ## Active Component IDs & Data Structures
 *Note: All structs must follow strict flat memory rules for Data-Oriented Design (DOD) to ensure cache alignment.*
 - Structs use integer IDs instead of pointers (e.g., `TargetID uint64`).
