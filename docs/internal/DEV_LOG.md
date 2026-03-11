@@ -1,7 +1,8 @@
 # Developer Knowledge Base: Internal Activity Log
 
 ## Current Phase / Task
-- **Phase 09.2: Dynamic Attrition** (from `docs/roadmap/09_logistics_artifacts.md`)
+- **Phase 09.3: Infrastructure Wear System (Desire Paths)** (from `docs/roadmap/09_logistics_artifacts.md`)
+- *Completed Phase 09.2: Dynamic Attrition*
 - *Completed Phase 09.1: The Caravan Entity*
 - *Completed Phase 08.2, 08.3, 08.4: Sub-Tick Interpolation, Map & Entity Rendering*
 - *Completed Phase 08.1: Window Management & Camera (Ebitengine)*
@@ -25,6 +26,7 @@
 - **Phase 05.4: Birth & Genetics Math**: Implemented `BirthSystem` (`internal/systems/birth.go`) and expanded `PopulationComponent` with a dynamic `Citizens []CitizenData` array. `CitizenData` strictly follows DOD by embedding `Genetics` (four `uint8` fields) and `BaseTraits` (`uint32`). This creates a perfectly flat 8-byte structure, guaranteeing cache alignment and avoiding hidden compiler padding. The `BirthSystem` deterministically processes parent traits by sequentially iterating over arrays, maximizing CPU cache locality during the biological inheritance algorithms.
 
 ## Design Decision Log (Phase 09):
+- **Phase 09.3: Infrastructure Wear System**: Implemented `InfrastructureWearSystem` (`internal/systems/infrastructure_wear.go`) to dynamically simulate structural degradation over terrain based on movement patterns. It queries `arche-go` for all entities holding both `Position` and `Velocity` components. Instead of checking logic every frame inside a nested map, when a non-zero velocity vector maps a transition, `Position.X` and `Position.Y` are explicitly cast to integers and mapped to a 1D index on `MapGrid.TileStates`. The system cleanly increments `FootTraffic` inside this parallel array. This guarantees that `TileData` byte size does not bloat and ensures extreme iteration speed over flat memory slices without any OOP overhead or GC spikes.
 - **Phase 09.2: Dynamic Attrition**: Implemented `SpoilageSystem` (`internal/systems/spoilage.go`) and `RustSystem` (`internal/systems/rust.go`) to simulate organic and non-biological wear over time. These systems query `StorageComponent` and `Payload` components across all entities, decrementing limits deterministically. To maintain strict DOD adherence and simulation determinism, integer math is used for fractional loss calculation (e.g. `(Food * 95) / 100` instead of float fractions). The systems use separate arche-go queries for each component type, retaining perfectly flat memory traversal loops to avoid cache misses.
 - **Phase 09.1: The Caravan Entity**: Implemented `CaravanSpawnerSystem` (`internal/systems/caravan_spawner.go`) along with `Caravan` and `Payload` components. A Caravan spawns when a `Village` has a negative delta in localized needs (e.g., `StorageComponent.Food < PopulationComponent.Count * 10`). To satisfy rigorous DOD constraints, `Payload` replicates the exact 16-byte structure of `StorageComponent` (`Wood`, `Stone`, `Iron`, `Food` all as `uint32`), ensuring 100% cache line alignment. Entity binding logic is constructed explicitly outside the `query.Next()` loop using a pre-allocated struct slice (`[]villageData`) containing the bare minimum pointers. This avoids concurrent modification panics and retains maximal sequential iteration performance during entity instantiation.
 

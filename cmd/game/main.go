@@ -39,6 +39,9 @@ func main() {
 	tickManager.AddSystem(systems.NewSpoilageSystem())
 	tickManager.AddSystem(systems.NewRustSystem())
 
+	// Phase 09.3: Infrastructure Wear System
+	tickManager.AddSystem(systems.NewInfrastructureWearSystem(grid))
+
 	// Simulation Goroutine
 	go func() {
 		// Phase 01.4: Hardware Affinity
