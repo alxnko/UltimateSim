@@ -110,6 +110,20 @@ type RuinComponent struct {
 	FormerName string
 }
 
+// Phase 07.1: Secret Registry (String Interning)
+
+// Secret represents a known piece of information mapped from the SecretRegistry.
+type Secret struct {
+	OriginID uint64
+	SecretID uint32
+	Virality uint8
+}
+
+// SecretComponent holds the known secrets for an entity.
+type SecretComponent struct {
+	Secrets []Secret
+}
+
 // Path component
 // Phase 04.2: Async Path Queue Pool
 // Stores the tactical node-to-node float32 positions for MovementSystem to traverse.
