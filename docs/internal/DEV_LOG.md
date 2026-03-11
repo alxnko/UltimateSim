@@ -1,7 +1,8 @@
 # Developer Knowledge Base: Internal Activity Log
 
 ## Current Phase / Task
-- **Phase 4.1: Hierarchical Pathfinding (HPA\*) Implementation - Grid Abstractor** (from `docs/roadmap/04_autonomous_nodes.md`)
+- **Phase 4.2: Async Path Queue Pool** (from `docs/roadmap/04_autonomous_nodes.md`)
+- *Completed Phase 4.1: Hierarchical Pathfinding (HPA\*) Implementation - Grid Abstractor*
 - *Completed Phase 3: The Genesis Entities (Spawning & Genes)*
 - *Completed Phase 2: Geography & Headless World Generation*
 - *Completed Phase 1: Initialization, Determinism, & ECS Bootstrapping*
@@ -30,6 +31,7 @@
 - **Phase 02.3: Biome Mapping**: Implemented a simplified Whittaker classification table algorithm in `internal/engine/biome_mapper.go` (`DetermineBiome`). Integrated it directly into the `GenerateMap` sequential pipeline. Adding `BiomeID` to `TileData` brought its total size from 3 bytes to 4 bytes, creating perfect 32-bit alignment and boosting sequential L1/L2 Cache hit rates because the Go compiler no longer inserts hidden padding.
 
 **Design Decision Log (Phase 04):**
+- **Phase 04.2: Async Path Queue Pool**: Created `PathRequestQueue` in `internal/engine/path_queue.go` to handle heavy HPA* computations without blocking the 60 TPS simulation loop. It employs a worker pool of dedicated persistent goroutines that receive `PathRequest` payloads via channels and return `PathResult` slices. Also introduced `PathComponent` (`internal/components/basic.go`) containing a `[]Position` array of upcoming path nodes, retaining `float32` flat-memory adherence for DOD iteration. Deterministic stability across multi-goroutine setups confirmed via `-count=2` testing.
 - **Phase 04.1: Hierarchical Pathfinding (HPA\*) Implementation**: Implemented the macro-level structure for HPA* (`pkg/math/hpa/grid.go`). To strictly adhere to Data-Oriented Design (DOD) guidelines, `AbstractGrid` handles regions by packing them into a flat `[]Cluster` array rather than a 2D slice or pointers. Struct components use `uint16` to maintain extremely small byte footprints and cache locality. `Cluster.X` and `Cluster.Y` use standard `int` to cleanly map into the 1D arrays of `MapGrid`, while `Node` structures representing tactical paths retain tightly packed arrays using `float32` for pathfinding movement costs. Tested edge case grid distributions and enforced a "Deterministic Check" verification.
 
 **Design Decision Log (Phase 03):**
