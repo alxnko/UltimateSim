@@ -1,7 +1,10 @@
 # Developer Knowledge Base: Internal Activity Log
 
 ## Current Phase / Task
-- **Phase 5.1: Settlement Conversion System** (from `docs/roadmap/05_settlements_ruins.md`)
+- **Phase 5.4: Birth & Genetics Math** (from `docs/roadmap/05_settlements_ruins.md`)
+- *Completed Phase 5.3: Arche-Go Component Filters*
+- *Completed Phase 5.2: The Ruin Transformation*
+- *Completed Phase 5.1: Settlement Conversion System*
 - *Completed Phase 4.4: Resolving Kinematics*
 - *Completed Phase 4.3: Trait & Need Driven Targeting*
 - *Completed Phase 4.2: Async Path Queue Pool*
@@ -38,6 +41,8 @@
 
 **Design Decision Log (Phase 05):**
 - **Phase 05.1: Settlement Conversion System**: Implemented `SettlementRuleSystem` (`internal/systems/settlement_rule.go`) and the components `StorageComponent`, `PopulationComponent`, and `SettlementLogic` alongside `FamilyCluster` and `Village` tag components. When a `FamilyCluster` reaches 1000 consecutive ticks at 0 velocity on a resource-rich tile (`WoodValue + FoodValue > 50`), the system despawns the entity and replaces it with a new `Village` entity holding storage and population. `StorageComponent` is limited to `uint32` flat arrays holding base resources, maintaining perfect 16-byte alignment. `SettlementLogic` safely uses `uint16` to cap tracking ticks while halving the usual `int` byte cost. Entities despawning/spawning is structured outside the arche-go `query.Next()` loop using pre-allocated slices clearing via `toRemove[:0]` to guarantee zero Garbage Collection panic limits and maintain L1/L2 hits on iteration. Tested via Deterministic E2E suites verifying proper spawning limits.
+- **Phase 05.2: The Ruin Transformation**: Implemented `RuinTransformationSystem` (`internal/systems/ruin_transformation.go`) and `RuinComponent`. When a settlement's `PopulationComponent.Count` drops to 0, instead of despawning the entity and erasing its history, the system removes the `PopulationComponent` and `NeedsComponent` and attaches the `RuinComponent`. This retains the former identity name and sets up a decay timer. `RuinComponent` utilizes a `uint32` for `Decay` to maintain DOD size limits (ensuring the struct fits within a strict 24-byte alignment, verified by `basic_test.go`).
+- **Phase 05.3: Arche-Go Component Filters**: Updated the core iterations in `MetabolismSystem` and `DeathSystem` to explicitly use `ecs.All(...).Without(RuinComponentID)`. By ensuring these high-frequency system loops completely skip over ruined entities at the query builder level, we save tens of thousands of CPU cycles per frame that would otherwise be wasted trying to calculate metabolism or starvation logic on abandoned structures.
 
 **Design Decision Log (Phase 04):**
 - **Phase 04.4: Resolving Kinematics**: Upgraded `MovementSystem` (`internal/systems/movement.go`) to consume `Path` components actively provided by the Path Queue Pool. Logic relies strictly on sequential struct iterations via `arche-go`. Mathematical distance checks calculate if node waypoints are reached using `float32` arrays, and boundary mappings verify components do not map outside array bounds. This ensures all kinematic tracking aligns perfectly with DOD L1/L2 data access performance principles instead of relying on decoupled object logic. Added rigorous End-to-End deterministic testing verifying boundary validation.

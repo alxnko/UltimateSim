@@ -18,8 +18,11 @@ func NewMetabolismSystem(world *ecs.World) *MetabolismSystem {
 	// Query entities that have both Needs and Genetics
 	needsID := ecs.ComponentID[components.Needs](world)
 	geneticsID := ecs.ComponentID[components.Genetics](world)
+	ruinID := ecs.ComponentID[components.RuinComponent](world)
 
-	mask := ecs.All(needsID, geneticsID)
+	// Phase 05.3: Arche-Go Component Filters
+	// Explicitly build Without(ruinID) to skip over ruins.
+	mask := ecs.All(needsID, geneticsID).Without(ruinID)
 
 	return &MetabolismSystem{
 		filter: &mask,
