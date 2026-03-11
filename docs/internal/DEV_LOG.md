@@ -1,7 +1,8 @@
 # Developer Knowledge Base: Internal Activity Log
 
 ## Current Phase / Task
-- **Phase 07.5: Ideological Infection (The Memetic Engine)** (from `docs/roadmap/07_cognitive_engine.md`)
+- **Phase 08.1: Window Management & Camera (Ebitengine)** (from `docs/roadmap/08_visual_2d.md`)
+- *Completed Phase 07.5: Ideological Infection (The Memetic Engine)*
 - *Completed Phase 07.4: Translation Penalties & Silent Hooks*
 - *Completed Phase 07.3: Linguistic Drift*
 - *Completed Phase 07.2: Information Leakage (GossipDistributionSystem)*
@@ -19,6 +20,9 @@
 - *Completed Phase 1: Initialization, Determinism, & ECS Bootstrapping*
 
 - **Phase 05.4: Birth & Genetics Math**: Implemented `BirthSystem` (`internal/systems/birth.go`) and expanded `PopulationComponent` with a dynamic `Citizens []CitizenData` array. `CitizenData` strictly follows DOD by embedding `Genetics` (four `uint8` fields) and `BaseTraits` (`uint32`). This creates a perfectly flat 8-byte structure, guaranteeing cache alignment and avoiding hidden compiler padding. The `BirthSystem` deterministically processes parent traits by sequentially iterating over arrays, maximizing CPU cache locality during the biological inheritance algorithms.
+
+## Design Decision Log (Phase 08):
+- **Phase 08.1: Window Management & Camera**: Integrated Ebitengine (`github.com/hajimehoshi/ebiten/v2`) and modified the `cmd/game/main.go` entrypoint. The `wg.Wait()` block and dummy render goroutine were stripped, enabling `ebiten.RunGame()` to natively hijack the main OS thread (which it requires for OpenGL/macOS contexts) while the simulation goroutine spins up via its own `runtime.LockOSThread()` hardware pinning. Designed `internal/render/camera.go` defining a mathematical `Camera` struct with X, Y, and Zoom. Explicitly chose `float64` for camera translations (despite our core ECS using `float32`) because Ebitengine's arbitrary matrix `GeoM` scaling tools and internal API endpoints mandate 64-bit precision bounds; keeping them as `float64` avoids perpetual casting on every rendered 144Hz frame. Tested deterministic coordinate translations bidirectionally with rigorous `epsilon` bounds.
 
 ## Active Component IDs & Data Structures
 *Note: All structs must follow strict flat memory rules for Data-Oriented Design (DOD) to ensure cache alignment.*

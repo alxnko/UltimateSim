@@ -6,10 +6,10 @@ import (
 	"net/http"
 	_ "net/http/pprof"
 	"runtime"
-	"sync"
-	"time"
 
 	"github.com/ALXNKO/UltimateSim/internal/engine"
+	"github.com/ALXNKO/UltimateSim/internal/render"
+	"github.com/hajimehoshi/ebiten/v2"
 )
 
 // Phase 01.4: Hardware Affinity & Rendering Bridging
@@ -25,42 +25,30 @@ func main() {
 		}
 	}()
 
-	var wg sync.WaitGroup
-	wg.Add(2)
+	// Initialize the TickManager with 60 TPS bounds outside goroutine so it can be passed
+	tickManager := engine.NewTickManager(60)
 
 	// Simulation Goroutine
 	go func() {
-		defer wg.Done()
 		// Phase 01.4: Hardware Affinity
 		// Pin this goroutine to an OS thread to prevent cache invalidations
 		runtime.LockOSThread()
 
 		fmt.Println("Simulation Goroutine locked to OS thread.")
 
-		// Initialize the TickManager with 60 TPS bounds
-		tickManager := engine.NewTickManager(60)
-
 		// Run simulation loop indefinitely
 		tickManager.Run(-1)
 	}()
 
-	// Render/Window Context Goroutine
-	go func() {
-		defer wg.Done()
-		// Phase 01.4: Hardware Affinity
-		// Pin this goroutine to an OS thread to prevent cache invalidations
-		runtime.LockOSThread()
+	// Phase 08.1: Window Management & Camera
+	// Ebitengine handles its own main-thread graphics context hijacking.
+	// We no longer need the dummy render goroutine.
+	ebiten.SetWindowSize(1280, 720)
+	ebiten.SetWindowTitle("Boundless Sovereigns")
 
-		fmt.Println("Render/Window Context Goroutine locked to OS thread.")
-
-		// Placeholder for actual render loop
-		// We'll just read alpha values periodically as a simulation of decoupled rendering
-		for {
-			time.Sleep(16 * time.Millisecond) // roughly 60 FPS
-			// In reality, this would read tickManager.Alpha via a thread-safe mechanism
-			// For now it's just a dummy loop
-		}
-	}()
-
-	wg.Wait()
+	// Create and run the new Ebitengine application on the main thread
+	app := render.NewApp(tickManager)
+	if err := ebiten.RunGame(app); err != nil {
+		log.Fatalf("Ebitengine failed: %v", err)
+	}
 }
