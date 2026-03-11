@@ -12,22 +12,25 @@ import (
 // GossipDistributionSystem handles the physical passing of secrets through the map.
 type GossipDistributionSystem struct {
 	tickCounter uint64
+	HookGraph   *engine.SparseHookGraph
 
 	// Component IDs
-	posID    ecs.ID
-	secretID ecs.ID
-	memoryID ecs.ID
-	identID  ecs.ID
-	ruinID   ecs.ID
+	posID     ecs.ID
+	secretID  ecs.ID
+	memoryID  ecs.ID
+	identID   ecs.ID
+	ruinID    ecs.ID
+	cultureID ecs.ID
 }
 
 // nodeData represents extracted data for DOD optimized proximity checking
 type nodeData struct {
-	entity ecs.Entity
-	pos    *components.Position
-	secret *components.SecretComponent
-	memory *components.Memory
-	ident  *components.Identity
+	entity  ecs.Entity
+	pos     *components.Position
+	secret  *components.SecretComponent
+	memory  *components.Memory
+	ident   *components.Identity
+	culture *components.CultureComponent
 }
 
 // Update runs the system every 10 ticks.
@@ -44,9 +47,10 @@ func (s *GossipDistributionSystem) Update(world *ecs.World) {
 	s.memoryID = ecs.ComponentID[components.Memory](world)
 	s.identID = ecs.ComponentID[components.Identity](world)
 	s.ruinID = ecs.ComponentID[components.RuinComponent](world)
+	s.cultureID = ecs.ComponentID[components.CultureComponent](world)
 
 	// Filter all valid actors capable of gossiping
-	filter := ecs.All(s.posID, s.secretID, s.memoryID, s.identID).Without(s.ruinID)
+	filter := ecs.All(s.posID, s.secretID, s.memoryID, s.identID, s.cultureID).Without(s.ruinID)
 	query := world.Query(&filter)
 
 	// Extract into a flat slice cache to prevent nested O(N^2) arche queries
@@ -55,11 +59,12 @@ func (s *GossipDistributionSystem) Update(world *ecs.World) {
 
 	for query.Next() {
 		nodes = append(nodes, nodeData{
-			entity: query.Entity(),
-			pos:    (*components.Position)(query.Get(s.posID)),
-			secret: (*components.SecretComponent)(query.Get(s.secretID)),
-			memory: (*components.Memory)(query.Get(s.memoryID)),
-			ident:  (*components.Identity)(query.Get(s.identID)),
+			entity:  query.Entity(),
+			pos:     (*components.Position)(query.Get(s.posID)),
+			secret:  (*components.SecretComponent)(query.Get(s.secretID)),
+			memory:  (*components.Memory)(query.Get(s.memoryID)),
+			ident:   (*components.Identity)(query.Get(s.identID)),
+			culture: (*components.CultureComponent)(query.Get(s.cultureID)),
 		})
 	}
 
@@ -86,6 +91,8 @@ func (s *GossipDistributionSystem) Update(world *ecs.World) {
 
 			// Overlap defined as distance < 2.0 (distSq < 4.0)
 			if distSq < 4.0 {
+				languageMismatch := sender.culture.LanguageID != receiver.culture.LanguageID
+
 				// Evaluate each secret the sender holds
 				for _, secret := range sender.secret.Secrets {
 					// Check if receiver already knows the secret
@@ -104,6 +111,11 @@ func (s *GossipDistributionSystem) Update(world *ecs.World) {
 					// Calculate chance
 					chance := float32(secret.Virality) / 255.0
 
+					// Apply Phase 07.4 Translation Penalty (90% reduction) if languages do not match
+					if languageMismatch {
+						chance *= 0.10
+					}
+
 					// Apply TraitGossip modifier
 					modifier := float32(1.0)
 					if sender.ident.BaseTraits&components.TraitGossip != 0 {
@@ -120,6 +132,7 @@ func (s *GossipDistributionSystem) Update(world *ecs.World) {
 							TargetID:        uint64(sender.entity.ID()), // Storing ECS entity ID for reference
 							TickStamp:       s.tickCounter,
 							InteractionType: components.InteractionGossip,
+							LanguageID:      sender.culture.LanguageID,
 							Value:           int32(secret.SecretID), // Safe because SecretID is uint32 and we use int32
 						}
 
@@ -132,6 +145,15 @@ func (s *GossipDistributionSystem) Update(world *ecs.World) {
 							SecretID: secret.SecretID,
 							Virality: secret.Virality,
 						})
+					} else if languageMismatch {
+						// Phase 07.4: Silent Hooks
+						// Even if language fails (or gossip fails to pass), physical trades can occur.
+						// 25% chance of a "Silent Hook" occurring when there's an overlap but mismatched languages.
+						if engine.GetRandomFloat32() < 0.25 {
+							if s.HookGraph != nil {
+								s.HookGraph.AddHook(sender.ident.ID, receiver.ident.ID, 1)
+							}
+						}
 					}
 				}
 			}
