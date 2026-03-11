@@ -111,6 +111,20 @@ type PopulationComponent struct {
 // Village is a tag component identifying stationary settlements.
 type Village struct{}
 
+// Phase 09.1: The Caravan Entity
+
+// Caravan is a tag component identifying mobile logistics units.
+type Caravan struct{}
+
+// Payload tracks trade goods limits on a Caravan in flat memory arrays.
+// Mirrors StorageComponent exactly for DOD 16-byte alignment.
+type Payload struct {
+	Wood  uint32
+	Stone uint32
+	Iron  uint32
+	Food  uint32
+}
+
 // RuinComponent identifies a dead settlement to avoid processing its needs.
 // Phase 05.2: The Ruin Transformation
 type RuinComponent struct {
