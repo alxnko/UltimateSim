@@ -87,7 +87,7 @@ func TestComponentSizes(t *testing.T) {
 		t.Errorf("Affiliation struct size should be exactly 16 bytes, got %d", affSize)
 	}
 
-	// MemoryEvent: uint64 (8) + uint64 (8) + uint8 (1) + int8 (1) + padding = 24 bytes on 64-bit
+	// MemoryEvent: uint64 (8) + uint64 (8) + uint8 (1) + int32 (4) + padding = 24 bytes on 64-bit
 	meSize := unsafe.Sizeof(MemoryEvent{})
 	if meSize > 24 {
 		t.Errorf("MemoryEvent struct size too large: %d bytes (expected <= 24)", meSize)

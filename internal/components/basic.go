@@ -8,6 +8,12 @@ package components
 const (
 	TraitRiskTaker uint32 = 1 << 0
 	TraitCautious  uint32 = 1 << 1
+	TraitGossip    uint32 = 1 << 2
+)
+
+// Interaction Types Constants
+const (
+	InteractionGossip uint8 = 1
 )
 
 // Identity component
@@ -62,7 +68,7 @@ type MemoryEvent struct {
 	TargetID        uint64
 	TickStamp       uint64
 	InteractionType uint8
-	Value           int8
+	Value           int32 // Increased from int8 to int32 to store SecretID while preserving 24-byte padding limit
 }
 
 type Memory struct {
