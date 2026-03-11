@@ -49,6 +49,32 @@ type Position struct {
 	Y float32
 }
 
+// Phase 05.1: Settlement Conversion Components
+
+// FamilyCluster is a tag component identifying migrating groups.
+type FamilyCluster struct{}
+
+// SettlementLogic tracks consecutive ticks at 0 velocity.
+type SettlementLogic struct {
+	TicksAtZeroVelocity uint16
+}
+
+// StorageComponent tracks inventory in flat memory arrays.
+type StorageComponent struct {
+	Wood  uint32
+	Stone uint32
+	Iron  uint32
+	Food  uint32
+}
+
+// PopulationComponent tracks headcount abstracting AI nodes inside city limits.
+type PopulationComponent struct {
+	Count uint32
+}
+
+// Village is a tag component identifying stationary settlements.
+type Village struct{}
+
 // Path component
 // Phase 04.2: Async Path Queue Pool
 // Stores the tactical node-to-node float32 positions for MovementSystem to traverse.

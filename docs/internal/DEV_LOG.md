@@ -1,7 +1,8 @@
 # Developer Knowledge Base: Internal Activity Log
 
 ## Current Phase / Task
-- **Phase 4.4: Resolving Kinematics** (from `docs/roadmap/04_autonomous_nodes.md`)
+- **Phase 5.1: Settlement Conversion System** (from `docs/roadmap/05_settlements_ruins.md`)
+- *Completed Phase 4.4: Resolving Kinematics*
 - *Completed Phase 4.3: Trait & Need Driven Targeting*
 - *Completed Phase 4.2: Async Path Queue Pool*
 - *Completed Phase 4.1: Hierarchical Pathfinding (HPA\*) Implementation - Grid Abstractor*
@@ -21,6 +22,9 @@
 - `Needs`: `Food`, `Rest`, `Safety`, `Wealth` (all `float32`)
 - `Position`: `X, Y float32`
 - `Velocity`: `X, Y float32`
+- `StorageComponent`: `Wood`, `Stone`, `Iron`, `Food` (all `uint32`)
+- `PopulationComponent`: `Count uint32`
+- `SettlementLogic`: `TicksAtZeroVelocity uint16`
 
 **Implemented Structures (`internal/engine/map_grid.go`):**
 - `TileData`: `Elevation`, `Moisture`, `Temperature`, `BiomeID` (all `uint8`). Packed precisely into 4 bytes for optimal cache alignment.
@@ -31,6 +35,9 @@
 - **Data Types & CPU Cache**: Using a 1D contiguous array `[]TileData` rather than `[][]TileData`. This bypasses pointer indirection across multiple slices, packing millions of grid tiles into tightly sequential memory blocks. When iterating across the map generation loops, this approach maximizes the L1/L2 cache hit rate, preventing cache misses common with 2D sliced pointers in Go. The `uint8` limits memory to 3 bytes per tile perfectly aligned for cache-lines.
 - **Phase 02.2: Procedural Generation Pipeline**: Implemented `GenerateMap` (`internal/engine/map_generator.go`) utilizing a custom deterministic `Perlin` noise generator (`pkg/math/noise.go`). The generation algorithm iterates sequentially over the `MapGrid.Tiles` 1D array, maintaining absolute L1/L2 cache locality and dodging memory fragmentation. By seeding `math/rand/v2`'s `ChaCha8` engine with distinct deterministic modifiers, Elevation, Moisture, and Temperature map layers are consistently reproducible across simulation instances while maximizing iteration speeds via DOD principles. Tested via End-to-End deterministic tests in `map_generator_test.go`.
 - **Phase 02.3: Biome Mapping**: Implemented a simplified Whittaker classification table algorithm in `internal/engine/biome_mapper.go` (`DetermineBiome`). Integrated it directly into the `GenerateMap` sequential pipeline. Adding `BiomeID` to `TileData` brought its total size from 3 bytes to 4 bytes, creating perfect 32-bit alignment and boosting sequential L1/L2 Cache hit rates because the Go compiler no longer inserts hidden padding.
+
+**Design Decision Log (Phase 05):**
+- **Phase 05.1: Settlement Conversion System**: Implemented `SettlementRuleSystem` (`internal/systems/settlement_rule.go`) and the components `StorageComponent`, `PopulationComponent`, and `SettlementLogic` alongside `FamilyCluster` and `Village` tag components. When a `FamilyCluster` reaches 1000 consecutive ticks at 0 velocity on a resource-rich tile (`WoodValue + FoodValue > 50`), the system despawns the entity and replaces it with a new `Village` entity holding storage and population. `StorageComponent` is limited to `uint32` flat arrays holding base resources, maintaining perfect 16-byte alignment. `SettlementLogic` safely uses `uint16` to cap tracking ticks while halving the usual `int` byte cost. Entities despawning/spawning is structured outside the arche-go `query.Next()` loop using pre-allocated slices clearing via `toRemove[:0]` to guarantee zero Garbage Collection panic limits and maintain L1/L2 hits on iteration. Tested via Deterministic E2E suites verifying proper spawning limits.
 
 **Design Decision Log (Phase 04):**
 - **Phase 04.4: Resolving Kinematics**: Upgraded `MovementSystem` (`internal/systems/movement.go`) to consume `Path` components actively provided by the Path Queue Pool. Logic relies strictly on sequential struct iterations via `arche-go`. Mathematical distance checks calculate if node waypoints are reached using `float32` arrays, and boundary mappings verify components do not map outside array bounds. This ensures all kinematic tracking aligns perfectly with DOD L1/L2 data access performance principles instead of relying on decoupled object logic. Added rigorous End-to-End deterministic testing verifying boundary validation.

@@ -79,4 +79,23 @@ func TestComponentSizes(t *testing.T) {
 	if needsSize != 16 {
 		t.Errorf("Needs struct size should be exactly 16 bytes, got %d", needsSize)
 	}
+
+	// Phase 05.1: Settlement Component Sizes
+	// SettlementLogic: 1 * uint16 (2) = 2 bytes
+	slSize := unsafe.Sizeof(SettlementLogic{})
+	if slSize != 2 {
+		t.Errorf("SettlementLogic struct size should be exactly 2 bytes, got %d", slSize)
+	}
+
+	// StorageComponent: 4 * uint32 (4) = 16 bytes
+	storageSize := unsafe.Sizeof(StorageComponent{})
+	if storageSize != 16 {
+		t.Errorf("StorageComponent struct size should be exactly 16 bytes, got %d", storageSize)
+	}
+
+	// PopulationComponent: 1 * uint32 (4) = 4 bytes
+	popSize := unsafe.Sizeof(PopulationComponent{})
+	if popSize != 4 {
+		t.Errorf("PopulationComponent struct size should be exactly 4 bytes, got %d", popSize)
+	}
 }
