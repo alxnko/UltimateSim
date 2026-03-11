@@ -1,7 +1,8 @@
 # Developer Knowledge Base: Internal Activity Log
 
 ## Current Phase / Task
-- **Phase 10.1: Debt Default Execution (The Hook Trap)** (from `docs/roadmap/10_state_failure.md`)
+- **Phase 10.2: Bureaucratic Delay (Administrative Entropy)** (from `docs/roadmap/10_state_failure.md`)
+- *Completed Phase 10.1: Debt Default Execution (The Hook Trap)*
 - *Completed Phase 09.4 & 09.5: Physical Legend Components and Item Inheritance*
 - *Completed Phase 09.3: Infrastructure Wear System (Desire Paths)*
 - *Completed Phase 09.2: Dynamic Attrition*
@@ -28,6 +29,7 @@
 - **Phase 05.4: Birth & Genetics Math**: Implemented `BirthSystem` (`internal/systems/birth.go`) and expanded `PopulationComponent` with a dynamic `Citizens []CitizenData` array. `CitizenData` strictly follows DOD by embedding `Genetics` (four `uint8` fields) and `BaseTraits` (`uint32`). This creates a perfectly flat 8-byte structure, guaranteeing cache alignment and avoiding hidden compiler padding. The `BirthSystem` deterministically processes parent traits by sequentially iterating over arrays, maximizing CPU cache locality during the biological inheritance algorithms.
 
 ## Design Decision Log (Phase 10):
+- **Phase 10.2: Bureaucratic Delay (Administrative Entropy)**: Created new ECS components `OrderEntity` (tag), `OrderComponent`, `CapitalComponent` (tag), and `LoyaltyComponent`. `OrderComponent` is strictly 16 bytes padded and tracks the creation tick and target city ID. Built the `AdministrativeDecaySystem` (`internal/systems/administrative_decay.go`) to test transit time vs the targeted `CityID.Loyalty`. To adhere to strict DOD rules and prevent nested ECS query loops during order evaluation, the system pre-calculates a flat `loyaltyMap` containing active `VillageEntity` loyalty values. This allows the primary order iteration loop to perform instant hashmap lookups for failure checks without fragmenting the CPU L1/L2 cache. Despawning entities happens outside the `query.Next()` loop by appending to a slice (`s.toRemove`) avoiding any concurrency panics. Tested successfully through E2E deterministic test suites (`administrative_decay_test.go`).
 - **Phase 10.1: Debt Default Execution (The Hook Trap)**: Added `LoanContractComponent` struct containing `CreditorID uint64`, `DueTick uint64`, and `AssetID uint32`. It strictly adheres to DOD sizes mapping exactly to 24 bytes (padded). Implemented `DebtDefaultSystem` in `internal/systems/debt_default.go` to iterate over all active loans via `arche-go`. If `Tick >= DueTick`, it natively deducts 100 accumulated resources from the `StorageComponent` array fields. If repayment fails due to a lack of resources, it deterministically transfers the entity's `Affiliation.GuildID` mapping to the debtor's `AssetID`, mimicking a legal trap without nested map lookups. Validated by deterministic e2e test checks ensuring cache line optimization.
 
 ## Design Decision Log (Phase 09):
