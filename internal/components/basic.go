@@ -43,6 +43,16 @@ type Position struct {
 	Y float32
 }
 
+// Path component
+// Phase 04.2: Async Path Queue Pool
+// Stores the tactical node-to-node float32 positions for MovementSystem to traverse.
+type Path struct {
+	Nodes   []Position
+	HasPath bool
+	TargetX float32
+	TargetY float32
+}
+
 // Velocity component
 type Velocity struct {
 	X float32
