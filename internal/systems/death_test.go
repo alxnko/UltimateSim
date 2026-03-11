@@ -49,6 +49,78 @@ func TestDeathSystem_E2E(t *testing.T) {
 	}
 }
 
+// Phase 09.5: Item Inheritance Tests
+func TestDeathSystem_ItemInheritance(t *testing.T) {
+	world := ecs.NewWorld()
+	needsID := ecs.ComponentID[components.Needs](&world)
+	legacyID := ecs.ComponentID[components.Legacy](&world)
+	posID := ecs.ComponentID[components.Position](&world)
+
+	deathSystem := systems.NewDeathSystem(&world)
+
+	// Entity with High Prestige (should spawn item)
+	e1 := world.NewEntity(needsID, legacyID, posID)
+	n1 := (*components.Needs)(world.Get(e1, needsID))
+	n1.Food = 0.0 // Starving
+	l1 := (*components.Legacy)(world.Get(e1, legacyID))
+	l1.Prestige = components.ExtremePrestigeThreshold + 50
+	p1 := (*components.Position)(world.Get(e1, posID))
+	p1.X = 10.0
+	p1.Y = 20.0
+
+	// Entity with Low Prestige (should not spawn item)
+	e2 := world.NewEntity(needsID, legacyID, posID)
+	n2 := (*components.Needs)(world.Get(e2, needsID))
+	n2.Food = 0.0 // Starving
+	l2 := (*components.Legacy)(world.Get(e2, legacyID))
+	l2.Prestige = 10 // Low prestige
+	p2 := (*components.Position)(world.Get(e2, posID))
+	p2.X = 5.0
+	p2.Y = 5.0
+
+	// Pre-update item count
+	itemID := ecs.ComponentID[components.ItemEntity](&world)
+	legendID := ecs.ComponentID[components.LegendComponent](&world)
+
+	queryBefore := world.Query(ecs.All(itemID))
+	countBefore := 0
+	for queryBefore.Next() { countBefore++ }
+	// In arche-go, queries fully iterated via for q.Next() automatically close and unlock the world.
+	// Calling q.Close() causes an unbalanced unlock panic.
+
+	if countBefore != 0 {
+		t.Errorf("Expected 0 items before update, got %d", countBefore)
+	}
+
+	deathSystem.Update(&world)
+
+	// Post-update verification
+	if world.Alive(e1) || world.Alive(e2) {
+		t.Errorf("Expected both starving entities to despawn")
+	}
+
+	queryAfter := world.Query(ecs.All(itemID, legendID, posID))
+	countAfter := 0
+	for queryAfter.Next() {
+		countAfter++
+
+		pos := (*components.Position)(queryAfter.Get(posID))
+		legend := (*components.LegendComponent)(queryAfter.Get(legendID))
+
+		if pos.X != 10.0 || pos.Y != 20.0 {
+			t.Errorf("Item spawned at incorrect position: %v, %v", pos.X, pos.Y)
+		}
+
+		if legend.Prestige != components.ExtremePrestigeThreshold + 50 {
+			t.Errorf("Item inherited incorrect prestige: %v", legend.Prestige)
+		}
+	}
+
+	if countAfter != 1 {
+		t.Errorf("Expected exactly 1 item spawned, got %d", countAfter)
+	}
+}
+
 // Deterministic Check: Runs simulation multiple times, expecting exact same state
 func TestMetabolismAndDeathSystem_Deterministic(t *testing.T) {
 	runSim := func() int {

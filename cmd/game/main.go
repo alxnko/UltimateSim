@@ -40,7 +40,7 @@ func main() {
 	tickManager.AddSystem(systems.NewRustSystem(), engine.PhaseResolution)
 
 	// Phase 09.3: Infrastructure Wear System
-	tickManager.AddSystem(systems.NewInfrastructureWearSystem(grid))
+	tickManager.AddSystem(systems.NewInfrastructureWearSystem(grid), engine.PhaseMovement)
 
 	// Simulation Goroutine
 	go func() {
