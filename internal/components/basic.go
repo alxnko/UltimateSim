@@ -55,6 +55,11 @@ type Position struct {
 	Y float32
 }
 
+// Phase 07.3: Linguistic Drift
+type CultureComponent struct {
+	LanguageID uint16
+}
+
 // Phase 06.1: Societal Hierarchies
 type Affiliation struct {
 	ClanID    uint32

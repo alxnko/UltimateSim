@@ -80,6 +80,13 @@ func TestComponentSizes(t *testing.T) {
 		t.Errorf("Needs struct size should be exactly 16 bytes, got %d", needsSize)
 	}
 
+	// Phase 07.3: Linguistic Drift
+	// CultureComponent: uint16 (2) = 2 bytes
+	cultSize := unsafe.Sizeof(CultureComponent{})
+	if cultSize != 2 {
+		t.Errorf("CultureComponent struct size should be exactly 2 bytes, got %d", cultSize)
+	}
+
 	// Phase 06.1 & 06.2: Social Graph Component Sizes
 	// Affiliation: 4 * uint32 (4) = 16 bytes
 	affSize := unsafe.Sizeof(Affiliation{})

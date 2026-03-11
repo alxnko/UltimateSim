@@ -1,7 +1,8 @@
 # Developer Knowledge Base: Internal Activity Log
 
 ## Current Phase / Task
-- **Phase 07.2: Information Leakage (GossipDistributionSystem)** (from `docs/roadmap/07_cognitive_engine.md`)
+- **Phase 07.3: Linguistic Drift** (from `docs/roadmap/07_cognitive_engine.md`)
+- *Completed Phase 07.2: Information Leakage (GossipDistributionSystem)*
 - *Completed Phase 07.1: Secret Registry (String Interning)*
 - *Completed Phase 5.4: Birth & Genetics Math*
 - *Completed Phase 5.3: Arche-Go Component Filters*
@@ -44,6 +45,7 @@
 - **Phase 02.3: Biome Mapping**: Implemented a simplified Whittaker classification table algorithm in `internal/engine/biome_mapper.go` (`DetermineBiome`). Integrated it directly into the `GenerateMap` sequential pipeline. Adding `BiomeID` to `TileData` brought its total size from 3 bytes to 4 bytes, creating perfect 32-bit alignment and boosting sequential L1/L2 Cache hit rates because the Go compiler no longer inserts hidden padding.
 
 **Design Decision Log (Phase 07):**
+- **Phase 07.3: Linguistic Drift**: Implemented `CultureComponent` (`internal/components/basic.go`) and `LanguageDriftSystem` (`internal/systems/language_drift.go`). `CultureComponent` uses a single `LanguageID uint16` to strictly limit size overhead to 2 bytes, strictly following DOD principles and keeping RAM footprint flat. `LanguageDriftSystem` executes every 100 ticks for performance optimization, scanning the `Memory` ring buffer. It references entities via cached flat memory `Map` mappings to prevent `arche-go` API `world.Get` bottlenecks. If an entity misses parent `LanguageID` interactions for 10000 ticks, it diverges into a Dialect. Meanwhile, cross-language interactions accumulate in a localized `pidginTracker` structure; upon reaching 50000 hits, it fuses both identities into a new Pidgin language block, directly applying mathematical sociolinguistics without deeply nested graph arrays.
 - **Phase 07.2: Information Leakage (GossipDistributionSystem)**: Implemented `GossipDistributionSystem` (`internal/systems/gossip_distribution.go`). It extracts valid gossiping entities (`Position`, `SecretComponent`, `Memory`, `Identity`) into a flat `[]nodeData` slice array. This DOD structural pattern preserves critical L1/L2 hits while running $O(N^2)$ distance and proximity calculations every 10 ticks, sidestepping nested `arche-go` iterator bottlenecks. Added `InteractionGossip` and enlarged `MemoryEvent.Value` from `int8` to `int32` to directly store the 32-bit `SecretID`, all while perfectly maintaining the 24-byte padding limit required for `MemoryEvent` alignment. Additionally, added `TraitGossip` as a bitmask modifier that doubles transmission odds.
 - **Phase 07.1: Secret Registry (String Interning)**: Added `SecretRegistry` to avoid duplicate string allocations across thousands of entities sharing secrets/gossip. It runs as a singleton and provides thread-safe access using `sync.RWMutex`, assigning unique `uint32` IDs to mapped strings. Designed `Secret` component struct (`OriginID uint64`, `SecretID uint32`, `Virality uint8`) carefully verifying its packed DOD alignment constraints size mapping to exactly 16 bytes. Used standard slice header in `SecretComponent` tracking arrays of information dynamically for flexibility without bloating the base ECS archetype allocation.
 
