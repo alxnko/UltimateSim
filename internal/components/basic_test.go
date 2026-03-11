@@ -183,4 +183,11 @@ func TestComponentSizes(t *testing.T) {
 	if itemEntitySize > 0 {
 		t.Errorf("ItemEntity struct size should be exactly 0 bytes (tag component), got %d", itemEntitySize)
 	}
+
+	// Phase 10.1: Debt Default Execution Component
+	// LoanContractComponent: uint64 (8) + uint64 (8) + uint32 (4) = 20 bytes -> padded to 24
+	loanSize := unsafe.Sizeof(LoanContractComponent{})
+	if loanSize > 24 {
+		t.Errorf("LoanContractComponent struct size too large: %d bytes (expected <= 24)", loanSize)
+	}
 }
