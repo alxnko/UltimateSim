@@ -61,6 +61,8 @@ func (s *FamilySpawnerSystem) Update(world *ecs.World) {
 	legID := ecs.ComponentID[components.Legacy](world)
 	needsID := ecs.ComponentID[components.Needs](world)
 	pathID := ecs.ComponentID[components.Path](world)
+	fcID := ecs.ComponentID[components.FamilyCluster](world)
+	slID := ecs.ComponentID[components.SettlementLogic](world)
 
 	// Spawn 100 Family Clusters
 	spawnCount := 100
@@ -69,7 +71,7 @@ func (s *FamilySpawnerSystem) Update(world *ecs.World) {
 		idx := engine.GetRandomInt() % len(habitableTiles)
 		coord := habitableTiles[idx]
 
-		entity := world.NewEntity(posID, velID, idID, genID, legID, needsID, pathID)
+		entity := world.NewEntity(posID, velID, idID, genID, legID, needsID, pathID, fcID, slID)
 
 		// Set Position
 		pos := (*components.Position)(world.Get(entity, posID))
@@ -111,6 +113,10 @@ func (s *FamilySpawnerSystem) Update(world *ecs.World) {
 		// Set Path
 		path := (*components.Path)(world.Get(entity, pathID))
 		path.HasPath = false
+
+		// Set SettlementLogic
+		sl := (*components.SettlementLogic)(world.Get(entity, slID))
+		sl.TicksAtZeroVelocity = 0
 	}
 
 	s.hasSpawned = true
