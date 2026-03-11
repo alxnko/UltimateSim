@@ -67,9 +67,16 @@ type StorageComponent struct {
 	Food  uint32
 }
 
+// CitizenData stores genetic and trait data for individuals born within a settlement.
+type CitizenData struct {
+	Genetics   Genetics
+	BaseTraits uint32
+}
+
 // PopulationComponent tracks headcount abstracting AI nodes inside city limits.
 type PopulationComponent struct {
-	Count uint32
+	Count    uint32
+	Citizens []CitizenData
 }
 
 // Village is a tag component identifying stationary settlements.

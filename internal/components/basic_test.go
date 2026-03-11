@@ -93,10 +93,16 @@ func TestComponentSizes(t *testing.T) {
 		t.Errorf("StorageComponent struct size should be exactly 16 bytes, got %d", storageSize)
 	}
 
-	// PopulationComponent: 1 * uint32 (4) = 4 bytes
+	// PopulationComponent: uint32 (4) + []CitizenData (24) = 28 bytes + 4 padding = 32 bytes
 	popSize := unsafe.Sizeof(PopulationComponent{})
-	if popSize != 4 {
-		t.Errorf("PopulationComponent struct size should be exactly 4 bytes, got %d", popSize)
+	if popSize > 32 {
+		t.Errorf("PopulationComponent struct size too large: %d bytes (expected <= 32)", popSize)
+	}
+
+	// CitizenData: Genetics (4) + uint32 (4) = 8 bytes
+	citizenSize := unsafe.Sizeof(CitizenData{})
+	if citizenSize != 8 {
+		t.Errorf("CitizenData struct size should be exactly 8 bytes, got %d", citizenSize)
 	}
 
 	// Phase 05.2: Ruin Component Size
