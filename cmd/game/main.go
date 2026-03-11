@@ -9,6 +9,7 @@ import (
 
 	"github.com/ALXNKO/UltimateSim/internal/engine"
 	"github.com/ALXNKO/UltimateSim/internal/render"
+	"github.com/ALXNKO/UltimateSim/internal/systems"
 	"github.com/hajimehoshi/ebiten/v2"
 )
 
@@ -33,6 +34,10 @@ func main() {
 
 	// Initialize the TickManager with 60 TPS bounds outside goroutine so it can be passed
 	tickManager := engine.NewTickManager(60)
+
+	// Phase 09.2: Dynamic Attrition
+	tickManager.AddSystem(systems.NewSpoilageSystem())
+	tickManager.AddSystem(systems.NewRustSystem())
 
 	// Simulation Goroutine
 	go func() {
