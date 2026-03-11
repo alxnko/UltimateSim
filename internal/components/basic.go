@@ -49,6 +49,27 @@ type Position struct {
 	Y float32
 }
 
+// Phase 06.1: Societal Hierarchies
+type Affiliation struct {
+	ClanID    uint32
+	GuildID   uint32
+	CityID    uint32
+	CountryID uint32
+}
+
+// Phase 06.2: Interaction Telemetry
+type MemoryEvent struct {
+	TargetID        uint64
+	TickStamp       uint64
+	InteractionType uint8
+	Value           int8
+}
+
+type Memory struct {
+	Events [50]MemoryEvent
+	Head   uint8
+}
+
 // Phase 05.1: Settlement Conversion Components
 
 // FamilyCluster is a tag component identifying migrating groups.
