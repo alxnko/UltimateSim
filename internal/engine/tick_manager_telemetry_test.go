@@ -28,7 +28,7 @@ func TestTickManager_Telemetry(t *testing.T) {
 	os.Stdout = w
 
 	tm := NewTickManager(60)
-	tm.AddSystem(&slowSystem{})
+	tm.AddSystem(&slowSystem{}, PhaseResolution)
 
 	// Run for 65 ticks so it logs at least once (logs after TPS=60 ticks)
 	tm.Run(65)

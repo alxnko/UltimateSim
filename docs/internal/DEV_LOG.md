@@ -98,6 +98,7 @@
 
 ## Phase 01.3: ECS Core (arche-go) Setup
 - Implemented TickManager and System interface to manage arche-go World with 60 TPS cap and alpha calculation for rendering.
+- **SystemRunner & Sequence Rigor**: Replaced simple insertion-order system additions with a rigorous phase-based `SystemRunner` scheduling mechanism (`PhaseInput` -> `PhaseAI` -> `PhaseMovement` -> `PhaseResolution` -> `PhaseCleanup`). Systems are mapped to buckets sequentially utilizing an array of slices `[][]System` indexed by the enum order. This strictly enforces logical bounds avoiding circular updates without adding hash map lookup costs during the simulation loop. Added `TestSystemRunner_Sequencing` unit test in `tick_manager_test.go`.
 - **Performance & Cache Locality**: We maintain flat memory arrays for all Entity ID queries using `arche-go`. `float32` vs `float64` is preferred to halve the byte size and double the L1/L2 cache hit rate during continuous loops inside Systems.
 - **MovementSystem Implementation**: Created `/internal/systems/movement.go` mapping `Velocity` to `Position` continuously.
   - Traceability: `// Phase 01.3: ECS Core Setup - MovementSystem`
