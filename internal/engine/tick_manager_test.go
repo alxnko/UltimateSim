@@ -29,7 +29,7 @@ func (s *MovementSystem) Update(world *ecs.World) {
 
 func TestTickManager_60TPS(t *testing.T) {
 	tm := NewTickManager(60)
-	tm.AddSystem(&MovementSystem{})
+	tm.AddSystem(&MovementSystem{}, PhaseMovement)
 
 	start := time.Now()
 	tm.Run(60) // Run exactly 60 ticks
@@ -48,7 +48,7 @@ func runDeterministicSimulation(seed [32]byte, ticks int) []components.Position 
 	InitializeRNG(seed)
 
 	tm := NewTickManager(60)
-	tm.AddSystem(&MovementSystem{})
+	tm.AddSystem(&MovementSystem{}, PhaseMovement)
 
 	// Spawn 100 entities with random velocities using our seeded RNG.
 	for i := 0; i < 100; i++ {
@@ -99,6 +99,43 @@ func TestTickManager_Determinism(t *testing.T) {
 	for i := 0; i < len(run1); i++ {
 		if run1[i].X != run2[i].X || run1[i].Y != run2[i].Y {
 			t.Errorf("Determinism failure at index %d: run1 %+v, run2 %+v", i, run1[i], run2[i])
+		}
+	}
+}
+
+// Phase 01.3: SystemRunner Sequencing Test
+type TrackerSystem struct {
+	PhaseName string
+	ExecutionLog *[]string
+}
+
+func (s *TrackerSystem) Update(world *ecs.World) {
+	*s.ExecutionLog = append(*s.ExecutionLog, s.PhaseName)
+}
+
+func TestSystemRunner_Sequencing(t *testing.T) {
+	tm := NewTickManager(60)
+	var log []string
+
+	// Add systems out of phase order
+	tm.AddSystem(&TrackerSystem{PhaseName: "Resolution", ExecutionLog: &log}, PhaseResolution)
+	tm.AddSystem(&TrackerSystem{PhaseName: "Input", ExecutionLog: &log}, PhaseInput)
+	tm.AddSystem(&TrackerSystem{PhaseName: "Cleanup", ExecutionLog: &log}, PhaseCleanup)
+	tm.AddSystem(&TrackerSystem{PhaseName: "Movement", ExecutionLog: &log}, PhaseMovement)
+	tm.AddSystem(&TrackerSystem{PhaseName: "AI", ExecutionLog: &log}, PhaseAI)
+	tm.AddSystem(&TrackerSystem{PhaseName: "AI_2", ExecutionLog: &log}, PhaseAI)
+
+	tm.Tick()
+
+	expectedOrder := []string{"Input", "AI", "AI_2", "Movement", "Resolution", "Cleanup"}
+
+	if len(log) != len(expectedOrder) {
+		t.Fatalf("Expected %d executions, got %d", len(expectedOrder), len(log))
+	}
+
+	for i, expected := range expectedOrder {
+		if log[i] != expected {
+			t.Errorf("Order mismatch at %d: expected %s, got %s", i, expected, log[i])
 		}
 	}
 }

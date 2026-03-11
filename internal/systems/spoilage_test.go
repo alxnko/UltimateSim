@@ -15,7 +15,7 @@ func TestSpoilageSystem(t *testing.T) {
 
 	tm := engine.NewTickManager(60)
 	sys := systems.NewSpoilageSystem()
-	tm.AddSystem(sys)
+	tm.AddSystem(sys, engine.PhaseResolution)
 
 	world := tm.World
 

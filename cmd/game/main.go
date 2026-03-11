@@ -36,8 +36,8 @@ func main() {
 	tickManager := engine.NewTickManager(60)
 
 	// Phase 09.2: Dynamic Attrition
-	tickManager.AddSystem(systems.NewSpoilageSystem())
-	tickManager.AddSystem(systems.NewRustSystem())
+	tickManager.AddSystem(systems.NewSpoilageSystem(), engine.PhaseResolution)
+	tickManager.AddSystem(systems.NewRustSystem(), engine.PhaseResolution)
 
 	// Phase 09.3: Infrastructure Wear System
 	tickManager.AddSystem(systems.NewInfrastructureWearSystem(grid))
