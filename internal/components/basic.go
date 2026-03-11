@@ -11,6 +11,9 @@ const (
 	TraitGossip    uint32 = 1 << 2
 )
 
+// Phase 09.5: Item Inheritance Threshold
+const ExtremePrestigeThreshold uint32 = 100
+
 // Interaction Types Constants
 const (
 	InteractionGossip   uint8 = 1
@@ -110,6 +113,17 @@ type PopulationComponent struct {
 
 // Village is a tag component identifying stationary settlements.
 type Village struct{}
+
+// Phase 09.4: Physical Legend Components
+// ItemEntity is a tag component identifying physical legendary items on the map.
+type ItemEntity struct{}
+
+// LegendComponent represents an artifact with physical existence and history.
+type LegendComponent struct {
+	NameID   uint32   // Unique ID from SecretRegistry representing the item's name
+	Prestige uint32   // Legacy prestige from the original holder
+	History  []uint32 // Array of EventIDs tracking the item's history
+}
 
 // Phase 09.1: The Caravan Entity
 

@@ -171,4 +171,16 @@ func TestComponentSizes(t *testing.T) {
 	if cultureSize > 16 {
 		t.Errorf("CultureComponent struct size too large: %d bytes (expected <= 16)", cultureSize)
 	}
+
+	// Phase 09.4: Physical Legend Components
+	// LegendComponent: uint32 (4) + uint32 (4) + []uint32 (24) = 32 bytes
+	legendSize := unsafe.Sizeof(LegendComponent{})
+	if legendSize > 32 {
+		t.Errorf("LegendComponent struct size too large: %d bytes (expected <= 32)", legendSize)
+	}
+
+	itemEntitySize := unsafe.Sizeof(ItemEntity{})
+	if itemEntitySize > 0 {
+		t.Errorf("ItemEntity struct size should be exactly 0 bytes (tag component), got %d", itemEntitySize)
+	}
 }
