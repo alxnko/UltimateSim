@@ -21,6 +21,7 @@ type GossipDistributionSystem struct {
 	identID   ecs.ID
 	ruinID    ecs.ID
 	cultureID ecs.ID
+	beliefID  ecs.ID // Phase 07.5: Ideological Infection
 }
 
 // nodeData represents extracted data for DOD optimized proximity checking
@@ -31,6 +32,7 @@ type nodeData struct {
 	memory  *components.Memory
 	ident   *components.Identity
 	culture *components.CultureComponent
+	belief  *components.BeliefComponent // Optional, might be nil
 }
 
 // Update runs the system every 10 ticks.
@@ -48,6 +50,7 @@ func (s *GossipDistributionSystem) Update(world *ecs.World) {
 	s.identID = ecs.ComponentID[components.Identity](world)
 	s.ruinID = ecs.ComponentID[components.RuinComponent](world)
 	s.cultureID = ecs.ComponentID[components.CultureComponent](world)
+	s.beliefID = ecs.ComponentID[components.BeliefComponent](world)
 
 	// Filter all valid actors capable of gossiping
 	filter := ecs.All(s.posID, s.secretID, s.memoryID, s.identID, s.cultureID).Without(s.ruinID)
@@ -58,6 +61,11 @@ func (s *GossipDistributionSystem) Update(world *ecs.World) {
 	var nodes []nodeData
 
 	for query.Next() {
+		var belief *components.BeliefComponent
+		if query.Has(s.beliefID) {
+			belief = (*components.BeliefComponent)(query.Get(s.beliefID))
+		}
+
 		nodes = append(nodes, nodeData{
 			entity:  query.Entity(),
 			pos:     (*components.Position)(query.Get(s.posID)),
@@ -65,6 +73,7 @@ func (s *GossipDistributionSystem) Update(world *ecs.World) {
 			memory:  (*components.Memory)(query.Get(s.memoryID)),
 			ident:   (*components.Identity)(query.Get(s.identID)),
 			culture: (*components.CultureComponent)(query.Get(s.cultureID)),
+			belief:  belief,
 		})
 	}
 
@@ -144,7 +153,28 @@ func (s *GossipDistributionSystem) Update(world *ecs.World) {
 							OriginID: secret.OriginID,
 							SecretID: secret.SecretID,
 							Virality: secret.Virality,
+							BeliefID: secret.BeliefID, // Preserve metadata flag
 						})
+
+						// Phase 07.5: Ideological Infection
+						// If the secret carries a BeliefID, spread the ideology
+						if secret.BeliefID != 0 && receiver.belief != nil {
+							found := false
+							for k := range receiver.belief.Beliefs {
+								if receiver.belief.Beliefs[k].BeliefID == secret.BeliefID {
+									receiver.belief.Beliefs[k].Weight += 1 // Linearly modify weight
+									found = true
+									break
+								}
+							}
+							if !found {
+								// First time encountering this belief
+								receiver.belief.Beliefs = append(receiver.belief.Beliefs, components.Belief{
+									BeliefID: secret.BeliefID,
+									Weight:   1,
+								})
+							}
+						}
 					} else if languageMismatch {
 						// Phase 07.4: Silent Hooks
 						// Even if language fails (or gossip fails to pass), physical trades can occur.

@@ -125,11 +125,25 @@ type Secret struct {
 	OriginID uint64
 	SecretID uint32
 	Virality uint8
+	BeliefID uint32 // Phase 07.5: Ideological Infection metadata flag
 }
 
 // SecretComponent holds the known secrets for an entity.
 type SecretComponent struct {
 	Secrets []Secret
+}
+
+// Phase 07.5: Ideological Infection (The Memetic Engine)
+
+// Belief represents a specific ideological or cultural dogma an entity adheres to.
+type Belief struct {
+	BeliefID uint32
+	Weight   int32
+}
+
+// BeliefComponent tracks the ideas an entity has been exposed to or follows.
+type BeliefComponent struct {
+	Beliefs []Belief // Kept as a flat slice for DOD instead of a Go map
 }
 
 // Path component

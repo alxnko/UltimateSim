@@ -224,3 +224,95 @@ func TestTranslationPenaltyAndSilentHooks(t *testing.T) {
 	// For compilation, unused variable
 	_ = rSecret
 }
+
+// Phase 07.5: Ideological Infection
+func TestIdeologicalInfection(t *testing.T) {
+	// Initialize deterministic RNG
+	engine.InitializeRNG([32]byte{7, 8, 9})
+
+	world := ecs.NewWorld()
+
+	// Register components
+	posID := ecs.ComponentID[components.Position](&world)
+	secretID := ecs.ComponentID[components.SecretComponent](&world)
+	memoryID := ecs.ComponentID[components.Memory](&world)
+	identID := ecs.ComponentID[components.Identity](&world)
+	cultureID := ecs.ComponentID[components.CultureComponent](&world)
+	beliefID := ecs.ComponentID[components.BeliefComponent](&world)
+
+	// Create Sender
+	sender := world.NewEntity()
+	world.Add(sender, posID, secretID, memoryID, identID, cultureID, beliefID)
+
+	sPos := (*components.Position)(world.Get(sender, posID))
+	sSecret := (*components.SecretComponent)(world.Get(sender, secretID))
+	sIdent := (*components.Identity)(world.Get(sender, identID))
+	sCulture := (*components.CultureComponent)(world.Get(sender, cultureID))
+
+	sPos.X = 10.0
+	sPos.Y = 10.0
+	sIdent.ID = 100
+	sCulture.LanguageID = 1 // Same language
+
+	// Sender knows a secret that carries a BeliefID
+	sSecret.Secrets = append(sSecret.Secrets, components.Secret{
+		OriginID: 100,
+		SecretID: 999,
+		Virality: 255, // 100% chance base
+		BeliefID: 42,
+	})
+
+	// Create Receiver
+	receiver := world.NewEntity()
+	world.Add(receiver, posID, secretID, memoryID, identID, cultureID, beliefID)
+
+	rPos := (*components.Position)(world.Get(receiver, posID))
+	rSecret := (*components.SecretComponent)(world.Get(receiver, secretID))
+	rIdent := (*components.Identity)(world.Get(receiver, identID))
+	rCulture := (*components.CultureComponent)(world.Get(receiver, cultureID))
+	rBelief := (*components.BeliefComponent)(world.Get(receiver, beliefID))
+
+	rPos.X = 11.0 // Within distance 2.0
+	rPos.Y = 10.0
+	rIdent.ID = 200
+	rCulture.LanguageID = 1 // Same language
+
+	// Pre-seed receiver with existing belief to test incrementing logic
+	rBelief.Beliefs = append(rBelief.Beliefs, components.Belief{
+		BeliefID: 42,
+		Weight:   5,
+	})
+
+	// Add system
+	system := &GossipDistributionSystem{}
+
+	// Run to tick 10 to trigger system
+	for i := 0; i < 10; i++ {
+		system.Update(&world)
+	}
+
+	// Verify receiver learned the secret
+	if len(rSecret.Secrets) != 1 {
+		t.Fatalf("Receiver should have learned exactly 1 secret, got %d", len(rSecret.Secrets))
+	}
+
+	if rSecret.Secrets[0].SecretID != 999 {
+		t.Errorf("Receiver learned wrong secret: %d", rSecret.Secrets[0].SecretID)
+	}
+
+	if rSecret.Secrets[0].BeliefID != 42 {
+		t.Errorf("Receiver learned secret but lost BeliefID metadata, got %d", rSecret.Secrets[0].BeliefID)
+	}
+
+	// Verify belief weight was incremented
+	if len(rBelief.Beliefs) != 1 {
+		t.Fatalf("Receiver should still have 1 belief struct array, got %d", len(rBelief.Beliefs))
+	}
+
+	if rBelief.Beliefs[0].Weight != 6 {
+		t.Errorf("Expected Belief weight to increment to 6, got %d", rBelief.Beliefs[0].Weight)
+	}
+
+	// For compilation
+	_ = rIdent
+}

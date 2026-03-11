@@ -133,17 +133,30 @@ func TestComponentSizes(t *testing.T) {
 		t.Errorf("RuinComponent struct size too large: %d bytes (expected <= 24)", ruinSize)
 	}
 
-	// Phase 07.1: Secret Component Sizes
-	// Secret: uint64 (8) + uint32 (4) + uint8 (1) = 13 bytes -> 16 bytes padded
+	// Phase 07.1 & 07.5: Secret Component Sizes
+	// Secret: uint64 (8) + uint32 (4) + uint8 (1) + uint32 (4) = 17 bytes -> 24 bytes padded
 	secretSize := unsafe.Sizeof(Secret{})
-	if secretSize > 16 {
-		t.Errorf("Secret struct size too large: %d bytes (expected <= 16)", secretSize)
+	if secretSize > 24 {
+		t.Errorf("Secret struct size too large: %d bytes (expected <= 24)", secretSize)
 	}
 
 	// SecretComponent: []Secret (24 bytes for slice header)
 	secretCompSize := unsafe.Sizeof(SecretComponent{})
 	if secretCompSize > 24 {
 		t.Errorf("SecretComponent struct size too large: %d bytes (expected <= 24)", secretCompSize)
+	}
+
+	// Phase 07.5: Belief Component Sizes
+	// Belief: uint32 (4) + int32 (4) = 8 bytes
+	beliefSize := unsafe.Sizeof(Belief{})
+	if beliefSize != 8 {
+		t.Errorf("Belief struct size should be exactly 8 bytes, got %d", beliefSize)
+	}
+
+	// BeliefComponent: []Belief (24 bytes for slice header)
+	beliefCompSize := unsafe.Sizeof(BeliefComponent{})
+	if beliefCompSize > 24 {
+		t.Errorf("BeliefComponent struct size too large: %d bytes (expected <= 24)", beliefCompSize)
 	}
 
 	// Phase 07.3: Linguistic Drift
