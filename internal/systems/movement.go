@@ -10,6 +10,7 @@ import (
 
 // Phase 01.3: ECS Core Setup - MovementSystem
 // Phase 04.4: Resolving Kinematics
+// Phase 09.3: Infrastructure Wear System (Desire Paths)
 // Implementing a deterministic, cache-friendly iteration system over Position, Velocity, and Path components.
 
 // MovementSystem updates the Position of entities based on their Velocity and active Paths.
@@ -50,6 +51,20 @@ func (s *MovementSystem) Update(world *ecs.World) {
 		pos := (*components.Position)(query.Get(posID))
 		vel := (*components.Velocity)(query.Get(velID))
 
+		// Phase 09.3: Infrastructure Wear System (Desire Paths)
+		// Calculate movement cost dynamically based on the current tile's biome and foot traffic.
+		currentX, currentY := int(pos.X), int(pos.Y)
+
+		// Ensure currentX and currentY are within map bounds
+		if currentX < 0 { currentX = 0 } else if currentX >= s.mapGrid.Width { currentX = s.mapGrid.Width - 1 }
+		if currentY < 0 { currentY = 0 } else if currentY >= s.mapGrid.Height { currentY = s.mapGrid.Height - 1 }
+
+		tileIndex := currentY*s.mapGrid.Width + currentX
+		tile := s.mapGrid.Tiles[tileIndex]
+		state := s.mapGrid.TileStates[tileIndex]
+
+		movementCost := engine.GetEffectiveMovementCost(tile.BiomeID, state.FootTraffic)
+
 		// Resolve Kinematics if there is an active path
 		if query.Has(pathID) {
 			path := (*components.Path)(query.Get(pathID))
@@ -81,9 +96,11 @@ func (s *MovementSystem) Update(world *ecs.World) {
 				if len(path.Nodes) > 0 {
 					// Move towards the node
 					dist := float32(math.Sqrt(float64(distSq)))
-					// Normalize and set a constant speed (e.g., 1.0 units per tick)
-					// For simplicity, we just use a speed of 1.0, or cap at distance
-					speed := float32(1.0)
+
+					// Phase 09.3: Adjust speed inversely proportional to movement cost.
+					// Base speed is 1.0 units per tick.
+					speed := 1.0 / movementCost
+
 					if dist < speed {
 						speed = dist
 					}
@@ -112,6 +129,19 @@ func (s *MovementSystem) Update(world *ecs.World) {
 			pos.Y = 0
 		} else if pos.Y > maxY {
 			pos.Y = maxY
+		}
+
+		// Phase 09.3: Infrastructure Wear System (Desire Paths)
+		// Detect tile transitions by comparing integer grids.
+		newX, newY := int(pos.X), int(pos.Y)
+		// Safe bounding (pos should be bounded above, but safeguard array indices)
+		if newX < 0 { newX = 0 } else if newX >= s.mapGrid.Width { newX = s.mapGrid.Width - 1 }
+		if newY < 0 { newY = 0 } else if newY >= s.mapGrid.Height { newY = s.mapGrid.Height - 1 }
+
+		if newX != currentX || newY != currentY {
+			// Entity transitioned to a new tile. Increment FootTraffic of the new tile.
+			newTileIndex := newY*s.mapGrid.Width + newX
+			s.mapGrid.TileStates[newTileIndex].FootTraffic++
 		}
 	}
 }

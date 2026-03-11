@@ -79,3 +79,57 @@ func DetermineBiome(elevation, moisture, temperature uint8) uint8 {
 	}
 	return BiomeTropicalRainForest
 }
+
+// Phase 09.3: Infrastructure Wear System (Desire Paths)
+
+// GetBaseMovementCost returns the initial movement cost for a specific biome.
+// Costs > 1.0 slow down entities, while 1.0 is the baseline speed.
+func GetBaseMovementCost(biomeID uint8) float32 {
+	switch biomeID {
+	case BiomeOcean:
+		return 1.0 // Maritime travel is currently base cost (future phase)
+	case BiomeBeach:
+		return 1.5
+	case BiomeScorched, BiomeBare:
+		return 2.0
+	case BiomeTundra, BiomeSnow:
+		return 3.0
+	case BiomeTemperateDesert, BiomeSubtropicalDesert:
+		return 2.5
+	case BiomeShrubland:
+		return 1.8
+	case BiomeGrassland:
+		return 1.0
+	case BiomeTemperateDeciduousForest, BiomeTropicalSeasonalForest:
+		return 3.5
+	case BiomeTemperateRainForest, BiomeTropicalRainForest:
+		return 5.0
+	case BiomeMountain:
+		return 10.0
+	default:
+		return 1.0
+	}
+}
+
+// GetEffectiveMovementCost calculates the current movement cost factoring in FootTraffic.
+// As FootTraffic increases, the cost asymptotically approaches 1.0 (baseline flat road).
+func GetEffectiveMovementCost(biomeID uint8, footTraffic uint32) float32 {
+	baseCost := GetBaseMovementCost(biomeID)
+
+	if baseCost <= 1.0 {
+		return baseCost // Already at maximum speed efficiency
+	}
+
+	// Each 1000 FootTraffic reduces the cost above 1.0 by half
+	// To avoid math.Pow float64 conversions and maintain strict DOD speed,
+	// we use a simple deterministic integer/float division reduction.
+
+	// For example, if baseCost is 5.0 (diff 4.0), and footTraffic is 1000:
+	// reduction factor = 1.0 + (1000 / 1000.0) = 2.0
+	// new cost = 1.0 + (4.0 / 2.0) = 3.0
+
+	diff := baseCost - 1.0
+	trafficFactor := float32(footTraffic) / 1000.0
+
+	return 1.0 + (diff / (1.0 + trafficFactor))
+}
