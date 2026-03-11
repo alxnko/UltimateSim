@@ -98,4 +98,12 @@ func TestComponentSizes(t *testing.T) {
 	if popSize != 4 {
 		t.Errorf("PopulationComponent struct size should be exactly 4 bytes, got %d", popSize)
 	}
+
+	// Phase 05.2: Ruin Component Size
+	// RuinComponent: uint32 (4) + string (16) = 20 bytes normally.
+	// 20 + 4 padding = 24 bytes on 64-bit architecture
+	ruinSize := unsafe.Sizeof(RuinComponent{})
+	if ruinSize > 24 {
+		t.Errorf("RuinComponent struct size too large: %d bytes (expected <= 24)", ruinSize)
+	}
 }

@@ -19,7 +19,11 @@ type DeathSystem struct {
 func NewDeathSystem(world *ecs.World) *DeathSystem {
 	// Query entities that have Needs
 	needsID := ecs.ComponentID[components.Needs](world)
-	mask := ecs.All(needsID)
+	ruinID := ecs.ComponentID[components.RuinComponent](world)
+
+	// Phase 05.3: Arche-Go Component Filters
+	// Explicitly build Without(ruinID) to skip over ruins.
+	mask := ecs.All(needsID).Without(ruinID)
 
 	return &DeathSystem{
 		filter:   &mask,

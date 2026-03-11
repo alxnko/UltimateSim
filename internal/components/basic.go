@@ -75,6 +75,13 @@ type PopulationComponent struct {
 // Village is a tag component identifying stationary settlements.
 type Village struct{}
 
+// RuinComponent identifies a dead settlement to avoid processing its needs.
+// Phase 05.2: The Ruin Transformation
+type RuinComponent struct {
+	Decay      uint32
+	FormerName string
+}
+
 // Path component
 // Phase 04.2: Async Path Queue Pool
 // Stores the tactical node-to-node float32 positions for MovementSystem to traverse.
