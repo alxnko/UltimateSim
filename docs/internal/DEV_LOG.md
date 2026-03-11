@@ -1,7 +1,8 @@
 # Developer Knowledge Base: Internal Activity Log
 
 ## Current Phase / Task
-- **Phase 08.1: Window Management & Camera (Ebitengine)** (from `docs/roadmap/08_visual_2d.md`)
+- **Phase 08.2, 08.3, 08.4: Sub-Tick Interpolation, Map & Entity Rendering** (from `docs/roadmap/08_visual_2d.md`)
+- *Completed Phase 08.1: Window Management & Camera (Ebitengine)*
 - *Completed Phase 07.5: Ideological Infection (The Memetic Engine)*
 - *Completed Phase 07.4: Translation Penalties & Silent Hooks*
 - *Completed Phase 07.3: Linguistic Drift*
@@ -22,6 +23,7 @@
 - **Phase 05.4: Birth & Genetics Math**: Implemented `BirthSystem` (`internal/systems/birth.go`) and expanded `PopulationComponent` with a dynamic `Citizens []CitizenData` array. `CitizenData` strictly follows DOD by embedding `Genetics` (four `uint8` fields) and `BaseTraits` (`uint32`). This creates a perfectly flat 8-byte structure, guaranteeing cache alignment and avoiding hidden compiler padding. The `BirthSystem` deterministically processes parent traits by sequentially iterating over arrays, maximizing CPU cache locality during the biological inheritance algorithms.
 
 ## Design Decision Log (Phase 08):
+- **Phase 08.2, 08.3, 08.4: Rendering Pipeline**: Implemented `App.Draw` in `internal/render/app.go`. To maximize CPU L1/L2 cache locality and adhere to strict DOD principles, map rendering directly iterates over the `MapGrid`'s contiguous 1D arrays (`Tiles` and `TileStates`), avoiding any 2D pointer chasing. Entity rendering uses precise `arche-go` ECS `All()` queries targeting exactly required components (e.g., `Position`, `Velocity`, `FamilyCluster`). By extracting raw struct pointers from flat Arche tables during iteration, we eliminate object-oriented allocation overhead per frame. Sub-tick interpolation correctly calculates fractional drawing coordinates `DrawX = Position.X + Velocity.X * Alpha`, separating the unyielding 60 TPS simulation logic from the visual 144Hz refresh rate seamlessly.
 - **Phase 08.1: Window Management & Camera**: Integrated Ebitengine (`github.com/hajimehoshi/ebiten/v2`) and modified the `cmd/game/main.go` entrypoint. The `wg.Wait()` block and dummy render goroutine were stripped, enabling `ebiten.RunGame()` to natively hijack the main OS thread (which it requires for OpenGL/macOS contexts) while the simulation goroutine spins up via its own `runtime.LockOSThread()` hardware pinning. Designed `internal/render/camera.go` defining a mathematical `Camera` struct with X, Y, and Zoom. Explicitly chose `float64` for camera translations (despite our core ECS using `float32`) because Ebitengine's arbitrary matrix `GeoM` scaling tools and internal API endpoints mandate 64-bit precision bounds; keeping them as `float64` avoids perpetual casting on every rendered 144Hz frame. Tested deterministic coordinate translations bidirectionally with rigorous `epsilon` bounds.
 
 ## Active Component IDs & Data Structures

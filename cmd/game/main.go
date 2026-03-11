@@ -25,6 +25,12 @@ func main() {
 		}
 	}()
 
+	// Phase 02: Map Generation
+	// Instantiate MapGrid and generate terrain deterministically
+	grid := engine.NewMapGrid(100, 100)
+	seed := [32]byte{1, 2, 3, 4, 5} // Deterministic seed
+	engine.GenerateMap(grid, seed)
+
 	// Initialize the TickManager with 60 TPS bounds outside goroutine so it can be passed
 	tickManager := engine.NewTickManager(60)
 
@@ -47,7 +53,7 @@ func main() {
 	ebiten.SetWindowTitle("Boundless Sovereigns")
 
 	// Create and run the new Ebitengine application on the main thread
-	app := render.NewApp(tickManager)
+	app := render.NewApp(tickManager, grid)
 	if err := ebiten.RunGame(app); err != nil {
 		log.Fatalf("Ebitengine failed: %v", err)
 	}
