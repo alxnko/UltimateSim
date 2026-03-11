@@ -15,7 +15,7 @@ func TestRustSystem(t *testing.T) {
 
 	tm := engine.NewTickManager(60)
 	sys := systems.NewRustSystem()
-	tm.AddSystem(sys)
+	tm.AddSystem(sys, engine.PhaseResolution)
 
 	world := tm.World
 

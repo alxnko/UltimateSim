@@ -62,7 +62,7 @@ func TestCityBinderSystem(t *testing.T) {
 
 func TestCityBinderDeterminism(t *testing.T) {
 	tm := engine.NewTickManager(60)
-	tm.AddSystem(&CityBinderSystem{})
+	tm.AddSystem(&CityBinderSystem{}, engine.PhaseResolution)
 
 	world := tm.World
 

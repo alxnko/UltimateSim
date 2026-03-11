@@ -15,10 +15,22 @@ type System interface {
 	Update(world *ecs.World)
 }
 
+// Phase 01.3: SystemRunner phase definitions
+type SystemPhase int
+
+const (
+	PhaseInput SystemPhase = iota
+	PhaseAI
+	PhaseMovement
+	PhaseResolution
+	PhaseCleanup
+	numPhases // Track the number of phases for array sizing
+)
+
 // TickManager orchestrates the ECS world and systems.
 type TickManager struct {
 	World   *ecs.World
-	Systems []System
+	Systems [][]System // Array of system slices, indexed by SystemPhase
 	TPS     int
 	Alpha   float64
 
@@ -31,22 +43,26 @@ func NewTickManager(tps int) *TickManager {
 	world := ecs.NewWorld()
 	return &TickManager{
 		World:    &world,
-		Systems:  make([]System, 0),
+		Systems:  make([][]System, numPhases),
 		TPS:      tps,
 		tickTime: time.Second / time.Duration(tps),
 		lastTick: time.Now(),
 	}
 }
 
-// AddSystem registers a new system to the TickManager.
-func (tm *TickManager) AddSystem(sys System) {
-	tm.Systems = append(tm.Systems, sys)
+// AddSystem registers a new system to the TickManager under a specific phase.
+func (tm *TickManager) AddSystem(sys System, phase SystemPhase) {
+	if phase >= 0 && phase < numPhases {
+		tm.Systems[phase] = append(tm.Systems[phase], sys)
+	}
 }
 
-// Tick executes a single simulation tick.
+// Tick executes a single simulation tick by iterating through phases sequentially.
 func (tm *TickManager) Tick() {
-	for _, sys := range tm.Systems {
-		sys.Update(tm.World)
+	for phase := PhaseInput; phase < numPhases; phase++ {
+		for _, sys := range tm.Systems[phase] {
+			sys.Update(tm.World)
+		}
 	}
 }
 
