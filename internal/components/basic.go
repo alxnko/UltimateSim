@@ -67,6 +67,13 @@ type Affiliation struct {
 	CountryID uint32
 }
 
+// Phase 10.1: Debt Default Execution (The Hook Trap)
+type LoanContractComponent struct {
+	CreditorID uint64
+	DueTick    uint64
+	AssetID    uint32
+}
+
 // Phase 06.2: Interaction Telemetry
 type MemoryEvent struct {
 	TargetID        uint64

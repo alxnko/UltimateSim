@@ -1,7 +1,8 @@
 # Developer Knowledge Base: Internal Activity Log
 
 ## Current Phase / Task
-- **Phase 09.4: Physical Legend Components and Phase 09.5: Item Inheritance** (from `docs/roadmap/09_logistics_artifacts.md`)
+- **Phase 10.1: Debt Default Execution (The Hook Trap)** (from `docs/roadmap/10_state_failure.md`)
+- *Completed Phase 09.4 & 09.5: Physical Legend Components and Item Inheritance*
 - *Completed Phase 09.3: Infrastructure Wear System (Desire Paths)*
 - *Completed Phase 09.2: Dynamic Attrition*
 - *Completed Phase 09.1: The Caravan Entity*
@@ -25,6 +26,9 @@
 - *Completed Phase 1: Initialization, Determinism, & ECS Bootstrapping*
 
 - **Phase 05.4: Birth & Genetics Math**: Implemented `BirthSystem` (`internal/systems/birth.go`) and expanded `PopulationComponent` with a dynamic `Citizens []CitizenData` array. `CitizenData` strictly follows DOD by embedding `Genetics` (four `uint8` fields) and `BaseTraits` (`uint32`). This creates a perfectly flat 8-byte structure, guaranteeing cache alignment and avoiding hidden compiler padding. The `BirthSystem` deterministically processes parent traits by sequentially iterating over arrays, maximizing CPU cache locality during the biological inheritance algorithms.
+
+## Design Decision Log (Phase 10):
+- **Phase 10.1: Debt Default Execution (The Hook Trap)**: Added `LoanContractComponent` struct containing `CreditorID uint64`, `DueTick uint64`, and `AssetID uint32`. It strictly adheres to DOD sizes mapping exactly to 24 bytes (padded). Implemented `DebtDefaultSystem` in `internal/systems/debt_default.go` to iterate over all active loans via `arche-go`. If `Tick >= DueTick`, it natively deducts 100 accumulated resources from the `StorageComponent` array fields. If repayment fails due to a lack of resources, it deterministically transfers the entity's `Affiliation.GuildID` mapping to the debtor's `AssetID`, mimicking a legal trap without nested map lookups. Validated by deterministic e2e test checks ensuring cache line optimization.
 
 ## Design Decision Log (Phase 09):
 - **Phase 09.4 & 09.5: Physical Legend Components and Item Inheritance**: Introduced `ItemEntity` tag and `LegendComponent` to the ECS. To maintain strict DOD principles and adhere to our String Interning rules, `LegendComponent` uses `NameID uint32` mapped via the global `SecretRegistry` rather than storing raw strings. This keeps the component highly cacheable and under 48 bytes (verified via `unsafe.Sizeof` tests). Expanded `DeathSystem` to spawn physical item entities when NPCs with `Legacy.Prestige` above `ExtremePrestigeThreshold` die of starvation. We used `query.Has` inside the loop to optionally evaluate `Legacy` and `Identity` properties without fragmenting our primary `ecs.All(needsID)` query, tracking the outgoing data in a pre-allocated slice `itemsToSpawn` to spawn the items strictly *after* iteration to avoid ECS loop panics.
