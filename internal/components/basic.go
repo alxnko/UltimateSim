@@ -74,6 +74,25 @@ type LoanContractComponent struct {
 	AssetID    uint32
 }
 
+// Phase 10.2: Bureaucratic Delay (Administrative Entropy)
+
+// OrderEntity is a tag component identifying administrative couriers traversing the map.
+type OrderEntity struct{}
+
+// OrderComponent tracks the destination and creation time of a specific political action.
+type OrderComponent struct {
+	CreationTick uint64
+	TargetCityID uint32
+}
+
+// CapitalComponent is a tag component identifying a central governing city.
+type CapitalComponent struct{}
+
+// LoyaltyComponent determines the threshold before a city ignores or intercepts orders.
+type LoyaltyComponent struct {
+	Value uint32
+}
+
 // Phase 06.2: Interaction Telemetry
 type MemoryEvent struct {
 	TargetID        uint64

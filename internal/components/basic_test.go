@@ -190,4 +190,27 @@ func TestComponentSizes(t *testing.T) {
 	if loanSize > 24 {
 		t.Errorf("LoanContractComponent struct size too large: %d bytes (expected <= 24)", loanSize)
 	}
+
+	// Phase 10.2: Bureaucratic Delay Components
+	orderEntitySize := unsafe.Sizeof(OrderEntity{})
+	if orderEntitySize > 0 {
+		t.Errorf("OrderEntity struct size should be exactly 0 bytes (tag component), got %d", orderEntitySize)
+	}
+
+	// OrderComponent: uint64 (8) + uint32 (4) = 12 bytes -> padded to 16
+	orderCompSize := unsafe.Sizeof(OrderComponent{})
+	if orderCompSize > 16 {
+		t.Errorf("OrderComponent struct size too large: %d bytes (expected <= 16)", orderCompSize)
+	}
+
+	capitalEntitySize := unsafe.Sizeof(CapitalComponent{})
+	if capitalEntitySize > 0 {
+		t.Errorf("CapitalComponent struct size should be exactly 0 bytes (tag component), got %d", capitalEntitySize)
+	}
+
+	// LoyaltyComponent: uint32 (4) = 4 bytes
+	loyaltyCompSize := unsafe.Sizeof(LoyaltyComponent{})
+	if loyaltyCompSize != 4 {
+		t.Errorf("LoyaltyComponent struct size should be exactly 4 bytes, got %d", loyaltyCompSize)
+	}
 }
