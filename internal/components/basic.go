@@ -4,6 +4,12 @@ package components
 // Structs use flat memory rules and explicit IDs instead of pointers.
 // We use float32 instead of float64 for Position and Velocity to minimize memory overhead.
 
+// Traits Bitmask Constants
+const (
+	TraitRiskTaker uint32 = 1 << 0
+	TraitCautious  uint32 = 1 << 1
+)
+
 // Identity component
 // Phase 03.1: Genesis Base Structs
 type Identity struct {

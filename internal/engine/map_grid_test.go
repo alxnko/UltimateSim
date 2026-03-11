@@ -57,7 +57,7 @@ func TestTileDataDOD(t *testing.T) {
 
 	// Phase 02.4: Static Resource Depots
 	var resource ResourceDepot
-	expectedResourceSize := uintptr(3)
+	expectedResourceSize := uintptr(4)
 	actualResourceSize := unsafe.Sizeof(resource)
 
 	if actualResourceSize != expectedResourceSize {

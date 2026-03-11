@@ -18,6 +18,7 @@ type ResourceDepot struct {
 	WoodValue  uint8
 	StoneValue uint8
 	IronValue  uint8
+	FoodValue  uint8
 }
 
 // Phase 02.5: The Infrastructure Layer
