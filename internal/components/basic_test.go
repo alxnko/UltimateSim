@@ -87,7 +87,7 @@ func TestComponentSizes(t *testing.T) {
 		t.Errorf("Affiliation struct size should be exactly 16 bytes, got %d", affSize)
 	}
 
-	// MemoryEvent: uint64 (8) + uint64 (8) + uint8 (1) + int32 (4) + padding = 24 bytes on 64-bit
+	// MemoryEvent: uint64 (8) + uint64 (8) + uint8 (1) + uint16 (2) + int32 (4) + padding = 24 bytes on 64-bit
 	meSize := unsafe.Sizeof(MemoryEvent{})
 	if meSize > 24 {
 		t.Errorf("MemoryEvent struct size too large: %d bytes (expected <= 24)", meSize)
@@ -144,5 +144,12 @@ func TestComponentSizes(t *testing.T) {
 	secretCompSize := unsafe.Sizeof(SecretComponent{})
 	if secretCompSize > 24 {
 		t.Errorf("SecretComponent struct size too large: %d bytes (expected <= 24)", secretCompSize)
+	}
+
+	// Phase 07.3: Linguistic Drift
+	// CultureComponent: uint64 (8) + uint32 (4) + 2*uint16 (4) = 16 bytes.
+	cultureSize := unsafe.Sizeof(CultureComponent{})
+	if cultureSize > 16 {
+		t.Errorf("CultureComponent struct size too large: %d bytes (expected <= 16)", cultureSize)
 	}
 }
