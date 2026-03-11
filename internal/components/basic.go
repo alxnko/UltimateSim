@@ -13,7 +13,8 @@ const (
 
 // Interaction Types Constants
 const (
-	InteractionGossip uint8 = 1
+	InteractionGossip   uint8 = 1
+	InteractionLanguage uint8 = 2 // Phase 07.3: Linguistic Drift
 )
 
 // Identity component
@@ -68,7 +69,8 @@ type MemoryEvent struct {
 	TargetID        uint64
 	TickStamp       uint64
 	InteractionType uint8
-	Value           int32 // Increased from int8 to int32 to store SecretID while preserving 24-byte padding limit
+	LanguageID      uint16 // Phase 07.3: Linguistic Drift - Storing Language of interaction
+	Value           int32  // Increased from int8 to int32 to store SecretID while preserving 24-byte padding limit
 }
 
 type Memory struct {
@@ -144,4 +146,14 @@ type Path struct {
 type Velocity struct {
 	X float32
 	Y float32
+}
+
+// Phase 07.3: Linguistic Drift
+
+// CultureComponent tracks language mutation and dialect formation over extended ticks.
+type CultureComponent struct {
+	DialectTickStamp        uint64 // The tick stamp of the last interaction with the same language
+	ForeignInteractionTicks uint32 // Ticks spent interacting with the dominant foreign language
+	LanguageID              uint16 // Current LanguageID
+	ForeignLanguageID       uint16 // Tracked distinct LanguageID for potential Pidgin creation
 }
