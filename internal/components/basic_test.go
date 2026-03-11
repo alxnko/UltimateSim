@@ -113,6 +113,12 @@ func TestComponentSizes(t *testing.T) {
 		t.Errorf("StorageComponent struct size should be exactly 16 bytes, got %d", storageSize)
 	}
 
+	// Payload: 4 * uint32 (4) = 16 bytes
+	payloadSize := unsafe.Sizeof(Payload{})
+	if payloadSize != 16 {
+		t.Errorf("Payload struct size should be exactly 16 bytes, got %d", payloadSize)
+	}
+
 	// PopulationComponent: uint32 (4) + []CitizenData (24) = 28 bytes + 4 padding = 32 bytes
 	popSize := unsafe.Sizeof(PopulationComponent{})
 	if popSize > 32 {

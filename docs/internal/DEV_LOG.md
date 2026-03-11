@@ -1,7 +1,8 @@
 # Developer Knowledge Base: Internal Activity Log
 
 ## Current Phase / Task
-- **Phase 08.2, 08.3, 08.4: Sub-Tick Interpolation, Map & Entity Rendering** (from `docs/roadmap/08_visual_2d.md`)
+- **Phase 09.1: The Caravan Entity** (from `docs/roadmap/09_logistics_artifacts.md`)
+- *Completed Phase 08.2, 08.3, 08.4: Sub-Tick Interpolation, Map & Entity Rendering*
 - *Completed Phase 08.1: Window Management & Camera (Ebitengine)*
 - *Completed Phase 07.5: Ideological Infection (The Memetic Engine)*
 - *Completed Phase 07.4: Translation Penalties & Silent Hooks*
@@ -21,6 +22,9 @@
 - *Completed Phase 1: Initialization, Determinism, & ECS Bootstrapping*
 
 - **Phase 05.4: Birth & Genetics Math**: Implemented `BirthSystem` (`internal/systems/birth.go`) and expanded `PopulationComponent` with a dynamic `Citizens []CitizenData` array. `CitizenData` strictly follows DOD by embedding `Genetics` (four `uint8` fields) and `BaseTraits` (`uint32`). This creates a perfectly flat 8-byte structure, guaranteeing cache alignment and avoiding hidden compiler padding. The `BirthSystem` deterministically processes parent traits by sequentially iterating over arrays, maximizing CPU cache locality during the biological inheritance algorithms.
+
+## Design Decision Log (Phase 09):
+- **Phase 09.1: The Caravan Entity**: Implemented `CaravanSpawnerSystem` (`internal/systems/caravan_spawner.go`) along with `Caravan` and `Payload` components. A Caravan spawns when a `Village` has a negative delta in localized needs (e.g., `StorageComponent.Food < PopulationComponent.Count * 10`). To satisfy rigorous DOD constraints, `Payload` replicates the exact 16-byte structure of `StorageComponent` (`Wood`, `Stone`, `Iron`, `Food` all as `uint32`), ensuring 100% cache line alignment. Entity binding logic is constructed explicitly outside the `query.Next()` loop using a pre-allocated struct slice (`[]villageData`) containing the bare minimum pointers. This avoids concurrent modification panics and retains maximal sequential iteration performance during entity instantiation.
 
 ## Design Decision Log (Phase 08):
 - **Phase 08.2, 08.3, 08.4: Rendering Pipeline**: Implemented `App.Draw` in `internal/render/app.go`. To maximize CPU L1/L2 cache locality and adhere to strict DOD principles, map rendering directly iterates over the `MapGrid`'s contiguous 1D arrays (`Tiles` and `TileStates`), avoiding any 2D pointer chasing. Entity rendering uses precise `arche-go` ECS `All()` queries targeting exactly required components (e.g., `Position`, `Velocity`, `FamilyCluster`). By extracting raw struct pointers from flat Arche tables during iteration, we eliminate object-oriented allocation overhead per frame. Sub-tick interpolation correctly calculates fractional drawing coordinates `DrawX = Position.X + Velocity.X * Alpha`, separating the unyielding 60 TPS simulation logic from the visual 144Hz refresh rate seamlessly.
