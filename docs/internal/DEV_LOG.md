@@ -1,6 +1,7 @@
 # Developer Knowledge Base: Internal Activity Log
 
 ## Current Phase / Task
+- *Completed Phase 13.3: Jealousy Vulnerability*
 - *Completed Phase 13.2: Labor Rebalancing*
 - *Completed Phase 13.1: Local Price Discovery (Market Logic)*
 - *Completed Phase 12.3: Robust Client Prediction & Smoothing*
@@ -137,3 +138,4 @@
 - **Phase 13.1: Local Price Discovery (Market Logic)**: Implemented `MarketComponent` strictly adhering to 16-byte bounds and Data-Oriented Design (DOD) by avoiding Go maps. Instead of `map[ItemID]float32`, `WoodPrice`, `StonePrice`, `IronPrice`, and `FoodPrice` are distinct `float32` fields keeping sequential memory access blazingly fast.
 - Implemented `PriceDiscoverySystem` (`internal/systems/price_discovery.go`) which mathematically calculates current pricing bounds using local `PopulationComponent.Count` demand versus `StorageComponent` resource levels. To avoid divide-by-zero panics, `+ 1.0` is permanently added to the supply divisors during float scaling.
 - Modified `CaravanSpawnerSystem` (`internal/systems/caravan_spawner.go`) to act via `MarketComponent.FoodPrice` instead of raw mathematical checks. When `FoodPrice > 10.0` (indicative of famine starvation conditions), the Node natively dispatches a `CaravanEntity` to execute trade route reliefs, integrating Phase 9's logistics into Phase 13's balance limits. Verified memory size limits and deterministic replication in `price_discovery_test.go`.
+- **Phase 13.3: Jealousy Vulnerability**: Implemented `JealousyVulnerabilitySystem` (`internal/systems/jealousy_vulnerability.go`) to dynamically generate negative secrets against High-Prestige entities. Evaluates entities with `Legacy.Prestige` > `ExtremePrestigeThreshold` using O(N^2) flat array iterations over `nodeData` arrays. Tested deterministically in `jealousy_vulnerability_test.go` scaling RNG rumor probabilities linearly against adjacent node grids.
