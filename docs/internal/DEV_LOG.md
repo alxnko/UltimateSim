@@ -1,7 +1,11 @@
 # Developer Knowledge Base: Internal Activity Log
 
 ## Current Phase / Task
-- **Phase 10.2: Bureaucratic Delay (Administrative Entropy)** (from `docs/roadmap/10_state_failure.md`)
+- **Phase 12.3: Robust Client Prediction & Smoothing** (from `docs/roadmap/12_multiplayer.md`)
+- *Completed Phase 12.2: Delta Extraction Queries*
+- *Completed Phase 12.1: Network Sockets & Stream Binding*
+- *Completed Phase 10.3: Biological Entropy (Plagues & Immune Arrays)*
+- *Completed Phase 10.2: Bureaucratic Delay (Administrative Entropy)*
 - *Completed Phase 10.1: Debt Default Execution (The Hook Trap)*
 - *Completed Phase 09.4 & 09.5: Physical Legend Components and Item Inheritance*
 - *Completed Phase 09.3: Infrastructure Wear System (Desire Paths)*
@@ -123,3 +127,4 @@
 - Completed Phase 1.6 Telemetry requirements by implementing a command-line readout in `TickManager` (`internal/engine/tick_manager.go`) that computes and outputs the average `Ticks Processing Time (ms)` every second. Added an End-to-End test (`internal/engine/tick_manager_telemetry_test.go`) to ensure this logging logic works as expected without disrupting simulation limits.
 - **Architectural Pivot (Phase 11)**: To avoid Go CGO multiple-definition collisions between `ebitengine` and `raylib-go` (both of which vendor GLFW internally), we fully unified the renderer under `raylib-go`. Ebitengine was completely removed. `raylib_app.go` now handles a 2D Strategy Mode mapping and dynamically switches to a 3D Possession Mode instantly without needing to teardown OpenGL contexts. This maximizes performance and adheres to the goal of preventing VRAM overflow by using one main rendering routine directly observing `arche.World`.
 - **Phase 12.1: Network Sockets & Stream Binding**: Implemented `Server` struct in `internal/network/server.go` establishing the core dual-socket foundation. Using raw `net.Listen` and `net.ListenUDP` mapped to dynamic ports (or default bindings), we secure a dedicated UDP endpoint intended for high-frequency positional float arrays, and a TCP listener mapped strictly to ledgers that require guaranteed delivery (e.g. `SparseHookGraph` exchanges). By isolating this into a standalone module that tracks its own `clients` and `udpClients` safely via `sync.RWMutex`, the architecture enforces "Server-Authoritative tick logic over all connected Clients" without tangling network buffers directly into the ECS loops yet. All components are bound contextually allowing clean shutdowns via `Stop()`. Tested E2E using `server_test.go` confirming socket allocation and read loops.
+- **Phase 12.2: Delta Extraction Queries**: Implemented `DeltaExtractionSystem` (`internal/systems/delta_extraction.go`) which queries `Position`, `Velocity`, and `Identity` components utilizing `arche-go`. To eliminate massive bandwidth payload limits, only entities currently shifting (`Velocity.X != 0 || Velocity.Y != 0`) are extracted. Mapped struct `PositionDelta` (`internal/network/payload.go`) strictly to a flat 16-byte memory footprint (uint64 + float32 + float32) without any padding. The system avoids garbage collection thrashing during highly active ticks by retaining `[]PositionDelta` capacity bounds and merely re-slicing to length 0 (`s.currentDeltas[:0]`) at the start of each frame. Confirmed size integrity via `unsafe.Sizeof` memory bounds testing.
