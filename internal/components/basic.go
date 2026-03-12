@@ -229,6 +229,11 @@ type Velocity struct {
 	Y float32
 }
 
+// Phase 11.2: Instanced 3D Control (raylib-go)
+
+// Possessed is a tag component identifying an entity possessed by the player.
+type Possessed struct{}
+
 // Phase 07.3: Linguistic Drift
 
 // CultureComponent tracks language mutation and dialect formation over extended ticks.

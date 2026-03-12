@@ -3,6 +3,7 @@ module github.com/ALXNKO/UltimateSim
 go 1.24.3
 
 require (
+	github.com/gen2brain/raylib-go/raylib v0.55.1
 	github.com/hajimehoshi/ebiten/v2 v2.9.9
 	github.com/mlange-42/arche v0.15.3
 )
@@ -12,6 +13,7 @@ require (
 	github.com/ebitengine/hideconsole v1.0.0 // indirect
 	github.com/ebitengine/purego v0.9.0 // indirect
 	github.com/jezek/xgb v1.1.1 // indirect
+	golang.org/x/exp v0.0.0-20240506185415-9bf2ced13842 // indirect
 	golang.org/x/sync v0.17.0 // indirect
 	golang.org/x/sys v0.36.0 // indirect
 )

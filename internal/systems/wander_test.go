@@ -134,3 +134,34 @@ func TestWanderSystem_Deterministic(t *testing.T) {
 		t.Fatalf("Determinism check failed: Run 1 gave %f, Run 2 gave %f", result1, result2)
 	}
 }
+
+func TestWanderSystem_PossessedBypass(t *testing.T) {
+	world := ecs.NewWorld()
+	grid := engine.NewMapGrid(10, 10)
+	grid.Resources[5] = engine.ResourceDepot{FoodValue: 10} // Target
+
+	queue := engine.NewPathRequestQueue(10, 1)
+	sys := systems.NewWanderSystem(&world, grid, queue)
+
+	posID := ecs.ComponentID[components.Position](&world)
+	idID := ecs.ComponentID[components.Identity](&world)
+	needsID := ecs.ComponentID[components.Needs](&world)
+	pathID := ecs.ComponentID[components.Path](&world)
+	possessedID := ecs.ComponentID[components.Possessed](&world)
+
+	e := world.NewEntity(posID, idID, needsID, pathID, possessedID)
+	pos := (*components.Position)(world.Get(e, posID))
+	id := (*components.Identity)(world.Get(e, idID))
+	needs := (*components.Needs)(world.Get(e, needsID))
+
+	pos.X, pos.Y = 1.0, 1.0
+	id.ID = 2
+	needs.Food = 20.0 // Hungry
+
+	sys.Update(&world)
+
+	path := (*components.Path)(world.Get(e, pathID))
+	if path.HasPath {
+		t.Errorf("WanderSystem should not process paths for Possessed entities")
+	}
+}
