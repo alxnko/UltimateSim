@@ -9,8 +9,8 @@ import (
 	"github.com/mlange-42/arche/ecs"
 )
 
-// Phase 05.1: Settlement Conversion System Test
-// End-to-End deterministic test verifying the transformation of FamilyCluster into Village.
+// Phase 05.1 & 14: Settlement Conversion System Test
+// End-to-End deterministic test verifying the transformation of NPC into Village logic.
 
 func TestSettlementRuleSystem_E2E(t *testing.T) {
 	world := ecs.NewWorld()
@@ -23,11 +23,13 @@ func TestSettlementRuleSystem_E2E(t *testing.T) {
 
 	posID := ecs.ComponentID[components.Position](&world)
 	velID := ecs.ComponentID[components.Velocity](&world)
-	fcID := ecs.ComponentID[components.FamilyCluster](&world)
+	npcID := ecs.ComponentID[components.NPC](&world)
 	slID := ecs.ComponentID[components.SettlementLogic](&world)
+	idID := ecs.ComponentID[components.Identity](&world)
+	affID := ecs.ComponentID[components.Affiliation](&world)
 
-	// Spawn migrating cluster at (5, 5) with zero velocity
-	entity := world.NewEntity(posID, velID, fcID, slID)
+	// Spawn migrating NPC at (5, 5) with zero velocity
+	entity := world.NewEntity(posID, velID, npcID, slID, idID, affID)
 
 	pos := (*components.Position)(world.Get(entity, posID))
 	pos.X = 5
@@ -38,9 +40,15 @@ func TestSettlementRuleSystem_E2E(t *testing.T) {
 	vel.Y = 0
 
 	sl := (*components.SettlementLogic)(world.Get(entity, slID))
+	id := (*components.Identity)(world.Get(entity, idID))
+	id.ID = 123
+
+	aff := (*components.Affiliation)(world.Get(entity, affID))
+	aff.CityID = 0
+
 	sl.TicksAtZeroVelocity = 0
 
-	// Tick 999 times - entity should not despawn yet
+	// Tick 999 times - conversion should not occur yet
 	for i := 0; i < 999; i++ {
 		system.Update(&world)
 	}
@@ -52,8 +60,14 @@ func TestSettlementRuleSystem_E2E(t *testing.T) {
 	// Tick 1000th time - conversion should occur
 	system.Update(&world)
 
-	if world.Alive(entity) {
-		t.Fatalf("FamilyCluster entity should have been despawned")
+	if !world.Alive(entity) {
+		t.Fatalf("NPC entity should NOT have been despawned")
+	}
+
+	// Verify Affiliation is updated
+	aff = (*components.Affiliation)(world.Get(entity, affID))
+	if aff.CityID != uint32(123) {
+		t.Fatalf("NPC CityID was not updated to new Village ID. Expected 123, got %d", aff.CityID)
 	}
 
 	villageID := ecs.ComponentID[components.Village](&world)
@@ -78,8 +92,8 @@ func TestSettlementRuleSystem_E2E(t *testing.T) {
 		}
 
 		pop := (*components.PopulationComponent)(query.Get(popID))
-		if pop.Count != 10 {
-			t.Errorf("Village population not initialized correctly")
+		if pop.Count != 1 {
+			t.Errorf("Village population not initialized correctly, got %d", pop.Count)
 		}
 
 		market := (*components.MarketComponent)(query.Get(marketID))
@@ -105,11 +119,11 @@ func TestSettlementRuleSystem_Deterministic(t *testing.T) {
 
 		posID := ecs.ComponentID[components.Position](&world)
 		velID := ecs.ComponentID[components.Velocity](&world)
-		fcID := ecs.ComponentID[components.FamilyCluster](&world)
+		npcID := ecs.ComponentID[components.NPC](&world)
 		slID := ecs.ComponentID[components.SettlementLogic](&world)
 		idID := ecs.ComponentID[components.Identity](&world)
 
-		entity := world.NewEntity(posID, velID, fcID, slID, idID)
+		entity := world.NewEntity(posID, velID, npcID, slID, idID)
 
 		pos := (*components.Position)(world.Get(entity, posID))
 		pos.X = 5

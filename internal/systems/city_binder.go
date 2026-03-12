@@ -28,7 +28,7 @@ func (s *CityBinderSystem) Update(world *ecs.World) {
 	posID := ecs.ComponentID[components.Position](world)
 	affID := ecs.ComponentID[components.Affiliation](world)
 	villageID := ecs.ComponentID[components.Village](world)
-	famClusterID := ecs.ComponentID[components.FamilyCluster](world)
+	npcID := ecs.ComponentID[components.NPC](world)
 	identID := ecs.ComponentID[components.Identity](world)
 
 	// Collect active villages
@@ -52,8 +52,8 @@ func (s *CityBinderSystem) Update(world *ecs.World) {
 		return // No villages to bind to
 	}
 
-	// Update wandering clusters
-	clusterQuery := world.Query(filter.All(posID, affID, famClusterID))
+	// Update wandering NPCs
+	clusterQuery := world.Query(filter.All(posID, affID, npcID))
 	for clusterQuery.Next() {
 		pos := (*components.Position)(clusterQuery.Get(posID))
 		aff := (*components.Affiliation)(clusterQuery.Get(affID))

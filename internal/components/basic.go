@@ -69,6 +69,7 @@ type Position struct {
 
 // Phase 06.1: Societal Hierarchies
 type Affiliation struct {
+	FamilyID  uint32
 	ClanID    uint32
 	GuildID   uint32
 	CityID    uint32
@@ -130,8 +131,9 @@ type Memory struct {
 
 // Phase 05.1: Settlement Conversion Components
 
-// FamilyCluster is a tag component identifying migrating groups.
-type FamilyCluster struct{}
+// Phase 14: True Individual NPCs
+// NPC is a tag component replacing FamilyCluster, identifies a single human actor.
+type NPC struct{}
 
 // SettlementLogic tracks consecutive ticks at 0 velocity.
 type SettlementLogic struct {

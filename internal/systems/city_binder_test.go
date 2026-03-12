@@ -9,7 +9,7 @@ import (
 	"github.com/mlange-42/arche/filter"
 )
 
-// Phase 06.1: Societal Hierarchies Test
+// Phase 06.1 & 14: Societal Hierarchies Test
 
 func TestCityBinderSystem(t *testing.T) {
 	world := ecs.NewWorld()
@@ -18,7 +18,7 @@ func TestCityBinderSystem(t *testing.T) {
 	affID := ecs.ComponentID[components.Affiliation](&world)
 	identID := ecs.ComponentID[components.Identity](&world)
 	villageID := ecs.ComponentID[components.Village](&world)
-	famClusterID := ecs.ComponentID[components.FamilyCluster](&world)
+	npcID := ecs.ComponentID[components.NPC](&world)
 
 	// Spawn Villages
 	v1 := world.NewEntity()
@@ -35,15 +35,15 @@ func TestCityBinderSystem(t *testing.T) {
 	posV2.X, posV2.Y = 100, 100
 	identV2.ID = 202
 
-	// Spawn wandering clusters
+	// Spawn wandering NPCs
 	c1 := world.NewEntity()
-	world.Add(c1, posID, affID, famClusterID)
+	world.Add(c1, posID, affID, npcID)
 	posC1 := (*components.Position)(world.Get(c1, posID))
 	affC1 := (*components.Affiliation)(world.Get(c1, affID))
 	posC1.X, posC1.Y = 12, 12 // Closer to v1 (101)
 
 	c2 := world.NewEntity()
-	world.Add(c2, posID, affID, famClusterID)
+	world.Add(c2, posID, affID, npcID)
 	posC2 := (*components.Position)(world.Get(c2, posID))
 	affC2 := (*components.Affiliation)(world.Get(c2, affID))
 	posC2.X, posC2.Y = 90, 95 // Closer to v2 (202)
@@ -70,7 +70,7 @@ func TestCityBinderDeterminism(t *testing.T) {
 	affID := ecs.ComponentID[components.Affiliation](world)
 	identID := ecs.ComponentID[components.Identity](world)
 	villageID := ecs.ComponentID[components.Village](world)
-	famClusterID := ecs.ComponentID[components.FamilyCluster](world)
+	npcID := ecs.ComponentID[components.NPC](world)
 
 	// Add Villages
 	v1 := world.NewEntity()
@@ -91,7 +91,7 @@ func TestCityBinderDeterminism(t *testing.T) {
 	numClusters := 50
 	for i := 0; i < numClusters; i++ {
 		c := world.NewEntity()
-		world.Add(c, posID, affID, famClusterID)
+		world.Add(c, posID, affID, npcID)
 		posC := (*components.Position)(world.Get(c, posID))
 		posC.X = float32(i * 5)
 		posC.Y = float32(i * 5)

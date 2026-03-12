@@ -9,9 +9,9 @@ import (
 	"github.com/mlange-42/arche/ecs"
 )
 
-// Phase 03.2: The Genesis Spawner Tests
+// Phase 03.2 & 14: The Genesis Spawner Tests
 
-func TestFamilySpawner_E2E(t *testing.T) {
+func TestNPCSpawner_E2E(t *testing.T) {
 	// Initialize deterministic RNG
 	engine.InitializeRNG([32]byte{1, 2, 3, 4})
 
@@ -31,20 +31,22 @@ func TestFamilySpawner_E2E(t *testing.T) {
 		}
 	}
 
-	spawner := systems.NewFamilySpawnerSystem(&world, mapGrid)
+	spawner := systems.NewNPCSpawnerSystem(&world, mapGrid)
 
 	// Tick once to spawn
 	spawner.Update(&world)
 
-	// Verify exactly 100 entities are spawned
+	// Verify exactly 100 entities are spawned (20 families * 5 individuals)
 	posID := ecs.ComponentID[components.Position](&world)
 	velID := ecs.ComponentID[components.Velocity](&world)
 	idID := ecs.ComponentID[components.Identity](&world)
 	genID := ecs.ComponentID[components.Genetics](&world)
 	legID := ecs.ComponentID[components.Legacy](&world)
 	needsID := ecs.ComponentID[components.Needs](&world)
+	npcID := ecs.ComponentID[components.NPC](&world)
+	affID := ecs.ComponentID[components.Affiliation](&world)
 
-	query := world.Query(ecs.All(posID, velID, idID, genID, legID, needsID))
+	query := world.Query(ecs.All(posID, velID, idID, genID, legID, needsID, npcID, affID))
 	count := 0
 
 	for query.Next() {
@@ -53,6 +55,7 @@ func TestFamilySpawner_E2E(t *testing.T) {
 		id := (*components.Identity)(query.Get(idID))
 		gen := (*components.Genetics)(query.Get(genID))
 		needs := (*components.Needs)(query.Get(needsID))
+		aff := (*components.Affiliation)(query.Get(affID))
 
 		// Verify placement is on a habitable tile
 		tile := mapGrid.GetTile(int(pos.X), int(pos.Y))
@@ -64,11 +67,14 @@ func TestFamilySpawner_E2E(t *testing.T) {
 		if id.ID == 0 {
 			t.Errorf("Entity ID not set")
 		}
-		if needs.Food != 100.0 {
+		if needs.Food != 1000.0 {
 			t.Errorf("Needs not initialized correctly")
 		}
 		if gen.Strength > 100 {
 			t.Errorf("Genetics out of bounds")
+		}
+		if aff.FamilyID == 0 {
+			t.Errorf("FamilyID not set")
 		}
 	}
 
@@ -88,7 +94,7 @@ func TestFamilySpawner_E2E(t *testing.T) {
 	}
 }
 
-func TestFamilySpawner_Deterministic(t *testing.T) {
+func TestNPCSpawner_Deterministic(t *testing.T) {
 	runSim := func() float32 {
 		engine.InitializeRNG([32]byte{42})
 		world := ecs.NewWorld()
@@ -100,7 +106,7 @@ func TestFamilySpawner_Deterministic(t *testing.T) {
 			}
 		}
 
-		spawner := systems.NewFamilySpawnerSystem(&world, mapGrid)
+		spawner := systems.NewNPCSpawnerSystem(&world, mapGrid)
 		spawner.Update(&world)
 
 		posID := ecs.ComponentID[components.Position](&world)
