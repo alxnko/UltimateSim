@@ -111,12 +111,15 @@ func GetBaseMovementCost(biomeID uint8) float32 {
 	}
 }
 
-// GetEffectiveMovementCost calculates the current movement cost factoring in FootTraffic.
+// GetEffectiveMovementCost calculates the current movement cost factoring in FootTraffic and Winter modifiers.
 // As FootTraffic increases, the cost asymptotically approaches 1.0 (baseline flat road).
-func GetEffectiveMovementCost(biomeID uint8, footTraffic uint32) float32 {
+func GetEffectiveMovementCost(biomeID uint8, footTraffic uint32, isWinter bool) float32 {
 	baseCost := GetBaseMovementCost(biomeID)
 
 	if baseCost <= 1.0 {
+		if isWinter {
+			return baseCost * 1.5 // Phase 13.4: Statically inflate numerical costs
+		}
 		return baseCost // Already at maximum speed efficiency
 	}
 
@@ -131,5 +134,11 @@ func GetEffectiveMovementCost(biomeID uint8, footTraffic uint32) float32 {
 	diff := baseCost - 1.0
 	trafficFactor := float32(footTraffic) / 1000.0
 
-	return 1.0 + (diff / (1.0 + trafficFactor))
+	effectiveCost := 1.0 + (diff / (1.0 + trafficFactor))
+
+	if isWinter {
+		effectiveCost *= 1.5 // Phase 13.4: Statically inflate numerical costs
+	}
+
+	return effectiveCost
 }

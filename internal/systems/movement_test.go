@@ -26,7 +26,7 @@ func TestMovementSystem_E2E(t *testing.T) {
 	mapGrid := engine.NewMapGrid(100, 100)
 
 	// 2. Add System
-	movementSystem := systems.NewMovementSystem(&world, mapGrid)
+	movementSystem := systems.NewMovementSystem(&world, mapGrid, nil)
 
 	// 3. Spawn Test Entity
 	entity := world.NewEntity(posID, velID, pathID)
@@ -90,7 +90,7 @@ func TestMovementSystem_Deterministic(t *testing.T) {
 		pathID := ecs.ComponentID[components.Path](&world)
 
 		mapGrid := engine.NewMapGrid(100, 100)
-		movementSystem := systems.NewMovementSystem(&world, mapGrid)
+		movementSystem := systems.NewMovementSystem(&world, mapGrid, nil)
 
 		// Spawn identical entities
 		for i := 0; i < 1000; i++ {
@@ -143,7 +143,7 @@ func TestMovementSystem_NonPathingEntity(t *testing.T) {
 	velID := ecs.ComponentID[components.Velocity](&world)
 
 	mapGrid := engine.NewMapGrid(100, 100)
-	movementSystem := systems.NewMovementSystem(&world, mapGrid)
+	movementSystem := systems.NewMovementSystem(&world, mapGrid, nil)
 
 	// Spawn Test Entity WITHOUT Path component
 	entity := world.NewEntity(posID, velID)

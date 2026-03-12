@@ -15,7 +15,7 @@ func TestMetabolismSystem_E2E(t *testing.T) {
 	needsID := ecs.ComponentID[components.Needs](&world)
 	geneticsID := ecs.ComponentID[components.Genetics](&world)
 
-	metabolismSystem := systems.NewMetabolismSystem(&world)
+	metabolismSystem := systems.NewMetabolismSystem(&world, nil)
 
 	// Entity 1: High Health (100)
 	e1 := world.NewEntity(needsID, geneticsID)
