@@ -54,11 +54,11 @@ func main() {
 	tickManager.AddSystem(systems.NewWanderSystem(world, grid, pathQueue), engine.PhaseAI)
 
 	// --- PHASE: MOVEMENT ---
-	tickManager.AddSystem(systems.NewMovementSystem(world, grid), engine.PhaseMovement)
+	tickManager.AddSystem(systems.NewMovementSystem(world, grid, calendar), engine.PhaseMovement)
 	tickManager.AddSystem(systems.NewInfrastructureWearSystem(grid), engine.PhaseMovement)
 
 	// --- PHASE: RESOLUTION ---
-	tickManager.AddSystem(systems.NewMetabolismSystem(world), engine.PhaseResolution)
+	tickManager.AddSystem(systems.NewMetabolismSystem(world, calendar), engine.PhaseResolution)
 	tickManager.AddSystem(systems.NewBirthSystem(world), engine.PhaseResolution)
 	tickManager.AddSystem(systems.NewDiseaseVectorSystem(world, grid), engine.PhaseResolution)
 	tickManager.AddSystem(systems.NewCaravanSpawnerSystem(), engine.PhaseResolution)
@@ -81,10 +81,6 @@ func main() {
 
 	// Phase 03.2: Genesis Spawner (Runs once at tick 0)
 	tickManager.AddSystem(systems.NewFamilySpawnerSystem(world, grid), engine.PhaseCleanup)
-
-	// Phase 09.2: Logistics & Entropy (Rust/Spoilage)
-	tickManager.AddSystem(systems.NewSpoilageSystem(), engine.PhaseResolution)
-	tickManager.AddSystem(systems.NewRustSystem(), engine.PhaseResolution)
 
 	/*
 		// Simulation Goroutine
