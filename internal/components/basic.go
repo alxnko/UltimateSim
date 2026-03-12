@@ -68,12 +68,14 @@ type Position struct {
 }
 
 // Phase 06.1: Societal Hierarchies
+// Phase 14: True Individual NPCs
 type Affiliation struct {
 	FamilyID  uint32
 	ClanID    uint32
 	GuildID   uint32
 	CityID    uint32
 	CountryID uint32
+	_         uint32 // Padding to maintain 24-byte alignment
 }
 
 // Phase 10.1: Debt Default Execution (The Hook Trap)
@@ -254,8 +256,25 @@ type MarketComponent struct {
 }
 
 // Phase 13.2: Labor Rebalancing
+// Phase 15.2: Employment & Wages (expanded)
 type JobComponent struct {
-	JobID uint8
+	JobID      uint8
+	EmployerID uint64
+}
+
+// Phase 15.1: Individual Economic Agency
+
+// BusinessEntity is a tag component identifying an entity as a business.
+type BusinessEntity struct{}
+
+// BusinessComponent tracks ownership and business details.
+type BusinessComponent struct {
+	OwnerID uint64
+}
+
+// TreasuryComponent tracks wealth of an entity, such as a Business.
+type TreasuryComponent struct {
+	Wealth float32
 }
 
 // Phase 07.3: Linguistic Drift
