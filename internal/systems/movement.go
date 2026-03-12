@@ -25,8 +25,6 @@ func NewMovementSystem(world *ecs.World, mapGrid *engine.MapGrid) *MovementSyste
 	posID := ecs.ComponentID[components.Position](world)
 	velID := ecs.ComponentID[components.Velocity](world)
 
-	// ecs.All returns an ecs.Mask which implements ecs.Filter
-	// We only strictly require Position and Velocity. Path component is checked optionally inside the loop.
 	mask := ecs.All(posID, velID)
 
 	return &MovementSystem{
@@ -44,12 +42,18 @@ func (s *MovementSystem) Update(world *ecs.World) {
 	maxX := float32(s.mapGrid.Width - 1)
 	maxY := float32(s.mapGrid.Height - 1)
 
+	// Phase 11.2: Check if possessed (to skip AI pathing)
+	possessedID := ecs.ComponentID[components.Possessed](world)
+
 	// Iterate over all entities matching the filter
 	query := world.Query(s.filter)
 	for query.Next() {
 		// Access components via flat memory pointers (arche-go handles the layout)
 		pos := (*components.Position)(query.Get(posID))
 		vel := (*components.Velocity)(query.Get(velID))
+
+		// Skip pathing logic if possessed by user
+		isPossessed := query.Has(possessedID)
 
 		// Phase 09.3: Infrastructure Wear System (Desire Paths)
 		// Calculate movement cost dynamically based on the current tile's biome and foot traffic.
@@ -65,8 +69,8 @@ func (s *MovementSystem) Update(world *ecs.World) {
 
 		movementCost := engine.GetEffectiveMovementCost(tile.BiomeID, state.FootTraffic)
 
-		// Resolve Kinematics if there is an active path
-		if query.Has(pathID) {
+		// Resolve Kinematics if there is an active path and NOT possessed
+		if !isPossessed && query.Has(pathID) {
 			path := (*components.Path)(query.Get(pathID))
 			if path.HasPath && len(path.Nodes) > 0 {
 				target := path.Nodes[0]

@@ -105,7 +105,7 @@ func (s *FamilySpawnerSystem) Update(world *ecs.World) {
 
 		// Set Needs
 		needs := (*components.Needs)(world.Get(entity, needsID))
-		needs.Food = 100.0
+		needs.Food = 1000.0
 		needs.Rest = 100.0
 		needs.Safety = 100.0
 		needs.Wealth = 100.0

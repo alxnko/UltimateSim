@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"log"
 	"net/http"
 	_ "net/http/pprof"
@@ -30,29 +29,70 @@ func main() {
 	// Instantiate MapGrid and generate terrain deterministically
 	grid := engine.NewMapGrid(100, 100)
 	seed := [32]byte{1, 2, 3, 4, 5} // Deterministic seed
+	engine.InitializeRNG(seed)
 	engine.GenerateMap(grid, seed)
 
-	// Initialize the TickManager with 60 TPS bounds outside goroutine so it can be passed
-	tickManager := engine.NewTickManager(60)
+	// Phase 04.2: Async Path Queue Pool
+	pathQueue := engine.NewPathRequestQueue(1000, runtime.NumCPU())
+	pathQueue.StartWorkers()
 
-	// Phase 09.2: Dynamic Attrition
+	// Phase 06.3: Sparse Hook Graph
+	hookGraph := engine.NewSparseHookGraph()
+
+	// Phase 01.3: Initialize the TickManager with 60 TPS
+	tickManager := engine.NewTickManager(60)
+	world := tickManager.World
+
+	// --- PHASE: AI ---
+	tickManager.AddSystem(systems.NewWanderSystem(world, grid, pathQueue), engine.PhaseAI)
+
+	// --- PHASE: MOVEMENT ---
+	tickManager.AddSystem(systems.NewMovementSystem(world, grid), engine.PhaseMovement)
+	tickManager.AddSystem(systems.NewInfrastructureWearSystem(grid), engine.PhaseMovement)
+
+	// --- PHASE: RESOLUTION ---
+	tickManager.AddSystem(systems.NewMetabolismSystem(world), engine.PhaseResolution)
+	tickManager.AddSystem(systems.NewBirthSystem(world), engine.PhaseResolution)
+	tickManager.AddSystem(systems.NewDiseaseVectorSystem(world, grid), engine.PhaseResolution)
+	tickManager.AddSystem(systems.NewCaravanSpawnerSystem(), engine.PhaseResolution)
+	tickManager.AddSystem(systems.NewCareerChangeSystem(), engine.PhaseResolution)
+	tickManager.AddSystem(systems.NewCityBinderSystem(), engine.PhaseResolution)
+	tickManager.AddSystem(systems.NewSettlementRuleSystem(grid), engine.PhaseResolution)
+	tickManager.AddSystem(systems.NewPriceDiscoverySystem(), engine.PhaseResolution)
+	tickManager.AddSystem(systems.NewRuinTransformationSystem(world), engine.PhaseResolution)
+	tickManager.AddSystem(systems.NewAdministrativeDecaySystem(), engine.PhaseResolution)
+	tickManager.AddSystem(systems.NewDebtDefaultSystem(), engine.PhaseResolution)
+
+	// Register Gossip
+	tickManager.AddSystem(systems.NewGossipDistributionSystem(world, hookGraph), engine.PhaseResolution)
+
+	// Register Language Drift
+	tickManager.AddSystem(systems.NewLanguageDriftSystem(world), engine.PhaseResolution)
+
+	// --- PHASE: CLEANUP ---
+	tickManager.AddSystem(systems.NewDeathSystem(world), engine.PhaseCleanup)
+
+	// Phase 03.2: Genesis Spawner (Runs once at tick 0)
+	tickManager.AddSystem(systems.NewFamilySpawnerSystem(world, grid), engine.PhaseCleanup)
+
+	// Phase 09.2: Logistics & Entropy (Rust/Spoilage)
 	tickManager.AddSystem(systems.NewSpoilageSystem(), engine.PhaseResolution)
 	tickManager.AddSystem(systems.NewRustSystem(), engine.PhaseResolution)
 
-	// Phase 09.3: Infrastructure Wear System
-	tickManager.AddSystem(systems.NewInfrastructureWearSystem(grid), engine.PhaseMovement)
+	/*
+		// Simulation Goroutine
+		go func() {
+			// Phase 01.4: Hardware Affinity
+			// Pin this goroutine to an OS thread to prevent cache invalidations
+			runtime.LockOSThread()
 
-	// Simulation Goroutine
-	go func() {
-		// Phase 01.4: Hardware Affinity
-		// Pin this goroutine to an OS thread to prevent cache invalidations
-		runtime.LockOSThread()
+			fmt.Println("Simulation Goroutine locked to OS thread.")
 
-		fmt.Println("Simulation Goroutine locked to OS thread.")
-
-		// Run simulation loop indefinitely
-		tickManager.Run(-1)
-	}()
+			// Run simulation loop indefinitely
+			tickManager.Run(-1)
+		}()
+	*/
+	// NOTE: Simulation is now driven manually by the render loop to prevent race conditions in the ECS world.
 
 	// Phase 11.1: Switch Pattern Loop -> Unified Raylib loop
 	// We handle everything in raylib to prevent OpenGL CGO collision with Ebiten.

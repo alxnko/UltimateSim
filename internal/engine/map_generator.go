@@ -86,6 +86,11 @@ func GenerateMap(grid *MapGrid, seed [32]byte) {
 			case BiomeTemperateDeciduousForest, BiomeTemperateRainForest, BiomeTropicalSeasonalForest, BiomeTropicalRainForest:
 				// Base wood value (e.g., 50-150)
 				grid.Resources[i].WoodValue = uint8(50 + localRNG.IntN(101))
+				// Base food value for forests (e.g., 20-60)
+				grid.Resources[i].FoodValue = uint8(20 + localRNG.IntN(41))
+			case BiomeGrassland:
+				// Higher base food value for grasslands (e.g., 40-100)
+				grid.Resources[i].FoodValue = uint8(40 + localRNG.IntN(61))
 			case BiomeMountain:
 				// Base stone value (e.g., 100-255)
 				grid.Resources[i].StoneValue = uint8(100 + localRNG.IntN(156))

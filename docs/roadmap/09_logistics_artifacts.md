@@ -6,7 +6,9 @@ _Objective: Make the ECS economy deeply physical. Move physical goods across the
 
 - **Demand Calculus:** If a `VillageEntity` processes a negative delta inside its `StorageComponent` against localized need requirements, instantiate a `CaravanEntity`.
 - **The Entity Bind:** `CaravanEntity` possesses `Component.Payload` containing specified integer limits of trade goods.
-- **Routing Integration:** Pushes destination vectors to the Phase 4 HPA\* `RoutingSystem`, physically traversing the array map towards the supplier or market.
+- **Labor & Personnel Requirement:** Caravans are not autonomous. They MUST be crewed by individual `NPC` entities functioning as Merchants, Teamsters, and Guards. If a village cannot hire enough NPCs, the caravan cannot depart.
+- **Passenger Economy:** Individual `NPC` entities with high `Wealth` and a desire to migrate can pay the Caravan owner to travel safely as passengers, generating an active travel economy.
+- **Routing Integration:** Pushes destination vectors to the Phase 4 HPA\* `RoutingSystem`, physically traversing the array map towards the supplier or market. The speed of the caravan is dictated by the slowest NPC in the group.
 
 ## 9.2 Dynamic Attrition
 
