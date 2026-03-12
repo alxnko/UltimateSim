@@ -45,6 +45,7 @@ All entities in the engine are composed of strict, flat-memory data structs stri
 - **`Legacy`**: Heritage mapping and biological succession IDs.
 - **`RuinComponent`**: Decay tracker for destroyed settlements.
 - **`Possessed`**: Marker component bypassing AI for player-controlled entities.
+- **`JobComponent`**: Flag identifying an NPC's role (e.g. Farmer, Lumberjack, Artisan) to handle labor bounds.
 *(Add all other newly identified/created components here)*
 
 ---
@@ -68,6 +69,7 @@ Systems perform decoupled, stateless logic by iterating over matched entities.
 - **`CaravanSpawnerSystem` (`caravan_spawner.go`)**: Initiates logistical trade routes across the map.
 
 ### Geography, Infrastructure & Entropy
+- **`CareerChangeSystem` (`career_change.go`)**: Algorithmically rebalances the economy by downgrading Artisans to basic gatherers when regional market limits flag food or wood shortages.
 - **`CityBinderSystem` (`city_binder.go`)**: Aggregates wandering NPCs into a structured physical settlement.
 - **`SettlementRuleSystem` (`settlement_rule.go`)**: Handles town/city state mechanics.
 - **`InfrastructureWearSystem` (`infrastructure_wear.go`)**: Processes organic decay of physical roads/desire paths due to usage or neglect.
@@ -96,4 +98,5 @@ Raw numerical utilities strictly built for deterministic execution.
 
 
 ## Phase 13: Stability & Balance Loops
+- **Phase 13.2 - Labor Rebalancing**: Implemented `CareerChangeSystem` and `JobComponent`. The ECS actively acts against simulation collapse (famines) by parsing the market boundaries established in Phase 13.1. When extreme Wood/Food prices trigger `MarketComponent`, the logic dynamically parses all active `JobComponent` values matching the city's ID (`Affiliation.CityID`) and immediately downgrades advanced processors (`JobArtisan`) back into base extraction jobs (`JobFarmer` or `JobLumberjack`) without nested loops.
 - **Phase 13.1 - Market Logic**: `MarketComponent` maintains a tightly packed 16-byte DOD struct tracking float32 local prices for `Food`, `Wood`, `Stone`, and `Iron`. `PriceDiscoverySystem` sequentially iterates over all nodes calculating mathematical limits defining demand (derived from `PopulationComponent`) versus supply (derived from `StorageComponent`). These distinct bounds actively govern the generation of `CaravanEntity` rescues if `FoodPrice` dynamically crosses extreme float boundaries natively without requiring hardcoded nested loops.

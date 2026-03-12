@@ -1,6 +1,7 @@
 # Developer Knowledge Base: Internal Activity Log
 
 ## Current Phase / Task
+- *Completed Phase 13.2: Labor Rebalancing*
 - *Completed Phase 13.1: Local Price Discovery (Market Logic)*
 - *Completed Phase 12.3: Robust Client Prediction & Smoothing*
 - *Completed Phase 12.2: Delta Extraction Queries*
@@ -132,6 +133,7 @@
 - **Phase 12.3: Robust Client Prediction & Smoothing**: Implemented `ClientPredictionSystem` in `internal/systems/client_prediction.go`. To adhere to strict DOD rules, the system processes incoming `PositionDelta` payloads into a flat map outside the main arche-go ECS iteration loop to allow instant O(1) matching against local `Identity.ID`. Because the base logic uses Phase 1 Seeded Global RNG, the clients perfectly duplicate standard movement paths locally. This system purely operates to mathematically interpolate unpredictabilities (Player Inputs/Overrides) towards the server's authoritative position, bypassing the need to transmit identical coordinates for distant AI units. Validated mathematical smoothing using exact E2E determinism constraints in `client_prediction_test.go`.
 
 ## Design Decision Log (Phase 13):
+- **Phase 13.2: Labor Rebalancing**: Implemented `CareerChangeSystem` (`internal/systems/career_change.go`) and the `JobComponent` attached to NPCs. `JobComponent` holds a `JobID uint8` perfectly aligning with DOD constraints. The system acts as a negative feedback loop: if a local city's `MarketComponent` prices severely cross bounds (e.g. `FoodPrice > 10.0` or `WoodPrice > 10.0`), any NPC holding an Artisan-level processing job is strictly forced back to a base `Farmer` or `Lumberjack` role. To guarantee `arche-go` sequential processing speed and dodge nested ECS queries, the system pre-calculates a flat map `marketPrices[uint32]*components.MarketComponent` using `Identity.ID` (acting as the City ID) to provide O(1) instant hashmap lookups during the primary NPC iteration loop. Validated with deterministic E2E check in `career_change_test.go`.
 - **Phase 13.1: Local Price Discovery (Market Logic)**: Implemented `MarketComponent` strictly adhering to 16-byte bounds and Data-Oriented Design (DOD) by avoiding Go maps. Instead of `map[ItemID]float32`, `WoodPrice`, `StonePrice`, `IronPrice`, and `FoodPrice` are distinct `float32` fields keeping sequential memory access blazingly fast.
 - Implemented `PriceDiscoverySystem` (`internal/systems/price_discovery.go`) which mathematically calculates current pricing bounds using local `PopulationComponent.Count` demand versus `StorageComponent` resource levels. To avoid divide-by-zero panics, `+ 1.0` is permanently added to the supply divisors during float scaling.
 - Modified `CaravanSpawnerSystem` (`internal/systems/caravan_spawner.go`) to act via `MarketComponent.FoodPrice` instead of raw mathematical checks. When `FoodPrice > 10.0` (indicative of famine starvation conditions), the Node natively dispatches a `CaravanEntity` to execute trade route reliefs, integrating Phase 9's logistics into Phase 13's balance limits. Verified memory size limits and deterministic replication in `price_discovery_test.go`.
