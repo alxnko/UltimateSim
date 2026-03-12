@@ -25,7 +25,7 @@ func TestLanguageDriftDialectFormation(t *testing.T) {
 	culture.DialectTickStamp = 0
 
 	// Create system
-	sys := &LanguageDriftSystem{}
+	sys := NewLanguageDriftSystem(&world)
 
 	// Fast forward 9900 ticks (no interaction)
 	for i := 0; i < 9900; i++ {
@@ -85,7 +85,7 @@ func TestLanguageDriftPidginCreation(t *testing.T) {
 	culture.LanguageID = 10
 	culture.DialectTickStamp = 0
 
-	sys := &LanguageDriftSystem{}
+	sys := NewLanguageDriftSystem(&world)
 
 	// Provide constant interaction with LanguageID 10 to prevent dialect formation,
 	// and also foreign LanguageID 20 to trigger Pidgin creation.
