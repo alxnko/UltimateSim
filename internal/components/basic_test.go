@@ -152,6 +152,13 @@ func TestComponentSizes(t *testing.T) {
 		t.Errorf("SecretComponent struct size too large: %d bytes (expected <= 24)", secretCompSize)
 	}
 
+	// Phase 13.1: Market Component Size
+	// MarketComponent: 4 * float32 (4) = 16 bytes
+	marketSize := unsafe.Sizeof(MarketComponent{})
+	if marketSize != 16 {
+		t.Errorf("MarketComponent struct size should be exactly 16 bytes, got %d", marketSize)
+	}
+
 	// Phase 07.5: Belief Component Sizes
 	// Belief: uint32 (4) + int32 (4) = 8 bytes
 	beliefSize := unsafe.Sizeof(Belief{})

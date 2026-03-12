@@ -234,6 +234,15 @@ type Velocity struct {
 // Possessed is a tag component identifying an entity possessed by the player.
 type Possessed struct{}
 
+// Phase 13.1: Local Price Discovery (Market Logic)
+// MarketComponent maintains local trade pricing determined by local demand and supply.
+type MarketComponent struct {
+	WoodPrice  float32
+	StonePrice float32
+	IronPrice  float32
+	FoodPrice  float32
+}
+
 // Phase 07.3: Linguistic Drift
 
 // CultureComponent tracks language mutation and dialect formation over extended ticks.

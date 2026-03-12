@@ -14,19 +14,18 @@ func TestCaravanSpawnerSystem(t *testing.T) {
 
 	villageID := ecs.ComponentID[components.Village](&world)
 	storageID := ecs.ComponentID[components.StorageComponent](&world)
-	popID := ecs.ComponentID[components.PopulationComponent](&world)
+	marketID := ecs.ComponentID[components.MarketComponent](&world)
 	posID := ecs.ComponentID[components.Position](&world)
 
 	// Create a Village entity
-	villageEntity := world.NewEntity(villageID, storageID, popID, posID)
+	villageEntity := world.NewEntity(villageID, storageID, marketID, posID)
 
 	// Initialize components
 	storage := (*components.StorageComponent)(world.Get(villageEntity, storageID))
-	storage.Food = 10
 	storage.Wood = 100
 
-	pop := (*components.PopulationComponent)(world.Get(villageEntity, popID))
-	pop.Count = 5
+	market := (*components.MarketComponent)(world.Get(villageEntity, marketID))
+	market.FoodPrice = 15.0 // Phase 13.1: > 10.0 triggers Caravan
 
 	pos := (*components.Position)(world.Get(villageEntity, posID))
 	pos.X = 1.0
@@ -75,8 +74,8 @@ func TestCaravanSpawnerSystem(t *testing.T) {
 		t.Errorf("Expected Village to have 50 Wood remaining in Storage, got %d", storage.Wood)
 	}
 
-	// Test Condition not met (Food is sufficient)
-	storage.Food = 100 // 100 > Count * 10 (5 * 10 = 50)
+	// Test Condition not met (Price is stable)
+	market.FoodPrice = 5.0 // Phase 13.1: 5.0 <= 10.0 (no caravan)
 	sys.Update(&world)
 
 	q3 := world.Query(filterCaravan)

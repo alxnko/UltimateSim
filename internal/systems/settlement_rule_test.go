@@ -59,8 +59,9 @@ func TestSettlementRuleSystem_E2E(t *testing.T) {
 	villageID := ecs.ComponentID[components.Village](&world)
 	storageID := ecs.ComponentID[components.StorageComponent](&world)
 	popID := ecs.ComponentID[components.PopulationComponent](&world)
+	marketID := ecs.ComponentID[components.MarketComponent](&world)
 
-	query := world.Query(ecs.All(villageID, posID, storageID, popID))
+	query := world.Query(ecs.All(villageID, posID, storageID, popID, marketID))
 	count := 0
 
 	for query.Next() {
@@ -79,6 +80,11 @@ func TestSettlementRuleSystem_E2E(t *testing.T) {
 		pop := (*components.PopulationComponent)(query.Get(popID))
 		if pop.Count != 10 {
 			t.Errorf("Village population not initialized correctly")
+		}
+
+		market := (*components.MarketComponent)(query.Get(marketID))
+		if market.FoodPrice != 1.0 {
+			t.Errorf("Village market not initialized correctly")
 		}
 	}
 

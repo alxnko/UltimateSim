@@ -5,15 +5,15 @@ import (
 	"github.com/mlange-42/arche/ecs"
 )
 
-// Phase 09.1: The Caravan Entity
-// Spawns CaravanEntity if a VillageEntity processes a negative delta inside its
-// StorageComponent against localized need requirements.
+// Phase 09.1 & 13.1: The Caravan Entity & Price Discovery
+// Spawns CaravanEntity if a VillageEntity processes extreme local disparity signals
+// mapped via MarketComponent pricing boundaries.
 
 type villageData struct {
 	entity  ecs.Entity
 	storage *components.StorageComponent
 	pos     *components.Position
-	pop     *components.PopulationComponent
+	market  *components.MarketComponent
 }
 
 type CaravanSpawnerSystem struct {
@@ -29,27 +29,28 @@ func NewCaravanSpawnerSystem() *CaravanSpawnerSystem {
 func (s *CaravanSpawnerSystem) Update(world *ecs.World) {
 	villageID := ecs.ComponentID[components.Village](world)
 	storageID := ecs.ComponentID[components.StorageComponent](world)
-	popID := ecs.ComponentID[components.PopulationComponent](world)
+	marketID := ecs.ComponentID[components.MarketComponent](world)
 	posID := ecs.ComponentID[components.Position](world)
 
-	filter := ecs.All(villageID, storageID, popID, posID)
+	filter := ecs.All(villageID, storageID, marketID, posID)
 	query := world.Query(filter)
 
 	s.toSpawn = s.toSpawn[:0] // Clear slice to reuse capacity
 
 	for query.Next() {
 		storage := (*components.StorageComponent)(query.Get(storageID))
-		pop := (*components.PopulationComponent)(query.Get(popID))
+		market := (*components.MarketComponent)(query.Get(marketID))
 		pos := (*components.Position)(query.Get(posID))
 
-		// Demand Calculus: Localized need requirement (e.g. Food < Count * 10)
-		if storage.Food < pop.Count*10 {
+		// Phase 13.1: Market logic bounds trigger
+		// Float thresholds dictating extreme famine or need
+		if market.FoodPrice > 10.0 {
 			// Deep copy the pointers logic out of the Next loop
 			s.toSpawn = append(s.toSpawn, villageData{
 				entity:  query.Entity(),
 				storage: storage, // We copy the pointer so we can deduct Wood later
 				pos:     pos,     // Pointer to copy values later
-				pop:     pop,
+				market:  market,
 			})
 		}
 	}
