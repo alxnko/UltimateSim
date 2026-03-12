@@ -8,10 +8,15 @@ import (
 
 // Phase 06.1: Societal Hierarchies
 
-// CityBinderSystem calculates spatial radii for wandering clusters and
-// assigns the nearest active VillageEntity index to their CityID field dynamically.
 type CityBinderSystem struct {
 	TicksElapsed uint32
+}
+
+// NewCityBinderSystem creates a new CityBinderSystem.
+func NewCityBinderSystem() *CityBinderSystem {
+	return &CityBinderSystem{
+		TicksElapsed: 0,
+	}
 }
 
 func (s *CityBinderSystem) Update(world *ecs.World) {

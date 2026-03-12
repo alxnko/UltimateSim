@@ -34,6 +34,8 @@ type TickManager struct {
 	TPS     int
 	Alpha   float64
 
+	IsPaused bool // Phase 12: Simulation Controls
+
 	lastTick time.Time
 	tickTime time.Duration
 }
@@ -59,6 +61,9 @@ func (tm *TickManager) AddSystem(sys System, phase SystemPhase) {
 
 // Tick executes a single simulation tick by iterating through phases sequentially.
 func (tm *TickManager) Tick() {
+	if tm.IsPaused {
+		return
+	}
 	for phase := PhaseInput; phase < numPhases; phase++ {
 		for _, sys := range tm.Systems[phase] {
 			sys.Update(tm.World)
@@ -114,4 +119,9 @@ func (tm *TickManager) Run(maxTicks int) {
 			}
 		}
 	}
+}
+
+// TogglePause flips the pause state.
+func (tm *TickManager) TogglePause() {
+	tm.IsPaused = !tm.IsPaused
 }

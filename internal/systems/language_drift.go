@@ -8,7 +8,6 @@ import (
 // Phase 07.3: Linguistic Drift
 // Propagates language mutations and drift natively via ticks and interactions
 
-// LanguageDriftSystem handles dialect formation and pidgin creation
 type LanguageDriftSystem struct {
 	tickCounter uint64
 	GlobalLanguageCounter uint16
@@ -16,6 +15,16 @@ type LanguageDriftSystem struct {
 	cultureID ecs.ID
 	memoryID  ecs.ID
 	ruinID    ecs.ID
+}
+
+// NewLanguageDriftSystem creates a new LanguageDriftSystem.
+func NewLanguageDriftSystem(world *ecs.World) *LanguageDriftSystem {
+	return &LanguageDriftSystem{
+		GlobalLanguageCounter: 1000,
+		cultureID:             ecs.ComponentID[components.CultureComponent](world),
+		memoryID:              ecs.ComponentID[components.Memory](world),
+		ruinID:                ecs.ComponentID[components.RuinComponent](world),
+	}
 }
 
 // Update runs the system every tick, but processes logic based on tick thresholds.
@@ -26,14 +35,6 @@ func (s *LanguageDriftSystem) Update(world *ecs.World) {
 	if s.tickCounter%100 != 0 {
 		return
 	}
-
-	if s.GlobalLanguageCounter == 0 {
-		s.GlobalLanguageCounter = 1000 // Base languages under 1000, new languages above
-	}
-
-	s.cultureID = ecs.ComponentID[components.CultureComponent](world)
-	s.memoryID = ecs.ComponentID[components.Memory](world)
-	s.ruinID = ecs.ComponentID[components.RuinComponent](world)
 
 	filter := ecs.All(s.cultureID, s.memoryID).Without(s.ruinID)
 	query := world.Query(&filter)

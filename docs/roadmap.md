@@ -17,12 +17,13 @@ This is the central index for the hyper-granular technical pipeline for the `arc
 - **[Phase 11: Possession Mechanics (Orchestrator)](roadmap/11_possession.md):** **The Graphics Orchestrator**, Ebiten/Raylib context switching, and Instanced 3D Rendering of village meshes.
 - **[Phase 12: Network Delta Sync & Multiplayer](roadmap/12_multiplayer.md):** Deterministic state predictions, UDP payload parsing, and sparse update transfers.
 - **[Phase 13: Stability, Tooling, & Balance Loops](roadmap/13_stability.md):** `MarketComponent` local price discovery, `CareerChangeSystem`, Jealousy metrics, `WinterPulse`, and `go-sqlite3` saves.
+- **[Phase 14: True Individual NPCs & Dynamic Villages](roadmap/14_individual_npcs.md):** Migrating from abstracted Clusters to individual `NPC` entities, adding `FamilyID`, and implementing dynamic Village hubs based on resource attraction.
 
 ## The Expansion Slots (Infinite ECS Extensibility)
 
 Because the architecture relies on decoupled, data-driven "Lego" pieces, these systems will be slotted in passively once the core engine achieves stability.
 
-- **[Phase 14: Maritime Reach & Naval Logistics](roadmap/14_maritime_trade.md):** Ships, ocean-specific HPA\* grid routing, and maritime piracy limits.
-- **[Phase 15: The Justice Engine & Legal Logic](roadmap/15_justice_engine.md):** `JurisdictionComponent`, contraband evaluation arrays, and active guard/punishment systems.
-- **[Phase 16: Advanced Biology & Ecology](roadmap/16_advanced_biology.md):** `GenomeComponent` recessive traits mapping, inbreeding math, and macro-climate drift.
-- **[Phase 17: Esoteric Systems & Ideological Apex](roadmap/17_esoteric_systems.md):** Expanding `BeliefID` spreading, triggering holy wars, and abstract numerical "Magic" physics utilizing map `ManaComponent` arrays.
+- **[Phase 15: Maritime Reach & Naval Logistics](roadmap/15_maritime_trade.md):** Ships, ocean-specific HPA\* grid routing, and maritime piracy limits.
+- **[Phase 16: The Justice Engine & Legal Logic](roadmap/16_justice_engine.md):** `JurisdictionComponent`, contraband evaluation arrays, and active guard/punishment systems.
+- **[Phase 17: Advanced Biology & Ecology](roadmap/17_advanced_biology.md):** `GenomeComponent` recessive traits mapping, inbreeding math, and macro-climate drift.
+- **[Phase 18: Esoteric Systems & Ideological Apex](roadmap/18_esoteric_systems.md):** Expanding `BeliefID` spreading, triggering holy wars, and abstract numerical "Magic" physics utilizing map `ManaComponent` arrays.

@@ -9,7 +9,6 @@ import (
 // Phase 07.2: Information Leakage (GossipDistributionSystem)
 // Propagates secrets between entities based on proximity, secret virality, and identity traits.
 
-// GossipDistributionSystem handles the physical passing of secrets through the map.
 type GossipDistributionSystem struct {
 	tickCounter uint64
 	HookGraph   *engine.SparseHookGraph
@@ -24,33 +23,39 @@ type GossipDistributionSystem struct {
 	beliefID  ecs.ID // Phase 07.5: Ideological Infection
 }
 
-// nodeData represents extracted data for DOD optimized proximity checking
-type nodeData struct {
-	entity  ecs.Entity
-	pos     *components.Position
-	secret  *components.SecretComponent
-	memory  *components.Memory
-	ident   *components.Identity
-	culture *components.CultureComponent
-	belief  *components.BeliefComponent // Optional, might be nil
+// NewGossipDistributionSystem creates a new GossipDistributionSystem.
+func NewGossipDistributionSystem(world *ecs.World, hookGraph *engine.SparseHookGraph) *GossipDistributionSystem {
+	return &GossipDistributionSystem{
+		HookGraph: hookGraph,
+		posID:     ecs.ComponentID[components.Position](world),
+		secretID:  ecs.ComponentID[components.SecretComponent](world),
+		memoryID:  ecs.ComponentID[components.Memory](world),
+		identID:   ecs.ComponentID[components.Identity](world),
+		ruinID:    ecs.ComponentID[components.RuinComponent](world),
+		cultureID: ecs.ComponentID[components.CultureComponent](world),
+		beliefID:  ecs.ComponentID[components.BeliefComponent](world),
+	}
 }
 
 // Update runs the system every 10 ticks.
 func (s *GossipDistributionSystem) Update(world *ecs.World) {
 	s.tickCounter++
 
+	// nodeData represents extracted data for DOD optimized proximity checking
+	type nodeData struct {
+		entity  ecs.Entity
+		pos     *components.Position
+		secret  *components.SecretComponent
+		memory  *components.Memory
+		ident   *components.Identity
+		culture *components.CultureComponent
+		belief  *components.BeliefComponent // Optional, might be nil
+	}
+
 	// Runs on a slower tick execution (every 10 Ticks)
 	if s.tickCounter%10 != 0 {
 		return
 	}
-
-	s.posID = ecs.ComponentID[components.Position](world)
-	s.secretID = ecs.ComponentID[components.SecretComponent](world)
-	s.memoryID = ecs.ComponentID[components.Memory](world)
-	s.identID = ecs.ComponentID[components.Identity](world)
-	s.ruinID = ecs.ComponentID[components.RuinComponent](world)
-	s.cultureID = ecs.ComponentID[components.CultureComponent](world)
-	s.beliefID = ecs.ComponentID[components.BeliefComponent](world)
 
 	// Filter all valid actors capable of gossiping
 	filter := ecs.All(s.posID, s.secretID, s.memoryID, s.identID, s.cultureID).Without(s.ruinID)
