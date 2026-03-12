@@ -6,6 +6,14 @@ This document serves as the comprehensive and definitive index of all actually i
 
 ---
 
+## 5. Network (`internal/network`)
+
+- **`Server` (`server.go`)**: The primary multi-protocol orchestration server.
+  - Handles concurrent TCP (`handleTCPConnection`) for reliable transactions (Ledgers, SparseHookGraph).
+  - Handles concurrent UDP (`listenUDP`) for high-frequency positional float array updates.
+- **`DeltaExtractionSystem` (`systems/delta_extraction.go`)**: Queries the ECS for shifting entities and extracts payload array structs mapping only these fractional data modifications.
+- **`ClientPredictionSystem` (`systems/client_prediction.go`)**: Evaluates queued `PositionDelta` payloads to smoothly interpolate client positions towards server authority, correcting unpredictabilities like player override states.
+
 ## 1. Engine (`internal/engine`)
 
 The core deterministic systems powering the total simulation and managing the world state.
@@ -86,8 +94,3 @@ Raw numerical utilities strictly built for deterministic execution.
 
 ---
 
-## 5. Network (`internal/network`)
-
-- **`Server` (`server.go`)**: The primary multi-protocol orchestration server.
-  - Handles concurrent TCP (`handleTCPConnection`) for reliable transactions (Ledgers, SparseHookGraph).
-  - Handles concurrent UDP (`listenUDP`) for high-frequency positional float array updates.
