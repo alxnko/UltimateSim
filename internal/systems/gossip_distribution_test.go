@@ -57,7 +57,7 @@ func TestGossipDistributionSystem(t *testing.T) {
 	rCulture.LanguageID = 1 // Same language as sender
 
 	// Add system
-	system := &GossipDistributionSystem{}
+	system := NewGossipDistributionSystem(&world, engine.NewSparseHookGraph())
 
 	// Run for 9 ticks - nothing should happen
 	for i := 0; i < 9; i++ {
@@ -188,9 +188,7 @@ func TestTranslationPenaltyAndSilentHooks(t *testing.T) {
 	hookGraph := engine.NewSparseHookGraph()
 
 	// Add system
-	system := &GossipDistributionSystem{
-		HookGraph: hookGraph,
-	}
+	system := NewGossipDistributionSystem(&world, hookGraph)
 
 	// Run multiple ticks to ensure they interact but verify penalty is applied.
 	// Because of the 90% penalty, chance is 10%. Over 5 update cycles (50 ticks),
@@ -284,7 +282,7 @@ func TestIdeologicalInfection(t *testing.T) {
 	})
 
 	// Add system
-	system := &GossipDistributionSystem{}
+	system := NewGossipDistributionSystem(&world, engine.NewSparseHookGraph())
 
 	// Run to tick 10 to trigger system
 	for i := 0; i < 10; i++ {

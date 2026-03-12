@@ -286,3 +286,14 @@ type CultureComponent struct {
 	LanguageID              uint16 // Current LanguageID
 	ForeignLanguageID       uint16 // Tracked distinct LanguageID for potential Pidgin creation
 }
+
+// Phase 15.3: Currency & Debt
+
+// CoinEntity is a tag component identifying physical coin objects.
+type CoinEntity struct{}
+
+// CurrencyComponent represents physical coins and their market value.
+type CurrencyComponent struct {
+	IssuerID uint32
+	Value    float32
+}
