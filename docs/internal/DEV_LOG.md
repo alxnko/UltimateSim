@@ -1,6 +1,8 @@
 # Developer Knowledge Base: Internal Activity Log
 
 ## Current Phase / Task
+- *Completed Phase 15.2: Employment & Wages (JobMarketSystem)*
+- *Completed Phase 15.1: Individual Economic Agency (ECS Structs)*
 - *Completed Phase 14: True Individual NPCs & Dynamic Villages*
 - *Completed Phase 13.3: Jealousy Vulnerability*
 - *Completed Phase 13.2: Labor Rebalancing*
@@ -108,6 +110,10 @@
 
 **Design Decision Log (Phase 01):**
 - **Data Types & CPU Cache**: `float32` was deliberately chosen over Go's default `float64` for `Position` and `Velocity` to strictly adhere to Data-Oriented Design (DOD) constraints. A `float32` takes 4 bytes instead of 8, doubling the density of our flat arrays. This tightly packed memory ensures significantly higher L1/L2 cache hit rates when the ECS iterates sequentially over 100,000+ entities, guaranteeing our 60 TPS performance goal is met.
+
+## Design Decision Log (Phase 15):
+- **Phase 15.1 & 15.2: Economic Agency & Job Markets**: Introduced the `BusinessEntity` tag component alongside `BusinessComponent` and `TreasuryComponent` strictly adhering to flat memory Data-Oriented Design (DOD) structures without nested slices or maps. Expanded `JobComponent` (originally from Phase 13.2) to include an `EmployerID uint64` to securely link specific NPCs to business structures.
+- Implemented `JobMarketSystem` (`internal/systems/job_market.go`). To avoid `arche-go` nested query deadlocks and preserve L1/L2 cache locality, the wage distribution loop pre-calculates an active flat map of `BusinessComponent` treasuries. Then, it iteratively transfers exact float32 values from the business entity's `TreasuryComponent.Wealth` directly to the `Needs.Wealth` of the employee. Unemployed NPCs query low `Needs.Wealth` thresholds and actively map themselves to businesses.
 
 ## Design Decision Log (Phase 14):
 - **Phase 14: True Individual NPCs & Dynamic Villages**: Migrated the simulation from abstracted `FamilyCluster` tags to individual `NPC` entities.
