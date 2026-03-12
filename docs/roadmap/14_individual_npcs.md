@@ -10,8 +10,9 @@ To allow players to possess and interact with a truly individual character who b
 - **`NPC` (Tag Component)**
     - Replaces `FamilyCluster`. Identifies a single human actor in the simulation.
 - **`Affiliation` (Component Update)**
-    - Add `FamilyID uint32` alongside the existing `ClanID`, `CityID`, etc.
-    - Enables rendering groups of individuals that belong to the same immediate family.
+    - **`FamilyID` uint32**: Identifies the immediate nuclear family (parents/children). NPCs move to protect and feed their family first.
+    - **`ClanID` uint32**: Identifies a broader network of interconnected families, often geographically grouped. Clans establish the "Legal" and "Moral" framework for a region.
+    - Enables rendering groups of individuals that belong to the same immediate family vs. broader clan colors.
 - **`Village` (Refined Logic)**
     - Villages no longer "delete" NPCs into abstract arrays. They become stationary "Hub" entities. NPCs physically stand at the Village coordinates and update their `CityID` to effectively "live" there.
 
