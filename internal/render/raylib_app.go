@@ -322,14 +322,14 @@ func RunRaylibApp(tm *engine.TickManager, mapGrid *engine.MapGrid) {
 			// Phase 08.4: Entity rendering
 			posID := ecs.ComponentID[components.Position](world)
 			velID := ecs.ComponentID[components.Velocity](world)
-			familyID := ecs.ComponentID[components.FamilyCluster](world)
+			npcID := ecs.ComponentID[components.NPC](world)
 			villageID := ecs.ComponentID[components.Village](world)
 			ruinID := ecs.ComponentID[components.RuinComponent](world)
 
 			alpha := tm.Alpha
 
-			// Wandering AI Clusters (FamilyCluster)
-			filterFamily := ecs.All(posID, familyID)
+			// Wandering AI NPCs
+			filterFamily := ecs.All(posID, npcID)
 			queryFamily := world.Query(filterFamily)
 			for queryFamily.Next() {
 				pos := (*components.Position)(queryFamily.Get(posID))

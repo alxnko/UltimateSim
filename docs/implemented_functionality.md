@@ -97,6 +97,9 @@ Raw numerical utilities strictly built for deterministic execution.
 ---
 
 
+## Phase 14: True Individual NPCs & Dynamic Villages
+- **Phase 14 - Individual Agents**: Shifted the primary atomic moving unit from the abstracted `FamilyCluster` tag to true individual `NPC` entities. Implemented `NPCSpawnerSystem` which spawns distinct family groups (`FamilyID`) containing individual actors rather than a single numerical group. Refactored `SettlementRuleSystem` so that when an `NPC` settles into a stationary `Village`, the `NPC` entity is explicitly retained and assigned the `Village`'s `CityID`, natively embedding them as physical residents within the dynamic hub rather than despawning them into an abstract array.
+
 ## Phase 13: Stability & Balance Loops
 - **Phase 13.2 - Labor Rebalancing**: Implemented `CareerChangeSystem` and `JobComponent`. The ECS actively acts against simulation collapse (famines) by parsing the market boundaries established in Phase 13.1. When extreme Wood/Food prices trigger `MarketComponent`, the logic dynamically parses all active `JobComponent` values matching the city's ID (`Affiliation.CityID`) and immediately downgrades advanced processors (`JobArtisan`) back into base extraction jobs (`JobFarmer` or `JobLumberjack`) without nested loops.
 - **Phase 13.1 - Market Logic**: `MarketComponent` maintains a tightly packed 16-byte DOD struct tracking float32 local prices for `Food`, `Wood`, `Stone`, and `Iron`. `PriceDiscoverySystem` sequentially iterates over all nodes calculating mathematical limits defining demand (derived from `PopulationComponent`) versus supply (derived from `StorageComponent`). These distinct bounds actively govern the generation of `CaravanEntity` rescues if `FoodPrice` dynamically crosses extreme float boundaries natively without requiring hardcoded nested loops.

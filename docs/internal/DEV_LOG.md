@@ -1,6 +1,7 @@
 # Developer Knowledge Base: Internal Activity Log
 
 ## Current Phase / Task
+- *Completed Phase 14: True Individual NPCs & Dynamic Villages*
 - *Completed Phase 13.3: Jealousy Vulnerability*
 - *Completed Phase 13.2: Labor Rebalancing*
 - *Completed Phase 13.1: Local Price Discovery (Market Logic)*
@@ -107,6 +108,14 @@
 
 **Design Decision Log (Phase 01):**
 - **Data Types & CPU Cache**: `float32` was deliberately chosen over Go's default `float64` for `Position` and `Velocity` to strictly adhere to Data-Oriented Design (DOD) constraints. A `float32` takes 4 bytes instead of 8, doubling the density of our flat arrays. This tightly packed memory ensures significantly higher L1/L2 cache hit rates when the ECS iterates sequentially over 100,000+ entities, guaranteeing our 60 TPS performance goal is met.
+
+## Design Decision Log (Phase 14):
+- **Phase 14: True Individual NPCs & Dynamic Villages**: Migrated the simulation from abstracted `FamilyCluster` tags to individual `NPC` entities.
+- Replaced `FamilyCluster` tag component with `NPC` tag component to identify single human actors.
+- Added `FamilyID uint32` to the `Affiliation` struct to establish immediate family relationships, keeping it perfectly flat and DOD-aligned.
+- Refactored `FamilySpawnerSystem` to `NPCSpawnerSystem` (`internal/systems/npc_spawner.go`). Instead of spawning 100 abstracted clusters, it seeds 20 distinct starting `FamilyID`s on habitable tiles and generates 5 individual `NPC` entities per family, effectively spawning 100 total entities at startup but with granular identities.
+- Refactored `SettlementRuleSystem` (`internal/systems/settlement_rule.go`). Instead of despawning a `FamilyCluster` to abstract it into a stationary `Village`, the system now spawns a `Village` at the designated location but explicitly retains the `NPC` entity, mutating its `Affiliation.CityID` to match the new `Village` ID. This ensures NPCs now physically "stand" and live in the town while remaining as individually simulated actors. Updated E2E deterministic checks.
+- Refactored `CityBinderSystem` and updated the renderer in `internal/render/raylib_app.go` to iterate and display independent `NPC` agents.
 
 ## Global RNG Seeding Strategy
 - **Seed Methodology**: A single, global singleton seed handles all stochastic events (terrain generation, birth systems, plague spawns, weather phenomena) to maintain absolute determinism across all simulation components.

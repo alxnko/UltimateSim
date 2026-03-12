@@ -6,9 +6,10 @@ import (
 	"github.com/mlange-42/arche/ecs"
 )
 
-// Phase 05.1: Settlement Conversion System
-// Transforms migrating groups (FamilyCluster) into stationary settlements (Village)
+// Phase 05.1 & 14: Settlement Conversion System
+// Spawns a new stationary settlement (Village) where an NPC group stopped
 // if their velocity is 0 for 1000 consecutive ticks on a resource-rich tile.
+// The NPC updates its CityID to live in the new Village instead of despawning.
 
 type SettlementRuleSystem struct {
 	mapGrid  *engine.MapGrid
@@ -23,16 +24,16 @@ func NewSettlementRuleSystem(mapGrid *engine.MapGrid) *SettlementRuleSystem {
 }
 
 func (s *SettlementRuleSystem) Update(world *ecs.World) {
-	fcID := ecs.ComponentID[components.FamilyCluster](world)
+	npcID := ecs.ComponentID[components.NPC](world)
 	slID := ecs.ComponentID[components.SettlementLogic](world)
 	posID := ecs.ComponentID[components.Position](world)
 	velID := ecs.ComponentID[components.Velocity](world)
 
 	// We only process entities that are part of a migrating family cluster
-	filter := ecs.All(fcID, slID, posID, velID)
+	filter := ecs.All(npcID, slID, posID, velID)
 	query := world.Query(filter)
 
-	s.toRemove = s.toRemove[:0] // Clear slice to reuse capacity
+	s.toRemove = s.toRemove[:0] // Clear slice to reuse capacity, now used to hold NPCs that settle
 
 	for query.Next() {
 		vel := (*components.Velocity)(query.Get(velID))
@@ -64,6 +65,7 @@ func (s *SettlementRuleSystem) Update(world *ecs.World) {
 	storageID := ecs.ComponentID[components.StorageComponent](world)
 	popID := ecs.ComponentID[components.PopulationComponent](world)
 	marketID := ecs.ComponentID[components.MarketComponent](world)
+	affID := ecs.ComponentID[components.Affiliation](world)
 
 	// Optional inherited components (copy from parent)
 	idID := ecs.ComponentID[components.Identity](world)
@@ -73,7 +75,7 @@ func (s *SettlementRuleSystem) Update(world *ecs.World) {
 	for _, e := range s.toRemove {
 		pos := (*components.Position)(world.Get(e, posID))
 
-		// Extract some data before despawning
+		// Extract some data
 		var inheritedID components.Identity
 		var inheritedGen components.Genetics
 		var inheritedLeg components.Legacy
@@ -88,11 +90,14 @@ func (s *SettlementRuleSystem) Update(world *ecs.World) {
 			inheritedLeg = *(*components.Legacy)(world.Get(e, legID))
 		}
 
-		// Save old pos before removing
+		// Save old pos
 		oldPos := *pos
 
-		// Despawn old entity
-		world.RemoveEntity(e)
+		// Reset NPC's SettlementLogic so they don't keep spawning villages
+		if world.Has(e, slID) {
+			sl := (*components.SettlementLogic)(world.Get(e, slID))
+			sl.TicksAtZeroVelocity = 0
+		}
 
 		// Spawn new Village
 		newEntity := world.NewEntity(villageID, posID, storageID, popID, marketID, idID, genID, legID)
@@ -108,7 +113,7 @@ func (s *SettlementRuleSystem) Update(world *ecs.World) {
 		newStorage.Iron = 0
 
 		newPop := (*components.PopulationComponent)(world.Get(newEntity, popID))
-		newPop.Count = 10 // abstract headcount for new village
+		newPop.Count = 1 // abstract headcount for new village
 
 		newMarket := (*components.MarketComponent)(world.Get(newEntity, marketID))
 		newMarket.FoodPrice = 1.0
@@ -118,7 +123,13 @@ func (s *SettlementRuleSystem) Update(world *ecs.World) {
 
 		// Re-attach inherited core components
 		if world.Has(newEntity, idID) {
-			*(*components.Identity)(world.Get(newEntity, idID)) = inheritedID
+			newId := (*components.Identity)(world.Get(newEntity, idID))
+			*newId = inheritedID
+			// Set the NPC's Affiliation.CityID to the new Village Identity ID
+			if world.Has(e, affID) {
+				aff := (*components.Affiliation)(world.Get(e, affID))
+				aff.CityID = uint32(newId.ID)
+			}
 		}
 		if world.Has(newEntity, genID) {
 			*(*components.Genetics)(world.Get(newEntity, genID)) = inheritedGen

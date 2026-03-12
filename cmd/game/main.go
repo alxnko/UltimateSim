@@ -80,7 +80,7 @@ func main() {
 	tickManager.AddSystem(systems.NewDeathSystem(world), engine.PhaseCleanup)
 
 	// Phase 03.2: Genesis Spawner (Runs once at tick 0)
-	tickManager.AddSystem(systems.NewFamilySpawnerSystem(world, grid), engine.PhaseCleanup)
+	tickManager.AddSystem(systems.NewNPCSpawnerSystem(world, grid), engine.PhaseCleanup)
 
 	/*
 		// Simulation Goroutine
