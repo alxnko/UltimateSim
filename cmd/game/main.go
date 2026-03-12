@@ -10,11 +10,11 @@ import (
 	"github.com/ALXNKO/UltimateSim/internal/engine"
 	"github.com/ALXNKO/UltimateSim/internal/render"
 	"github.com/ALXNKO/UltimateSim/internal/systems"
-	"github.com/hajimehoshi/ebiten/v2"
 )
 
 // Phase 01.4: Hardware Affinity & Rendering Bridging
 // Phase 01.6: Telemetry & Profiling
+// Phase 11.1: Raylib rendering architecture
 
 func main() {
 	// Phase 01.6: Telemetry & Profiling
@@ -54,15 +54,7 @@ func main() {
 		tickManager.Run(-1)
 	}()
 
-	// Phase 08.1: Window Management & Camera
-	// Ebitengine handles its own main-thread graphics context hijacking.
-	// We no longer need the dummy render goroutine.
-	ebiten.SetWindowSize(1280, 720)
-	ebiten.SetWindowTitle("Boundless Sovereigns")
-
-	// Create and run the new Ebitengine application on the main thread
-	app := render.NewApp(tickManager, grid)
-	if err := ebiten.RunGame(app); err != nil {
-		log.Fatalf("Ebitengine failed: %v", err)
-	}
+	// Phase 11.1: Switch Pattern Loop -> Unified Raylib loop
+	// We handle everything in raylib to prevent OpenGL CGO collision with Ebiten.
+	render.RunRaylibApp(tickManager, grid)
 }

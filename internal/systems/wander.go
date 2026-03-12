@@ -24,7 +24,11 @@ func NewWanderSystem(world *ecs.World, mapGrid *engine.MapGrid, pathQueue *engin
 	needsID := ecs.ComponentID[components.Needs](world)
 	pathID := ecs.ComponentID[components.Path](world)
 
-	mask := ecs.All(posID, idID, needsID, pathID)
+	possessedID := ecs.ComponentID[components.Possessed](world)
+
+	// Phase 11.2: Override the standard WanderSystem AI state-processor for the Possessed target
+	// We skip entities that are Possessed so input cleanly controls movement
+	mask := ecs.All(posID, idID, needsID, pathID).Without(possessedID)
 
 	return &WanderSystem{
 		mapGrid:     mapGrid,
