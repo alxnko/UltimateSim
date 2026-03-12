@@ -13,6 +13,7 @@ The definitive vision and technical blueprint for **Boundless Sovereigns** has b
 5. **`docs/roadmap/*.md`**: The individual phase-by-phase implementation blueprints (e.g., `01_foundation.md`, `02_geography.md`).
 6. **`docs/internal/DEV_LOG.md`**: The active developer log tracking current tasks, ECS Component IDs, and the singleton Seed strategy.
 7. **`docs/internal/CODING_STANDARDS.md`**: The project's rules for mandatory E2E testing, Arche-Go filter query constraints, and PR profiling checks.
+8. **`docs/implemented_functionality.md`**: The comprehensive index of all currently implemented packages, ECS Components, ECS Systems, and underlying logic.
 
 These files must be treated as the ultimate instruction set and single source of truth.
 
@@ -27,3 +28,4 @@ These files must be treated as the ultimate instruction set and single source of
 - **Single Source of Truth:** As the project evolves, the three `docs/` files MUST be updated. They serve as the definitive representation of the project, replacing external knowledge bases.
 - **Continuous Synchronization:** AI agents will actively read `mechanics.md` and `architecture.md` to refactor code and generate logic with those specific guardrails in mind (Physicality, Culture, Justice, Entropy).
 - **Adherence:** All actions conform to the project's Go and ECS-driven architecture designed to build a bottom-up grand strategy game. Agents must maintain the structural priorities (parallel processing, procedural generation, cache efficiency) defined in the architecture.
+- **Mandatory Documentation:** AI agents MUST aggressively keep `docs/implemented_functionality.md` updated. Whenever a new feature is added, a system is modified, or an undocumented piece of logic is found, the agent must update this document to accurately reflect the codebase state. No code change is complete until the documentation matches the implemented reality.
