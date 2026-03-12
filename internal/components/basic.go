@@ -74,6 +74,19 @@ type LoanContractComponent struct {
 	AssetID    uint32
 }
 
+// Phase 10.3: Biological Entropy (Plagues & Immune Arrays)
+
+// DiseaseEntity identifies a plague instance on the map.
+type DiseaseEntity struct {
+	ID        uint32
+	Lethality uint8
+}
+
+// ImmunityTag identifies an entity that survived a plague and ignores subsequent identical evaluations.
+type ImmunityTag struct {
+	ImmuneTo []uint32
+}
+
 // Phase 10.2: Bureaucratic Delay (Administrative Entropy)
 
 // OrderEntity is a tag component identifying administrative couriers traversing the map.

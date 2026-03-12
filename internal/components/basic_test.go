@@ -213,4 +213,17 @@ func TestComponentSizes(t *testing.T) {
 	if loyaltyCompSize != 4 {
 		t.Errorf("LoyaltyComponent struct size should be exactly 4 bytes, got %d", loyaltyCompSize)
 	}
+
+	// Phase 10.3: Biological Entropy
+	// DiseaseEntity: uint32 (4) + uint8 (1) = 5 bytes -> padded to 8 bytes on 64-bit
+	diseaseSize := unsafe.Sizeof(DiseaseEntity{})
+	if diseaseSize > 8 {
+		t.Errorf("DiseaseEntity struct size too large: %d bytes (expected <= 8)", diseaseSize)
+	}
+
+	// ImmunityTag: []uint32 slice header = 24 bytes
+	immunitySize := unsafe.Sizeof(ImmunityTag{})
+	if immunitySize > 24 {
+		t.Errorf("ImmunityTag struct size too large: %d bytes (expected <= 24)", immunitySize)
+	}
 }
