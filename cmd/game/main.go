@@ -35,6 +35,10 @@ func main() {
 	// Initialize the TickManager with 60 TPS bounds outside goroutine so it can be passed
 	tickManager := engine.NewTickManager(60)
 
+	// Phase 13.4: The Seasonal Pulse
+	calendar := engine.NewCalendar()
+	tickManager.AddSystem(systems.NewCalendarSystem(calendar), engine.PhaseInput)
+
 	// Phase 09.2: Dynamic Attrition
 	tickManager.AddSystem(systems.NewSpoilageSystem(), engine.PhaseResolution)
 	tickManager.AddSystem(systems.NewRustSystem(), engine.PhaseResolution)

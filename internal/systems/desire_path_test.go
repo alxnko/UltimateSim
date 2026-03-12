@@ -21,7 +21,7 @@ func TestDesirePathCreation(t *testing.T) {
 	tileIndex := 1 // x=1, y=0
 	mapGrid.Tiles[tileIndex].BiomeID = engine.BiomeMountain
 
-	initialCost := engine.GetEffectiveMovementCost(engine.BiomeMountain, 0)
+	initialCost := engine.GetEffectiveMovementCost(engine.BiomeMountain, 0, false)
 	if initialCost <= 1.0 {
 		t.Fatalf("Expected Mountain biome to have > 1.0 cost, got %f", initialCost)
 	}
@@ -47,7 +47,7 @@ func TestDesirePathCreation(t *testing.T) {
 	}
 
 	// 3. Initialize MovementSystem
-	movSystem := NewMovementSystem(&world, mapGrid)
+	movSystem := NewMovementSystem(&world, mapGrid, nil)
 
 	// 4. Tick simulation until entity crosses the boundary into tile (1,0)
 	// At base speed 1.0 on standard tile, crossing from 0.5 to 1.0 should take 1 tick.
@@ -81,7 +81,7 @@ func TestDesirePathCreation(t *testing.T) {
 
 	// Now artificially boost FootTraffic on the mountain tile to see movement cost reduction
 	mapGrid.TileStates[tileIndex].FootTraffic = 5000
-	reducedCost := engine.GetEffectiveMovementCost(engine.BiomeMountain, mapGrid.TileStates[tileIndex].FootTraffic)
+	reducedCost := engine.GetEffectiveMovementCost(engine.BiomeMountain, mapGrid.TileStates[tileIndex].FootTraffic, false)
 
 	if reducedCost >= initialCost {
 		t.Errorf("Expected movement cost to reduce with FootTraffic. Initial: %f, Reduced: %f", initialCost, reducedCost)

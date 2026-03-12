@@ -15,12 +15,13 @@ import (
 
 // MovementSystem updates the Position of entities based on their Velocity and active Paths.
 type MovementSystem struct {
-	mapGrid *engine.MapGrid
-	filter  ecs.Filter
+	mapGrid  *engine.MapGrid
+	filter   ecs.Filter
+	calendar *engine.Calendar
 }
 
 // NewMovementSystem creates a new MovementSystem.
-func NewMovementSystem(world *ecs.World, mapGrid *engine.MapGrid) *MovementSystem {
+func NewMovementSystem(world *ecs.World, mapGrid *engine.MapGrid, calendar *engine.Calendar) *MovementSystem {
 	// Enforce strict 'arche-go' filter usage to query specific components and prevent 'Zombie Entity' processing.
 	posID := ecs.ComponentID[components.Position](world)
 	velID := ecs.ComponentID[components.Velocity](world)
@@ -30,8 +31,9 @@ func NewMovementSystem(world *ecs.World, mapGrid *engine.MapGrid) *MovementSyste
 	mask := ecs.All(posID, velID)
 
 	return &MovementSystem{
-		mapGrid: mapGrid,
-		filter:  &mask,
+		mapGrid:  mapGrid,
+		filter:   &mask,
+		calendar: calendar,
 	}
 }
 
@@ -63,7 +65,12 @@ func (s *MovementSystem) Update(world *ecs.World) {
 		tile := s.mapGrid.Tiles[tileIndex]
 		state := s.mapGrid.TileStates[tileIndex]
 
-		movementCost := engine.GetEffectiveMovementCost(tile.BiomeID, state.FootTraffic)
+		isWinter := false
+		if s.calendar != nil {
+			isWinter = s.calendar.IsWinter
+		}
+
+		movementCost := engine.GetEffectiveMovementCost(tile.BiomeID, state.FootTraffic, isWinter)
 
 		// Resolve Kinematics if there is an active path
 		if query.Has(pathID) {

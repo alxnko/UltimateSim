@@ -2,6 +2,7 @@ package systems
 
 import (
 	"github.com/ALXNKO/UltimateSim/internal/components"
+	"github.com/ALXNKO/UltimateSim/internal/engine"
 	"github.com/mlange-42/arche/ecs"
 )
 
@@ -10,11 +11,12 @@ import (
 // Deducts Needs.Food based on a formula like: Food -= 0.05 * GeneticHealthModifier
 
 type MetabolismSystem struct {
-	filter ecs.Filter
+	filter   ecs.Filter
+	calendar *engine.Calendar
 }
 
 // NewMetabolismSystem creates a new MetabolismSystem.
-func NewMetabolismSystem(world *ecs.World) *MetabolismSystem {
+func NewMetabolismSystem(world *ecs.World, calendar *engine.Calendar) *MetabolismSystem {
 	// Query entities that have both Needs and Genetics
 	needsID := ecs.ComponentID[components.Needs](world)
 	geneticsID := ecs.ComponentID[components.Genetics](world)
@@ -25,7 +27,8 @@ func NewMetabolismSystem(world *ecs.World) *MetabolismSystem {
 	mask := ecs.All(needsID, geneticsID).Without(ruinID)
 
 	return &MetabolismSystem{
-		filter: &mask,
+		filter:   &mask,
+		calendar: calendar,
 	}
 }
 
@@ -48,8 +51,15 @@ func (s *MetabolismSystem) Update(world *ecs.World) {
 			healthModifier = 0.1
 		}
 
+		// Phase 13.4: The Seasonal Pulse
+		// Mutably scales the NeedsComponent decay matrices (1.5x calorie burn rates globally)
+		multiplier := float32(1.0)
+		if s.calendar != nil && s.calendar.IsWinter {
+			multiplier = 1.5
+		}
+
 		// Deduct food
-		needs.Food -= 0.05 * healthModifier
+		needs.Food -= (0.05 * healthModifier) * multiplier
 
 		// Ensure it doesn't drop below 0
 		if needs.Food < 0 {
