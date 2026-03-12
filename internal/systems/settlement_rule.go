@@ -63,6 +63,7 @@ func (s *SettlementRuleSystem) Update(world *ecs.World) {
 	villageID := ecs.ComponentID[components.Village](world)
 	storageID := ecs.ComponentID[components.StorageComponent](world)
 	popID := ecs.ComponentID[components.PopulationComponent](world)
+	marketID := ecs.ComponentID[components.MarketComponent](world)
 
 	// Optional inherited components (copy from parent)
 	idID := ecs.ComponentID[components.Identity](world)
@@ -94,7 +95,7 @@ func (s *SettlementRuleSystem) Update(world *ecs.World) {
 		world.RemoveEntity(e)
 
 		// Spawn new Village
-		newEntity := world.NewEntity(villageID, posID, storageID, popID, idID, genID, legID)
+		newEntity := world.NewEntity(villageID, posID, storageID, popID, marketID, idID, genID, legID)
 
 		newPos := (*components.Position)(world.Get(newEntity, posID))
 		*newPos = oldPos // exact float vector
@@ -108,6 +109,12 @@ func (s *SettlementRuleSystem) Update(world *ecs.World) {
 
 		newPop := (*components.PopulationComponent)(world.Get(newEntity, popID))
 		newPop.Count = 10 // abstract headcount for new village
+
+		newMarket := (*components.MarketComponent)(world.Get(newEntity, marketID))
+		newMarket.FoodPrice = 1.0
+		newMarket.WoodPrice = 1.0
+		newMarket.StonePrice = 1.0
+		newMarket.IronPrice = 1.0
 
 		// Re-attach inherited core components
 		if world.Has(newEntity, idID) {

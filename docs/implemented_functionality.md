@@ -94,3 +94,6 @@ Raw numerical utilities strictly built for deterministic execution.
 
 ---
 
+
+## Phase 13: Stability & Balance Loops
+- **Phase 13.1 - Market Logic**: `MarketComponent` maintains a tightly packed 16-byte DOD struct tracking float32 local prices for `Food`, `Wood`, `Stone`, and `Iron`. `PriceDiscoverySystem` sequentially iterates over all nodes calculating mathematical limits defining demand (derived from `PopulationComponent`) versus supply (derived from `StorageComponent`). These distinct bounds actively govern the generation of `CaravanEntity` rescues if `FoodPrice` dynamically crosses extreme float boundaries natively without requiring hardcoded nested loops.
