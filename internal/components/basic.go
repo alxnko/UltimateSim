@@ -11,6 +11,14 @@ const (
 	TraitGossip    uint32 = 1 << 2
 )
 
+// Phase 13.2: Labor Rebalancing
+const (
+	JobNone       uint8 = 0
+	JobFarmer     uint8 = 1
+	JobLumberjack uint8 = 2
+	JobArtisan    uint8 = 3 // A processing job that can be reverted
+)
+
 // Phase 09.5: Item Inheritance Threshold
 const ExtremePrestigeThreshold uint32 = 100
 
@@ -241,6 +249,11 @@ type MarketComponent struct {
 	StonePrice float32
 	IronPrice  float32
 	FoodPrice  float32
+}
+
+// Phase 13.2: Labor Rebalancing
+type JobComponent struct {
+	JobID uint8
 }
 
 // Phase 07.3: Linguistic Drift
