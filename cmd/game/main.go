@@ -56,5 +56,8 @@ func main() {
 
 	// Phase 11.1: Switch Pattern Loop -> Unified Raylib loop
 	// We handle everything in raylib to prevent OpenGL CGO collision with Ebiten.
+	// Phase 01.4: Hardware Affinity
+	// Pin the Window Context Goroutine to prevent OS-level cache invalidations on multicore CPUs
+	runtime.LockOSThread()
 	render.RunRaylibApp(tickManager, grid)
 }
