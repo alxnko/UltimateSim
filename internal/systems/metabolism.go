@@ -19,7 +19,7 @@ type MetabolismSystem struct {
 func NewMetabolismSystem(world *ecs.World, calendar *engine.Calendar) *MetabolismSystem {
 	// Query entities that have both Needs and Genetics
 	needsID := ecs.ComponentID[components.Needs](world)
-	geneticsID := ecs.ComponentID[components.Genetics](world)
+	geneticsID := ecs.ComponentID[components.GenomeComponent](world)
 	ruinID := ecs.ComponentID[components.RuinComponent](world)
 
 	// Phase 05.3: Arche-Go Component Filters
@@ -35,12 +35,12 @@ func NewMetabolismSystem(world *ecs.World, calendar *engine.Calendar) *Metabolis
 // Update executes the system logic per tick.
 func (s *MetabolismSystem) Update(world *ecs.World) {
 	needsID := ecs.ComponentID[components.Needs](world)
-	geneticsID := ecs.ComponentID[components.Genetics](world)
+	geneticsID := ecs.ComponentID[components.GenomeComponent](world)
 
 	query := world.Query(s.filter)
 	for query.Next() {
 		needs := (*components.Needs)(query.Get(needsID))
-		genetics := (*components.Genetics)(query.Get(geneticsID))
+		genetics := (*components.GenomeComponent)(query.Get(geneticsID))
 
 		// Calculate health modifier. Health is 0-100.
 		// Higher health means slower metabolism (less food deducted).

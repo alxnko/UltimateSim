@@ -105,7 +105,7 @@ func (s *DiseaseVectorSystem) Update(world *ecs.World) {
 
 	// 3. Query all vulnerable entities (Position + Genetics)
 	posID := ecs.ComponentID[components.Position](world)
-	genID := ecs.ComponentID[components.Genetics](world)
+	genID := ecs.ComponentID[components.GenomeComponent](world)
 	immunityID := ecs.ComponentID[components.ImmunityTag](world)
 
 	targetFilter := ecs.All(posID, genID)
@@ -113,7 +113,7 @@ func (s *DiseaseVectorSystem) Update(world *ecs.World) {
 
 	for query.Next() {
 		pos := (*components.Position)(query.Get(posID))
-		gen := (*components.Genetics)(query.Get(genID))
+		gen := (*components.GenomeComponent)(query.Get(genID))
 		entX, entY := int(pos.X), int(pos.Y)
 
 		var immunity *components.ImmunityTag

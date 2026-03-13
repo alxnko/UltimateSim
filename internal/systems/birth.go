@@ -17,7 +17,7 @@ type BirthSystem struct {
 func NewBirthSystem(world *ecs.World) *BirthSystem {
 	storageID := ecs.ComponentID[components.StorageComponent](world)
 	popID := ecs.ComponentID[components.PopulationComponent](world)
-	genID := ecs.ComponentID[components.Genetics](world)
+	genID := ecs.ComponentID[components.GenomeComponent](world)
 	idID := ecs.ComponentID[components.Identity](world)
 	ruinID := ecs.ComponentID[components.RuinComponent](world)
 
@@ -31,7 +31,7 @@ func NewBirthSystem(world *ecs.World) *BirthSystem {
 func (s *BirthSystem) Update(world *ecs.World) {
 	storageID := ecs.ComponentID[components.StorageComponent](world)
 	popID := ecs.ComponentID[components.PopulationComponent](world)
-	genID := ecs.ComponentID[components.Genetics](world)
+	genID := ecs.ComponentID[components.GenomeComponent](world)
 	idID := ecs.ComponentID[components.Identity](world)
 
 	query := world.Query(s.filter)
@@ -45,12 +45,12 @@ func (s *BirthSystem) Update(world *ecs.World) {
 			storage.Food -= 50
 			pop.Count++
 
-			var p1Gen, p2Gen components.Genetics
+			var p1Gen, p2Gen components.GenomeComponent
 			var p1Traits, p2Traits uint32
 
 			if len(pop.Citizens) < 2 {
 				// Use the foundational village genetics if there aren't enough citizens yet
-				baseGen := (*components.Genetics)(query.Get(genID))
+				baseGen := (*components.GenomeComponent)(query.Get(genID))
 				baseID := (*components.Identity)(query.Get(idID))
 
 				p1Gen = *baseGen
@@ -71,12 +71,32 @@ func (s *BirthSystem) Update(world *ecs.World) {
 				p2Traits = p2.BaseTraits
 			}
 
+			domMask := uint32(engine.GetRandomInt())
+			recMask := uint32(engine.GetRandomInt())
+
 			// Calculate child genetics (Average of parents +/- 5 points mutation)
-			childGenetics := components.Genetics{
+			childGenetics := components.GenomeComponent{
 				Strength:  clampGenetics(int(p1Gen.Strength)+int(p2Gen.Strength), engine.GetRandomInt()),
 				Beauty:    clampGenetics(int(p1Gen.Beauty)+int(p2Gen.Beauty), engine.GetRandomInt()),
 				Health:    clampGenetics(int(p1Gen.Health)+int(p2Gen.Health), engine.GetRandomInt()),
 				Intellect: clampGenetics(int(p1Gen.Intellect)+int(p2Gen.Intellect), engine.GetRandomInt()),
+				Dominant:  (p1Gen.Dominant & domMask) | (p2Gen.Dominant & ^domMask),
+				Recessive: (p1Gen.Recessive & recMask) | (p2Gen.Recessive & ^recMask),
+			}
+
+			// Phase 19.1: Inbreeding Penalties
+			// Calculate similarity between parent Dominant arrays.
+			// The XOR result will have 0s where bits are identical. We count differences (1s).
+			diffCount := 0
+			xorRes := p1Gen.Dominant ^ p2Gen.Dominant
+			for xorRes > 0 {
+				diffCount += int(xorRes & 1)
+				xorRes >>= 1
+			}
+
+			// If parents share extremely similar dominant traits (< 5 bits difference), penalize health.
+			if diffCount < 5 {
+				childGenetics.Health /= 2
 			}
 
 			// Inherit BaseTraits via 50% chance bitmask evaluation

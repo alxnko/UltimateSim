@@ -62,10 +62,10 @@ func TestComponentSizes(t *testing.T) {
 		t.Errorf("Identity struct size too large: %d bytes (expected <= 32)", idSize)
 	}
 
-	// Genetics: 4 * uint8 (1) = 4 bytes
-	genSize := unsafe.Sizeof(Genetics{})
-	if genSize != 4 {
-		t.Errorf("Genetics struct size should be exactly 4 bytes, got %d", genSize)
+	// GenomeComponent: 4 * uint8 (1) + 2 * uint32 (4) = 12 bytes
+	genSize := unsafe.Sizeof(GenomeComponent{})
+	if genSize != 12 {
+		t.Errorf("GenomeComponent struct size should be exactly 12 bytes, got %d", genSize)
 	}
 
 	// Legacy: 2 * uint32 (4) = 8 bytes
@@ -125,10 +125,10 @@ func TestComponentSizes(t *testing.T) {
 		t.Errorf("PopulationComponent struct size too large: %d bytes (expected <= 32)", popSize)
 	}
 
-	// CitizenData: Genetics (4) + uint32 (4) = 8 bytes
+	// CitizenData: GenomeComponent (12) + uint32 (4) = 16 bytes
 	citizenSize := unsafe.Sizeof(CitizenData{})
-	if citizenSize != 8 {
-		t.Errorf("CitizenData struct size should be exactly 8 bytes, got %d", citizenSize)
+	if citizenSize != 16 {
+		t.Errorf("CitizenData struct size should be exactly 16 bytes, got %d", citizenSize)
 	}
 
 	// Phase 05.2: Ruin Component Size

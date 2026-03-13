@@ -13,21 +13,21 @@ import (
 func TestMetabolismSystem_E2E(t *testing.T) {
 	world := ecs.NewWorld()
 	needsID := ecs.ComponentID[components.Needs](&world)
-	geneticsID := ecs.ComponentID[components.Genetics](&world)
+	geneticsID := ecs.ComponentID[components.GenomeComponent](&world)
 
 	metabolismSystem := systems.NewMetabolismSystem(&world, nil)
 
 	// Entity 1: High Health (100)
 	e1 := world.NewEntity(needsID, geneticsID)
 	n1 := (*components.Needs)(world.Get(e1, needsID))
-	g1 := (*components.Genetics)(world.Get(e1, geneticsID))
+	g1 := (*components.GenomeComponent)(world.Get(e1, geneticsID))
 	n1.Food = 100.0
 	g1.Health = 100 // Modifier = 1.0 -> Food loss = 0.05
 
 	// Entity 2: Low Health (0)
 	e2 := world.NewEntity(needsID, geneticsID)
 	n2 := (*components.Needs)(world.Get(e2, needsID))
-	g2 := (*components.Genetics)(world.Get(e2, geneticsID))
+	g2 := (*components.GenomeComponent)(world.Get(e2, geneticsID))
 	n2.Food = 100.0
 	g2.Health = 0 // Modifier = 2.0 -> Food loss = 0.10
 

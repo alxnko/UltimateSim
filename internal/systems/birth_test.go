@@ -19,7 +19,7 @@ func TestBirthSystem_E2E(t *testing.T) {
 	// Register Components
 	storageID := ecs.ComponentID[components.StorageComponent](&world)
 	popID := ecs.ComponentID[components.PopulationComponent](&world)
-	genID := ecs.ComponentID[components.Genetics](&world)
+	genID := ecs.ComponentID[components.GenomeComponent](&world)
 	idID := ecs.ComponentID[components.Identity](&world)
 	_ = ecs.ComponentID[components.RuinComponent](&world) // needed for the filter
 
@@ -35,7 +35,7 @@ func TestBirthSystem_E2E(t *testing.T) {
 	pop.Count = 10
 	pop.Citizens = make([]components.CitizenData, 0)
 
-	gen := (*components.Genetics)(world.Get(entity, genID))
+	gen := (*components.GenomeComponent)(world.Get(entity, genID))
 	gen.Strength = 100
 	gen.Beauty = 100
 	gen.Health = 100
