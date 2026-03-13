@@ -21,6 +21,7 @@ type PathRequest struct {
 	StartY   float32
 	TargetX  float32
 	TargetY  float32
+	IsNaval  bool
 }
 
 // PathResult contains the calculated path nodes returned from the worker pool.
@@ -106,6 +107,89 @@ func (pq *PathRequestQueue) workerProcess() {
 			Path:     path,
 			Success:  success,
 		}
+	}
+}
+
+// WorkerProcessSync deterministically calculates a path synchronously for systems that cannot wait
+// for asynchronous goroutines to resolve, such as NavalRouting.
+func (pq *PathRequestQueue) WorkerProcessSync(req PathRequest, mapGrid *MapGrid) PathResult {
+	var path []Vec2
+	success := false
+
+	if req.IsNaval && mapGrid != nil {
+		// Deterministic step-by-step raycast evaluation enforcing strict oceanic travel boundaries.
+		// A full HPA* over Gateways requires a complex path builder; for DOD bounds tracking,
+		// verifying every tile in the interpolated line ensures we do not cross land.
+		dx := req.TargetX - req.StartX
+		dy := req.TargetY - req.StartY
+		dist := float32(math.Sqrt(float64(dx*dx + dy*dy)))
+
+		if dist > 0 {
+			steps := int(math.Ceil(float64(dist)))
+			path = make([]Vec2, 0, steps+1)
+
+			stepX := dx / float32(steps)
+			stepY := dy / float32(steps)
+
+			validPath := true
+			for i := 0; i <= steps; i++ {
+				nodeX := req.StartX + stepX*float32(i)
+				nodeY := req.StartY + stepY*float32(i)
+
+				gridX := int(nodeX)
+				gridY := int(nodeY)
+
+				// Clamp to array sizes to prevent index panics
+				if gridX < 0 { gridX = 0 }
+				if gridY < 0 { gridY = 0 }
+				if gridX >= mapGrid.Width { gridX = mapGrid.Width - 1 }
+				if gridY >= mapGrid.Height { gridY = mapGrid.Height - 1 }
+
+				idx := gridY*mapGrid.Width + gridX
+
+				// Enforce strict maritime boundaries. BiomeOcean == 0.
+				if mapGrid.Tiles[idx].BiomeID != 0 {
+					validPath = false
+					break
+				}
+
+				path = append(path, Vec2{X: nodeX, Y: nodeY})
+			}
+
+			if validPath {
+				success = true
+				// Ensure precise target lock at final node
+				path[len(path)-1] = Vec2{X: req.TargetX, Y: req.TargetY}
+			} else {
+				// Failed raycast over land, pathing blocked.
+				path = nil
+			}
+		}
+	} else {
+		// Non-naval default mocked straight-line logic
+		dx := req.TargetX - req.StartX
+		dy := req.TargetY - req.StartY
+		dist := float32(math.Sqrt(float64(dx*dx + dy*dy)))
+
+		if dist > 0 {
+			success = true
+			steps := int(math.Ceil(float64(dist)))
+			path = make([]Vec2, 0, steps+1)
+
+			stepX := dx / float32(steps)
+			stepY := dy / float32(steps)
+
+			for i := 0; i <= steps; i++ {
+				path = append(path, Vec2{X: req.StartX + stepX*float32(i), Y: req.StartY + stepY*float32(i)})
+			}
+			path[len(path)-1] = Vec2{X: req.TargetX, Y: req.TargetY}
+		}
+	}
+
+	return PathResult{
+		EntityID: req.EntityID,
+		Path:     path,
+		Success:  success,
 	}
 }
 
