@@ -277,6 +277,14 @@ type TreasuryComponent struct {
 	Wealth float32
 }
 
+// Phase 15.4: Physical Locations & Workplaces
+
+// WorkplaceComponent defines the physical map grid location of a business.
+type WorkplaceComponent struct {
+	X float32
+	Y float32
+}
+
 // Phase 07.3: Linguistic Drift
 
 // CultureComponent tracks language mutation and dialect formation over extended ticks.
