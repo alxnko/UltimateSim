@@ -63,6 +63,9 @@ func main() {
 
 	// --- PHASE: RESOLUTION ---
 	tickManager.AddSystem(systems.NewMetabolismSystem(world, calendar), engine.PhaseResolution)
+	// Phase 17.3: Maritime Attrition & Piracy
+	tickManager.AddSystem(systems.NewStormSystem(grid), engine.PhaseResolution)
+	tickManager.AddSystem(systems.NewNavalPiracySystem(), engine.PhaseResolution)
 	tickManager.AddSystem(systems.NewBirthSystem(world), engine.PhaseResolution)
 	tickManager.AddSystem(systems.NewDiseaseVectorSystem(world, grid), engine.PhaseResolution)
 	tickManager.AddSystem(systems.NewCaravanSpawnerSystem(), engine.PhaseResolution)
