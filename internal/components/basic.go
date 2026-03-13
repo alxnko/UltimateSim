@@ -305,3 +305,10 @@ type CurrencyComponent struct {
 	IssuerID uint32
 	Value    float32
 }
+
+// Phase 16.1: The Country Entity (Macro-State)
+
+// CountryComponent is a higher-level tag attached to a Capital entity that manages sub-affiliations.
+type CountryComponent struct {
+	StandardCurrencyID uint32
+}

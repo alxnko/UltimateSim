@@ -46,6 +46,7 @@ All entities in the engine are composed of strict, flat-memory data structs stri
 - **`RuinComponent`**: Decay tracker for destroyed settlements.
 - **`Possessed`**: Marker component bypassing AI for player-controlled entities.
 - **`JobComponent`**: Flag identifying an NPC's role (e.g. Farmer, Lumberjack, Artisan) to handle labor bounds.
+- **`CountryComponent`**: Higher-level tag struct (`StandardCurrencyID`) tracking macro-state parameters for Country capitals.
 *(Add all other newly identified/created components here)*
 
 ---
@@ -72,6 +73,7 @@ Systems perform decoupled, stateless logic by iterating over matched entities.
 - **`CareerChangeSystem` (`career_change.go`)**: Algorithmically rebalances the economy by downgrading Artisans to basic gatherers when regional market limits flag food or wood shortages.
 - **`CityBinderSystem` (`city_binder.go`)**: Aggregates wandering NPCs into a structured physical settlement.
 - **`SettlementRuleSystem` (`settlement_rule.go`)**: Handles town/city state mechanics.
+- **`TaxationSystem` (`taxation.go`)**: Siphons revenue linearly from sub-cities back to their macro-state Country Capital.
 - **`InfrastructureWearSystem` (`infrastructure_wear.go`)**: Processes organic decay of physical roads/desire paths due to usage or neglect.
 - **`RuinTransformationSystem` (`ruin_transformation.go`)**: Flips dead settlements to a ruined state while preserving map geometry but altering functional logic.
 - **`RustSystem` (`rust.go`)**: Entropy mapping applied to metal-based artifacts/equipment.
