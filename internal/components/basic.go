@@ -358,8 +358,10 @@ type MilitaryForce struct{}
 // PortComponent is a tag component attached to VillageEntity structures resting adjacent to Ocean tiles.
 type PortComponent struct{}
 
-// ShipComponent is a tag component attached to a vessel entity.
-type ShipComponent struct{}
+// ShipComponent is a component attached to a vessel entity.
+type ShipComponent struct {
+	Hull uint32
+}
 
 // Passenger tracks passenger slots for trans-oceanic migration.
 type Passenger struct {
