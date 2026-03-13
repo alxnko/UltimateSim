@@ -66,3 +66,31 @@ func TestServer_Connections(t *testing.T) {
 	// Allow server to process messages
 	time.Sleep(50 * time.Millisecond)
 }
+
+func TestServer_BroadcastTCPError(t *testing.T) {
+	server := network.NewServer("0", "0")
+	err := server.Start()
+	if err != nil {
+		t.Fatalf("Failed to start server: %v", err)
+	}
+	defer server.Stop()
+
+	// Wait briefly for server to bind
+	time.Sleep(50 * time.Millisecond)
+
+	// Connect a client
+	tcpAddr := fmt.Sprintf("127.0.0.1:%d", server.GetTCPPort())
+	conn, err := net.Dial("tcp", tcpAddr)
+	if err != nil {
+		t.Fatalf("Failed to connect to TCP server: %v", err)
+	}
+
+	// Close the client side immediately
+	conn.Close()
+
+	// Allow some time for the server to accept and start handling
+	time.Sleep(100 * time.Millisecond)
+
+	// This should not panic and should handle the write error gracefully once implemented
+	server.BroadcastTCP([]byte("test broadcast"))
+}

@@ -184,7 +184,10 @@ func (s *Server) BroadcastTCP(payload []byte) {
 	defer s.mu.RUnlock()
 
 	for _, conn := range s.clients {
-		_, _ = conn.Write(payload)
+		if _, err := conn.Write(payload); err != nil {
+			log.Printf("BroadcastTCP error for %s: %v", conn.RemoteAddr(), err)
+			conn.Close()
+		}
 	}
 }
 
@@ -194,7 +197,9 @@ func (s *Server) BroadcastUDP(payload []byte) {
 	defer s.mu.RUnlock()
 
 	for _, addr := range s.udpClients {
-		_, _ = s.udpConn.WriteToUDP(payload, addr)
+		if _, err := s.udpConn.WriteToUDP(payload, addr); err != nil {
+			log.Printf("BroadcastUDP error for %s: %v", addr, err)
+		}
 	}
 }
 
