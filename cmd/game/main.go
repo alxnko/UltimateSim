@@ -68,6 +68,8 @@ func main() {
 	tickManager.AddSystem(systems.NewPriceDiscoverySystem(), engine.PhaseResolution)
 	tickManager.AddSystem(systems.NewRuinTransformationSystem(world), engine.PhaseResolution)
 	tickManager.AddSystem(systems.NewAdministrativeDecaySystem(), engine.PhaseResolution)
+	// Phase 16.4: Administrative Reach & Friction
+	tickManager.AddSystem(systems.NewAdministrativeFractureSystem(world), engine.PhaseResolution)
 	tickManager.AddSystem(systems.NewDebtDefaultSystem(), engine.PhaseResolution)
 
 	// Register Gossip
