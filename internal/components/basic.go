@@ -335,3 +335,6 @@ type UnionComponent struct {
 // MilitaryForce represents the armed forces of a city/country.
 // Used for Defense Pacts.
 type MilitaryForce struct{}
+
+// Phase 16.4: Administrative Reach & Friction
+// (Entities will unilaterally fracture if distance from Capital exceeds max thresholds, removing their CountryID).
