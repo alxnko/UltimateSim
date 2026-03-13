@@ -312,3 +312,26 @@ type CurrencyComponent struct {
 type CountryComponent struct {
 	StandardCurrencyID uint32
 }
+
+// Phase 16.2: Strategic Unions & Pacts
+
+// UnionType constants
+const (
+	UnionDefensePact  uint8 = 0
+	UnionCurrency     uint8 = 1
+	UnionEconomicBloc uint8 = 2
+)
+
+// UnionEntity is a specialized non-physical entity representing a treaty or agreement between independent Countries or Cities.
+type UnionEntity struct{}
+
+// UnionComponent stores the data of a strategic union.
+type UnionComponent struct {
+	UnionType        uint8
+	SharedCurrencyID uint32
+	MemberIDs        []uint32 // Array of City/Country IDs
+}
+
+// MilitaryForce represents the armed forces of a city/country.
+// Used for Defense Pacts.
+type MilitaryForce struct{}
