@@ -17,6 +17,7 @@ const (
 	JobFarmer     uint8 = 1
 	JobLumberjack uint8 = 2
 	JobArtisan    uint8 = 3 // A processing job that can be reverted
+	JobGuard      uint8 = 4 // Phase 18.2: The Guard System
 )
 
 // Phase 09.5: Item Inheritance Threshold
@@ -26,6 +27,8 @@ const ExtremePrestigeThreshold uint32 = 100
 const (
 	InteractionGossip   uint8 = 1
 	InteractionLanguage uint8 = 2 // Phase 07.3: Linguistic Drift
+	InteractionAssault  uint8 = 3 // Phase 18.1: Law Definitions
+	InteractionTheft    uint8 = 4 // Phase 18.1: Law Definitions
 )
 
 // Identity component
@@ -246,6 +249,14 @@ type Velocity struct {
 // Possessed is a tag component identifying an entity possessed by the player.
 type Possessed struct{}
 
+// Item IDs for contraband mapping
+const (
+	ItemWood  uint8 = 1
+	ItemStone uint8 = 2
+	ItemIron  uint8 = 3
+	ItemFood  uint8 = 4
+)
+
 // Phase 13.1: Local Price Discovery (Market Logic)
 // MarketComponent maintains local trade pricing determined by local demand and supply.
 type MarketComponent struct {
@@ -253,6 +264,12 @@ type MarketComponent struct {
 	StonePrice float32
 	IronPrice  float32
 	FoodPrice  float32
+}
+
+// Phase 18.1: Contraband Logic
+// ContrabandComponent maintains local laws regarding illegal items.
+type ContrabandComponent struct {
+	Contraband uint32 // Bitmask flagging illegal ItemIDs
 }
 
 // Phase 13.2: Labor Rebalancing
@@ -357,3 +374,20 @@ type PassengerComponent struct {
 
 // Phase 16.4: Administrative Reach & Friction
 // (Entities will unilaterally fracture if distance from Capital exceeds max thresholds, removing their CountryID).
+
+// Phase 18.1: Jurisdiction & Law Definitions
+
+// JurisdictionComponent defines the geometric bounds and the legal parameters.
+// This is typically attached to a VillageEntity or a Capital.
+type JurisdictionComponent struct {
+	RadiusSquared    float32 // Squared radius mapped around the entity's Position
+	IllegalActionIDs uint32  // Bitmask of interaction types that are considered crimes (e.g. 1<<InteractionAssault)
+}
+
+// Phase 18.2: Detection & The Guard System
+
+// CrimeMarker is tagged onto an entity observed committing a crime within a Jurisdiction.
+type CrimeMarker struct {
+	CrimeLevel uint8
+	Bounty     uint32
+}

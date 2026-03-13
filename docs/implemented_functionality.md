@@ -99,6 +99,11 @@ Raw numerical utilities strictly built for deterministic execution.
 ---
 
 
+## Phase 18: The Justice Engine & Legal Logic
+- **Phase 18.1 - Jurisdiction & Law Definitions**: Added `JurisdictionComponent` dictating squared radii bounds around Capital entities and tracking a bitmask of `IllegalActionIDs` (`InteractionAssault`, `InteractionTheft`). Refactored `MarketComponent` limits into a standalone `ContrabandComponent` struct tracking bits mapped to `ItemWood`, `ItemStone`, `ItemIron`, etc.
+- **Phase 18.2 - Detection & The Guard System**: Added `JusticeSystem` (`internal/systems/justice.go`). The system utilizes arche-go queries to compare `MemoryEvent` buffers against local `JurisdictionComponent` constraints, tagging offenders with a `CrimeMarker`. Implemented a `JobGuard` target mapping where idle Guards pathfind directly towards entities bearing the `CrimeMarker`.
+- **Phase 18.3 - Sentencing & Prisons**: Attached O(G*C) distance evaluations in `JusticeSystem`. When a Guard entity physically intercepts a `CrimeMarker` within a ~1.4 tile radius (`distSq < 2.0`), it executes punishment logic: extracting `Bounty` fines from the criminal's `Needs.Wealth`, and forcibly applying Banishment (stripping `Affiliation.CityID` and assigning fleeing vectors). Proven natively via end-to-end tests in `justice_test.go`.
+
 ## Phase 14: True Individual NPCs & Dynamic Villages
 - **Phase 14 - Individual Agents**: Shifted the primary atomic moving unit from the abstracted `FamilyCluster` tag to true individual `NPC` entities. Implemented `NPCSpawnerSystem` which spawns distinct family groups (`FamilyID`) containing individual actors rather than a single numerical group. Refactored `SettlementRuleSystem` so that when an `NPC` settles into a stationary `Village`, the `NPC` entity is explicitly retained and assigned the `Village`'s `CityID`, natively embedding them as physical residents within the dynamic hub rather than despawning them into an abstract array.
 
