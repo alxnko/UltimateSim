@@ -82,6 +82,9 @@ func main() {
 	// Register Language Drift
 	tickManager.AddSystem(systems.NewLanguageDriftSystem(world), engine.PhaseResolution)
 
+	// Phase 18: Justice Engine
+	tickManager.AddSystem(systems.NewJusticeSystem(world), engine.PhaseResolution)
+
 	// --- PHASE: CLEANUP ---
 	tickManager.AddSystem(systems.NewDeathSystem(world), engine.PhaseCleanup)
 
