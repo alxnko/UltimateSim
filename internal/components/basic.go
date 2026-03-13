@@ -336,5 +336,24 @@ type UnionComponent struct {
 // Used for Defense Pacts.
 type MilitaryForce struct{}
 
+// Phase 17.1: Maritime Reach & Naval Logistics
+
+// PortComponent is a tag component attached to VillageEntity structures resting adjacent to Ocean tiles.
+type PortComponent struct{}
+
+// ShipComponent is a tag component attached to a vessel entity.
+type ShipComponent struct{}
+
+// Passenger tracks passenger slots for trans-oceanic migration.
+type Passenger struct {
+	EntityID uint64
+}
+
+// PassengerComponent holds the passenger array for Ship entities.
+// Slices map to 24 bytes in 64-bit Go, adhering to DOD constraints.
+type PassengerComponent struct {
+	Passengers []Passenger
+}
+
 // Phase 16.4: Administrative Reach & Friction
 // (Entities will unilaterally fracture if distance from Capital exceeds max thresholds, removing their CountryID).

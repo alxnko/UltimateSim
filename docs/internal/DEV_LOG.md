@@ -1,6 +1,7 @@
 # Developer Knowledge Base: Internal Activity Log
 
 ## Current Phase / Task
+- *Completed Phase 17.1: Coastal Ports & Ship Construction*
 - *Completed Phase 16.1: The Country Entity (Macro-State)*
 - *Completed Phase 15.4: Physical Locations & Workplaces (WorkplaceSystem)*
 - *Completed Phase 15.3: Currency & Debt (MintingSystem & CurrencyExchangeSystem)*
@@ -115,6 +116,7 @@
 - **Data Types & CPU Cache**: `float32` was deliberately chosen over Go's default `float64` for `Position` and `Velocity` to strictly adhere to Data-Oriented Design (DOD) constraints. A `float32` takes 4 bytes instead of 8, doubling the density of our flat arrays. This tightly packed memory ensures significantly higher L1/L2 cache hit rates when the ECS iterates sequentially over 100,000+ entities, guaranteeing our 60 TPS performance goal is met.
 
 ## Design Decision Log (Phase 16):
+- **Phase 17.1: Coastal Ports & Ship Construction**: Added `PortComponent`, `ShipComponent`, `Passenger` struct, and `PassengerComponent`. `PassengerComponent` rigidly maps to 24 bytes under 64-bit bounds using slice headers, dodging nested pointer penalties. Implemented `PortBinderSystem` (`internal/systems/port_binder.go`) which dynamically assesses `VillageEntity` adjacency to `TileData(Ocean)` bounds and tags them with `PortComponent`. Implemented `NavalSpawningSystem` (`internal/systems/naval_spawning.go`) which checks for arrived `CaravanEntity` entities (`Velocity == 0`) inside marked Port bounds. It creates new Ship entities and copies over `StorageComponent` items retaining rigorous sequential iterations by managing `toConvert` capacities prior to instantiation without nested `arche-go` component removals during loop queries. Validated deterministically through E2E tests in `port_binder_test.go` and `naval_spawning_test.go`.
 - **Phase 16.1: The Country Entity (Macro-State)**: Added `CountryComponent` tag struct (`StandardCurrencyID uint32`) and developed `TaxationSystem` (`internal/systems/taxation.go`). Sub-cities dynamically transfer wealth up the chain to their `CountryComponent` macro-state Capital based on local `MarketComponent` prices. Adhered strictly to DOD constraints by flat mapping active Country Treasuries using a pre-calculated map prior to parsing active villages, resulting in O(1) matching during the O(N) village iteration.
 
 ## Design Decision Log (Phase 15):
