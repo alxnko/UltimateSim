@@ -1,5 +1,7 @@
 package engine
 
+import "github.com/ALXNKO/UltimateSim/pkg/math/hpa"
+
 // Phase 02.1: Geography - The Map Data Array
 // Objective: Map numerical data arrays that construct the physical terrain of the game world independent of rendering.
 
@@ -36,6 +38,22 @@ type MapGrid struct {
 	Tiles      []TileData
 	Resources  []ResourceDepot
 	TileStates []TileState
+	NavMesh    *hpa.AbstractGrid // Phase 17.2: Oceanic Pathfinding NavMesh
+}
+
+// BuildOceanicNavMesh iterates over the generated grid map and calculates
+// oceanic boundaries natively.
+func BuildOceanicNavMesh(grid *MapGrid) {
+	// Initialize abstract grid specifically targeting 16x16 chunk sizes
+	grid.NavMesh = hpa.NewAbstractGrid(grid.Width, grid.Height, 16)
+
+	// Extract BiomeIDs directly from Tiles to flat []uint8 array required by hpa
+	biomeTiles := make([]uint8, len(grid.Tiles))
+	for i, t := range grid.Tiles {
+		biomeTiles[i] = t.BiomeID
+	}
+
+	grid.NavMesh.BuildNavMesh(biomeTiles, grid.Width)
 }
 
 // NewMapGrid initializes a new MapGrid with the specified width and height.

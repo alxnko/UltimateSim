@@ -32,6 +32,9 @@ func main() {
 	engine.InitializeRNG(seed)
 	engine.GenerateMap(grid, seed)
 
+	// Phase 17.2: Build Secondary Nav Mesh for Oceanic Pathfinding
+	engine.BuildOceanicNavMesh(grid)
+
 	// Phase 04.2: Async Path Queue Pool
 	pathQueue := engine.NewPathRequestQueue(1000, runtime.NumCPU())
 	pathQueue.StartWorkers()
@@ -52,6 +55,7 @@ func main() {
 	tickManager.AddSystem(systems.NewRustSystem(), engine.PhaseResolution)
 	// --- PHASE: AI ---
 	tickManager.AddSystem(systems.NewWanderSystem(world, grid, pathQueue), engine.PhaseAI)
+	tickManager.AddSystem(systems.NewNavalRoutingSystem(world, grid, pathQueue, calendar), engine.PhaseAI)
 
 	// --- PHASE: MOVEMENT ---
 	tickManager.AddSystem(systems.NewMovementSystem(world, grid, calendar), engine.PhaseMovement)
