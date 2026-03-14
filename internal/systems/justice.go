@@ -187,6 +187,7 @@ func (s *JusticeSystem) Update(world *ecs.World) {
 		pathID := ecs.ComponentID[components.Path](world)
 		velID := ecs.ComponentID[components.Velocity](world)
 		needsID := ecs.ComponentID[components.Needs](world)
+		jurID := ecs.ComponentID[components.JurisdictionComponent](world)
 
 		guardQuery := world.Query(s.guardFilter)
 
@@ -228,39 +229,66 @@ func (s *JusticeSystem) Update(world *ecs.World) {
 				// Phase 18.3: Sentencing & Prisons
 				// If Guard is extremely close to Criminal (e.g. adjacent tile) -> Execute Punishment
 				if distSq < 2.0 && world.Alive(c.Entity) {
-					// Apply Punishment (Banishment & Fines)
+					bribed := false
 
-					// Fines
+					// Check for Phase 22.1 Bribery / Corruption Engine
 					if world.Has(c.Entity, needsID) {
 						cNeeds := (*components.Needs)(world.Get(c.Entity, needsID))
 						crimeMarker := (*components.CrimeMarker)(world.Get(c.Entity, crimeID))
+						bribeAmount := float32(crimeMarker.Bounty) * 2.0
 
-						fine := float32(crimeMarker.Bounty)
-						if cNeeds.Wealth >= fine {
-							cNeeds.Wealth -= fine
-						} else {
-							cNeeds.Wealth = 0
+						if cNeeds.Wealth >= bribeAmount {
+							// Execute bribe
+							cNeeds.Wealth -= bribeAmount
+							bribed = true
+
+							// Increment Corruption in Guard's active Jurisdiction
+							if gAff != nil {
+								for jIdx := 0; jIdx < len(s.jurisdictions); jIdx++ {
+									if s.jurisdictions[jIdx].CityID == gAff.CityID {
+										jurEnt := s.jurisdictions[jIdx].Entity
+										if world.Alive(jurEnt) && world.Has(jurEnt, jurID) {
+											jurComp := (*components.JurisdictionComponent)(world.Get(jurEnt, jurID))
+											jurComp.Corruption += 1
+										}
+										break
+									}
+								}
+							}
 						}
-
-						// Transfer wealth to enforcing City's treasury (we map it to the Guard's employer abstractly for now, or just burn it out of the system)
 					}
 
-					// Banishment
-					if world.Has(c.Entity, affID) && gAff != nil {
-						cAff := (*components.Affiliation)(world.Get(c.Entity, affID))
-						// Remove CityID if it belongs to the enforcing Guard's city
-						if cAff.CityID == gAff.CityID {
-							cAff.CityID = 0
-						}
-					}
+					if !bribed {
+						// Apply standard Punishment (Banishment & Fines)
+						if world.Has(c.Entity, needsID) {
+							cNeeds := (*components.Needs)(world.Get(c.Entity, needsID))
+							crimeMarker := (*components.CrimeMarker)(world.Get(c.Entity, crimeID))
 
-					// Force fleeing behavior
-					if world.Has(c.Entity, velID) {
-						cVel := (*components.Velocity)(world.Get(c.Entity, velID))
-						// Send flying outward
-						if dx == 0 && dy == 0 { dx = 1 } // prevent div by zero
-						cVel.X = -dx * 2.0
-						cVel.Y = -dy * 2.0
+							fine := float32(crimeMarker.Bounty)
+							if cNeeds.Wealth >= fine {
+								cNeeds.Wealth -= fine
+							} else {
+								cNeeds.Wealth = 0
+							}
+						}
+
+						// Banishment
+						if world.Has(c.Entity, affID) && gAff != nil {
+							cAff := (*components.Affiliation)(world.Get(c.Entity, affID))
+							// Remove CityID if it belongs to the enforcing Guard's city
+							if cAff.CityID == gAff.CityID {
+								cAff.CityID = 0
+							}
+						}
+
+						// Force fleeing behavior
+						if world.Has(c.Entity, velID) {
+							cVel := (*components.Velocity)(world.Get(c.Entity, velID))
+							// Send flying outward
+							if dx == 0 && dy == 0 { dx = 1 } // prevent div by zero
+							cVel.X = -dx * 2.0
+							cVel.Y = -dy * 2.0
+						}
 					}
 
 					// Queue CrimeMarker for removal (cannot remove component while query is active)

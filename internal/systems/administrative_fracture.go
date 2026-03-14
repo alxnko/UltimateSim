@@ -26,6 +26,7 @@ type AdministrativeFractureSystem struct {
 	posID     ecs.ID
 	countryID ecs.ID
 	capitalID ecs.ID
+	jurID     ecs.ID
 }
 
 // NewAdministrativeFractureSystem initializes the administrative fracture evaluation.
@@ -38,7 +39,13 @@ func NewAdministrativeFractureSystem(world *ecs.World) *AdministrativeFractureSy
 		posID:     ecs.ComponentID[components.Position](world),
 		countryID: ecs.ComponentID[components.CountryComponent](world),
 		capitalID: ecs.ComponentID[components.CapitalComponent](world),
+		jurID:     ecs.ComponentID[components.JurisdictionComponent](world),
 	}
+}
+
+type capitalData struct {
+	pos        *components.Position
+	corruption uint32
 }
 
 // Update executes the core loop.
@@ -50,14 +57,24 @@ func (s *AdministrativeFractureSystem) Update(world *ecs.World) {
 		return
 	}
 
-	// 1. Build a flat map of Capital Positions for O(1) distance matching
-	capitalPositions := make(map[uint32]*components.Position)
+	// 1. Build a flat map of Capital data for O(1) distance matching
+	capitalDataMap := make(map[uint32]capitalData)
 
 	capitalQuery := s.world.Query(filter.All(s.capitalID, s.countryID, s.posID, s.affilID))
 	for capitalQuery.Next() {
 		affil := (*components.Affiliation)(capitalQuery.Get(s.affilID))
 		pos := (*components.Position)(capitalQuery.Get(s.posID))
-		capitalPositions[affil.CountryID] = pos
+
+		var corruption uint32 = 0
+		if s.world.Has(capitalQuery.Entity(), s.jurID) {
+			jur := (*components.JurisdictionComponent)(capitalQuery.Get(s.jurID))
+			corruption = jur.Corruption
+		}
+
+		capitalDataMap[affil.CountryID] = capitalData{
+			pos:        pos,
+			corruption: corruption,
+		}
 	}
 
 	maxDistSq := float32(MaxAdministrativeRange * MaxAdministrativeRange)
@@ -69,16 +86,19 @@ func (s *AdministrativeFractureSystem) Update(world *ecs.World) {
 
 		// If the village belongs to a Country
 		if affil.CountryID != 0 {
-			if capPos, exists := capitalPositions[affil.CountryID]; exists {
+			if capData, exists := capitalDataMap[affil.CountryID]; exists {
 				pos := (*components.Position)(villageQuery.Get(s.posID))
 
 				// Calculate distance squared to capital
-				dx := pos.X - capPos.X
-				dy := pos.Y - capPos.Y
+				dx := pos.X - capData.pos.X
+				dy := pos.Y - capData.pos.Y
 				distSq := dx*dx + dy*dy
 
+				// Phase 22.1: The Corruption Engine
+				effectiveDistSq := distSq * (1.0 + float32(capData.corruption)*0.1)
+
 				// Fracture Logic: Unilaterally withdraw from Union/Country
-				if distSq > maxDistSq {
+				if effectiveDistSq > maxDistSq {
 					affil.CountryID = 0
 				}
 			} else {

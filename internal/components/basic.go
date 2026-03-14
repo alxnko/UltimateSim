@@ -398,6 +398,7 @@ type PassengerComponent struct {
 type JurisdictionComponent struct {
 	RadiusSquared    float32 // Squared radius mapped around the entity's Position
 	IllegalActionIDs uint32  // Bitmask of interaction types that are considered crimes (e.g. 1<<InteractionAssault)
+	Corruption       uint32  // Phase 22.1: The Corruption Engine
 }
 
 // Phase 18.2: Detection & The Guard System
