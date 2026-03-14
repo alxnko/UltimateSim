@@ -153,10 +153,17 @@ func TestComponentSizes(t *testing.T) {
 	}
 
 	// Phase 13.1: Market Component Size
-	// MarketComponent: 4 * float32 (4) = 16 bytes
+	// MarketComponent: 5 * float32 (4) + uint32 (4) = 24 bytes
 	marketSize := unsafe.Sizeof(MarketComponent{})
-	if marketSize != 16 {
-		t.Errorf("MarketComponent struct size should be exactly 16 bytes, got %d", marketSize)
+	if marketSize != 24 {
+		t.Errorf("MarketComponent struct size should be exactly 24 bytes, got %d", marketSize)
+	}
+
+	// Phase 24.1: Labor Union Sizes
+	// StrikeMarker: uint64 (8) = 8 bytes
+	strikeMarkerSize := unsafe.Sizeof(StrikeMarker{})
+	if strikeMarkerSize != 8 {
+		t.Errorf("StrikeMarker struct size should be exactly 8 bytes, got %d", strikeMarkerSize)
 	}
 
 	// Phase 07.5: Belief Component Sizes

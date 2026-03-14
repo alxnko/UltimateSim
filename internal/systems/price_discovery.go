@@ -48,6 +48,12 @@ func (s *PriceDiscoverySystem) Update(world *ecs.World) {
 		ironDemand := float32(pop.Count) * 1.0
 		market.IronPrice = 1.0 * (ironDemand / (float32(storage.Iron) + 1.0))
 
+		// Phase 24.1: Dynamic Wage Discovery (Labor Union Engine)
+		// Wages scale inversely to population representing labor scarcity.
+		// Ideal population assumed to be 100.
+		idealPopulation := float32(100.0)
+		market.WageRate = 1.0 * (idealPopulation / (float32(pop.Count) + 1.0))
+
 		// Phase 15.4: Organic Inflation via Debasement
 		// PriceDiscoverySystem does not know about physical coins locally,
 		// but InflationSystem forcibly modifies MarketComponent afterwards in the pipeline.
