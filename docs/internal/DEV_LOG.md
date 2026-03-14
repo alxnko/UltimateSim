@@ -1,6 +1,7 @@
 # Developer Knowledge Base: Internal Activity Log
 
 ## Current Phase / Task
+- *Completed Phase 20.2: Abstract Physics (The "Magic" Expansion)*
 - *Completed Phase 20.1: Ideological Warfare*
 - *Completed Phase 19.2: Ecological Drift (Climate Change)*
 - *Completed Phase 19.1: Deep Genetics (GenomeComponent)*
@@ -48,6 +49,7 @@
 - **Phase 05.4: Birth & Genetics Math**: Implemented `BirthSystem` (`internal/systems/birth.go`) and expanded `PopulationComponent` with a dynamic `Citizens []CitizenData` array. `CitizenData` strictly follows DOD by embedding `Genetics` (four `uint8` fields) and `BaseTraits` (`uint32`). This creates a perfectly flat 8-byte structure, guaranteeing cache alignment and avoiding hidden compiler padding. The `BirthSystem` deterministically processes parent traits by sequentially iterating over arrays, maximizing CPU cache locality during the biological inheritance algorithms.
 
 ## Design Decision Log (Phase 20):
+- **Phase 20.2: Abstract Physics (The "Magic" Expansion)**: Added `ManaData` array to `MapGrid` in `internal/engine/map_grid.go` ensuring it runs in a strictly parallel array to maintain L1/L2 cache speeds across the grid. Added `JobCaster` to `JobComponent` (uint8) definitions. Implemented `CastingSystem` (`internal/systems/casting.go`) simulating numerical abstract "magic" logic where Casters reading `ManaData` >= 50 at their coordinate immediately drain it to mathematically spike the `Temperature` variable of their local tile, hitting max limits deterministically. The query parses sequentially without allocations. Verified determinism with `-count=2` in E2E tests inside `casting_test.go`.
 - **Phase 20.1: Ideological Warfare (`PreacherSystem` & `HolyWarSystem`)**: Implemented `JobPreacher` (uint8) tracking and added `CrusaderEntity` along with `CrusadeComponent`. To ensure complete DOD compliance, `CrusadeComponent` maps `TargetCityID` strictly to `uint32`, bypassing any pointer logic or Go map tracking. Developed `PreacherSystem` (`internal/systems/preacher.go`) which extracts valid actor `nodeData` into a flat sequential slice and computes a vast Region-sized O(N^2) suppression radius using squared distance checks. This preserves L1/L2 hits during the proximity loop without allocating dynamic sizes. Developed `HolyWarSystem` (`internal/systems/holy_war.go`) which mathematically evaluates diverging ideological paths between cities. Crusader logic operates natively by sequentially parsing `float32` arrays to compute pure DOD math movement without nesting external `pathfinding` modules. Validated global determinism with tests mapped across multiple ticks running on standard Seed sequences.
 
 ## Design Decision Log (Phase 19):
