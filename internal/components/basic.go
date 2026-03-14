@@ -25,6 +25,11 @@ const (
 // Phase 09.5: Item Inheritance Threshold
 const ExtremePrestigeThreshold uint32 = 100
 
+// Belief IDs
+const (
+	BeliefXenophobia uint32 = 100 // Phase 20.3: Traumatic Traditions
+)
+
 // Interaction Types Constants
 const (
 	InteractionGossip   uint8 = 1
@@ -412,6 +417,8 @@ type JurisdictionComponent struct {
 	IllegalActionIDs uint32  // Bitmask of interaction types that are considered crimes (e.g. 1<<InteractionAssault)
 	Corruption       uint32  // Phase 22.1: The Corruption Engine
 	BannedSecretID   uint32  // Phase 04.5: The Epistemological Layer (Propaganda Erasure Target)
+	Trauma           uint16  // Phase 20.3: Traumatic Traditions
+	_                uint16  // Padding to maintain 4-byte alignment
 }
 
 // Phase 18.2: Detection & The Guard System

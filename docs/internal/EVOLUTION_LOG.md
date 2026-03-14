@@ -2,6 +2,19 @@
 
 This file tracks autonomous additions to the total simulation that bridge gaps identified in the vision.
 
+## Evolution: Phase 20.3 - Traumatic Traditions (Ideological Xenophobia)
+- **Goal:** Execute the "Systemic Emergence" objective by bridging Biological entropy with the Memetic engine ("Massive societal trauma (plague) causes algorithmic Traumatic Traditions (e.g., permanent Xenophobia)").
+- **DOD Implementation:**
+  - Expanded `JurisdictionComponent` in `internal/components/basic.go` to include a `Trauma uint16` counter, correctly adjusting tests to ensure perfect 4-byte padding bounds.
+  - Modified `DeathSystem` to explicitly increment the `Trauma` value of any local `JurisdictionComponent` when an entity dies of starvation or plague (via `Needs.Food <= 0`).
+  - Added `TraumaticTraditionsSystem` to automatically assign a `BeliefXenophobia` component (Weight: 100) to surviving NPCs in regions where the `Trauma` threshold is exceeded.
+  - Added `XenophobiaSystem` to process entities with `BeliefXenophobia`. If they interact with someone of a different `LanguageID` (Foreigner), they instantly assign a `-100` negative hook against them using the `SparseHookGraph`.
+- **The Butterfly Effect:**
+  - When a Plague or Famine hits a jurisdiction, a massive die-off occurs.
+  - The survivors are traumatized and become Xenophobic.
+  - If a foreign trade Caravan or migrating wanderer enters the traumatized city, the Xenophobes instantly form a massive grudge against them.
+  - This natively hooks into `BloodFeudSystem` (Phase 23.1), causing the traumatized citizens to organically murder the foreigners on sight, subsequently generating generational Clan feuds and triggering international Justice (Phase 18) interventions. Natively linking Biology, Epistemology, and Justice without hardcoded events.
+
 ## Evolution: Phase 23.1 - The Blood Feud Engine
 - **Goal:** Execute the "Systemic Emergence" objective by implementing a completely new sub-system requested in the vision ("Blood Feuds: Unresolved murders before a state exists trigger Blood Feuds. The ECS memory ensures grandchildren of rival clans still possess deep Negative Hooks, leading to endless frontier violence.")
 - **DOD Implementation:**

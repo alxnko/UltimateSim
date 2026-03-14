@@ -1,0 +1,162 @@
+package systems
+
+import (
+	"testing"
+
+	"github.com/ALXNKO/UltimateSim/internal/components"
+	"github.com/ALXNKO/UltimateSim/internal/engine"
+	"github.com/mlange-42/arche/ecs"
+)
+
+// Phase 20.3: Traumatic Traditions Testing
+// End-to-End Test ensuring that Plague -> Death -> Trauma -> Belief -> Xenophobia -> Grudge
+
+func TestTraumaticTraditions_Integration(t *testing.T) {
+	world := ecs.NewWorld()
+	hookGraph := engine.NewSparseHookGraph()
+
+	// Initialize components
+	posID := ecs.ComponentID[components.Position](&world)
+	identID := ecs.ComponentID[components.Identity](&world)
+	belID := ecs.ComponentID[components.BeliefComponent](&world)
+	cultureID := ecs.ComponentID[components.CultureComponent](&world)
+	jurID := ecs.ComponentID[components.JurisdictionComponent](&world)
+	needsID := ecs.ComponentID[components.Needs](&world)
+	affID := ecs.ComponentID[components.Affiliation](&world)
+
+	// Create a Jurisdiction for our city
+	city := world.NewEntity()
+	world.Add(city, jurID, posID)
+	jur := (*components.JurisdictionComponent)(world.Get(city, jurID))
+	jur.RadiusSquared = 100.0
+	jur.Trauma = 0
+
+	cityPos := (*components.Position)(world.Get(city, posID))
+	cityPos.X = 0
+	cityPos.Y = 0
+
+	// Create two citizens in the city
+	citizen1 := world.NewEntity()
+	world.Add(citizen1, posID, identID, belID, cultureID, needsID, affID)
+
+	ident1 := (*components.Identity)(world.Get(citizen1, identID))
+	ident1.ID = 1
+	pos1 := (*components.Position)(world.Get(citizen1, posID))
+	pos1.X = 1
+	pos1.Y = 1
+	culture1 := (*components.CultureComponent)(world.Get(citizen1, cultureID))
+	culture1.LanguageID = 100 // Local language
+
+	needs1 := (*components.Needs)(world.Get(citizen1, needsID))
+	needs1.Food = 0 // Starve to trigger trauma
+
+	citizen2 := world.NewEntity()
+	world.Add(citizen2, posID, identID, belID, cultureID, needsID, affID)
+
+	ident2 := (*components.Identity)(world.Get(citizen2, identID))
+	ident2.ID = 2
+	pos2 := (*components.Position)(world.Get(citizen2, posID))
+	pos2.X = -1
+	pos2.Y = -1
+	culture2 := (*components.CultureComponent)(world.Get(citizen2, cultureID))
+	culture2.LanguageID = 100 // Local language
+
+	needs2 := (*components.Needs)(world.Get(citizen2, needsID))
+	needs2.Food = 100 // Survives
+
+	// Create systems
+	deathSys := NewDeathSystem(&world)
+	traumaSys := NewTraumaticTraditionsSystem(&world)
+	xenoSys := NewXenophobiaSystem(&world, hookGraph)
+
+	// Step 1: Trigger Death System to kill citizen1 and increase trauma
+	deathSys.Update(&world)
+
+	if world.Alive(citizen1) {
+		t.Errorf("Citizen 1 did not die")
+	}
+
+	if jur.Trauma != 1 {
+		t.Errorf("Expected Trauma 1, got %d", jur.Trauma)
+	}
+
+	// Manually spike Trauma to simulate mass casualty event (like a Plague)
+	jur.Trauma = 15
+
+	// Step 2: Traumatic Traditions System should infect citizen2 with Xenophobia
+	// It runs every 50 ticks
+	for i := 0; i < 50; i++ {
+		traumaSys.Update(&world)
+	}
+
+	bel2 := (*components.BeliefComponent)(world.Get(citizen2, belID))
+	hasXeno := false
+	for _, b := range bel2.Beliefs {
+		if b.BeliefID == components.BeliefXenophobia {
+			hasXeno = true
+		}
+	}
+	if !hasXeno {
+		t.Errorf("Citizen 2 did not develop Xenophobia despite high Trauma")
+	}
+
+	// Step 3: Spawn a foreigner
+	foreigner := world.NewEntity()
+	world.Add(foreigner, posID, identID, belID, cultureID, needsID, affID)
+
+	identF := (*components.Identity)(world.Get(foreigner, identID))
+	identF.ID = 99
+	posF := (*components.Position)(world.Get(foreigner, posID))
+	posF.X = 0 // Closer to citizen2 (-1, -1) to trigger distSq < 10
+	posF.Y = 0
+	cultureF := (*components.CultureComponent)(world.Get(foreigner, cultureID))
+	cultureF.LanguageID = 999 // Foreign language
+
+	// Initialize their belief component to avoid nil slices
+	belF := (*components.BeliefComponent)(world.Get(foreigner, belID))
+	belF.Beliefs = []components.Belief{}
+
+	// Update positions directly to ensure exact distance
+	// Re-fetch pointers because world.NewEntity(foreigner) might have reallocated the memory!
+	pos2 = (*components.Position)(world.Get(citizen2, posID))
+	pos2.X = 0
+	pos2.Y = 0
+
+	posF = (*components.Position)(world.Get(foreigner, posID))
+	posF.X = 1
+	posF.Y = 1
+
+	culture2 = (*components.CultureComponent)(world.Get(citizen2, cultureID))
+	culture2.LanguageID = 100 // Restore Local language just in case it was overwritten
+
+	cultureF = (*components.CultureComponent)(world.Get(foreigner, cultureID))
+	cultureF.LanguageID = 999 // Restore Foreign language
+
+	ident2 = (*components.Identity)(world.Get(citizen2, identID))
+	ident2.ID = 2
+
+	identF = (*components.Identity)(world.Get(foreigner, identID))
+	identF.ID = 99
+
+	xenoSys.tickCounter = 9
+	xenoSys.Update(&world)
+
+	// Check if XenophobiaSystem actually queries our entities properly
+	filter := ecs.All(posID, identID, belID, cultureID)
+	q := world.Query(filter)
+	count := 0
+	for q.Next() {
+		count++
+	}
+	if count < 2 {
+		t.Errorf("XenophobiaSystem filter returned %d entities, expected at least 2", count)
+	}
+
+	// Step 4: Verify that a massive negative hook was generated by the Xenophobe against the foreigner
+	grudge := hookGraph.GetHook(ident2.ID, identF.ID)
+
+	// Print culture to see what they are in xenophobia system
+	if grudge > -50 {
+		t.Errorf("Expected massive negative hook (grudge <= -50) against foreigner, got %d. xenophobe: %v, pos2: %v, posF: %v. culture2: %v, cultureF: %v. bel2: %v. ident2: %d, identF: %d", grudge, hasXeno, pos2, posF, culture2, cultureF, bel2.Beliefs, ident2.ID, identF.ID)
+	}
+}

@@ -23,6 +23,7 @@ type DeathSystem struct {
 	filter       ecs.Filter
 	toRemove     []ecs.Entity
 	itemsToSpawn []itemSpawnData
+	deadPos      []components.Position // Phase 20.3: Used for mapping trauma
 }
 
 // NewDeathSystem creates a new DeathSystem.
@@ -39,6 +40,7 @@ func NewDeathSystem(world *ecs.World) *DeathSystem {
 		filter:       &mask,
 		toRemove:     make([]ecs.Entity, 0, 100),
 		itemsToSpawn: make([]itemSpawnData, 0, 10),
+		deadPos:      make([]components.Position, 0, 100),
 	}
 }
 
@@ -53,6 +55,7 @@ func (s *DeathSystem) Update(world *ecs.World) {
 	// Reset the slice length to 0, retaining capacity to avoid GC pressure
 	s.toRemove = s.toRemove[:0]
 	s.itemsToSpawn = s.itemsToSpawn[:0]
+	s.deadPos = s.deadPos[:0]
 
 	query := world.Query(s.filter)
 	for query.Next() {
@@ -60,6 +63,14 @@ func (s *DeathSystem) Update(world *ecs.World) {
 
 		if needs.Food <= 0 {
 			s.toRemove = append(s.toRemove, query.Entity())
+
+			var posX, posY float32
+			if query.Has(positionID) {
+				pos := (*components.Position)(query.Get(positionID))
+				posX = pos.X
+				posY = pos.Y
+				s.deadPos = append(s.deadPos, *pos)
+			}
 
 			// Phase 09.5: Item Inheritance logic
 			if query.Has(legacyID) {
@@ -70,13 +81,6 @@ func (s *DeathSystem) Update(world *ecs.World) {
 						ident := (*components.Identity)(query.Get(identityID))
 						registry := engine.GetSecretRegistry()
 						nameID = registry.RegisterSecret(ident.Name)
-					}
-
-					var posX, posY float32
-					if query.Has(positionID) {
-						pos := (*components.Position)(query.Get(positionID))
-						posX = pos.X
-						posY = pos.Y
 					}
 
 					s.itemsToSpawn = append(s.itemsToSpawn, itemSpawnData{
@@ -91,6 +95,44 @@ func (s *DeathSystem) Update(world *ecs.World) {
 			// log root causes to standard output
 			// ecs.Entity formats safely to string via %v
 			log.Printf("Entity %v despawned due to starvation (Food <= 0)", query.Entity())
+		}
+	}
+
+	// Phase 20.3: Traumatic Traditions
+	// Map dead positions to jurisdictions to increment Trauma
+	if len(s.deadPos) > 0 {
+		jurID := ecs.ComponentID[components.JurisdictionComponent](world)
+		posID := ecs.ComponentID[components.Position](world)
+		jurQuery := world.Query(ecs.All(jurID, posID))
+
+		type jurData struct {
+			comp *components.JurisdictionComponent
+			x    float32
+			y    float32
+		}
+		jurisdictions := make([]jurData, 0, 20)
+		for jurQuery.Next() {
+			jur := (*components.JurisdictionComponent)(jurQuery.Get(jurID))
+			p := (*components.Position)(jurQuery.Get(posID))
+			jurisdictions = append(jurisdictions, jurData{
+				comp: jur,
+				x:    p.X,
+				y:    p.Y,
+			})
+		}
+
+		for _, dp := range s.deadPos {
+			for i := 0; i < len(jurisdictions); i++ {
+				j := &jurisdictions[i]
+				dx := dp.X - j.x
+				dy := dp.Y - j.y
+				if dx*dx+dy*dy <= j.comp.RadiusSquared {
+					if j.comp.Trauma < 65535 {
+						j.comp.Trauma++
+					}
+					break
+				}
+			}
 		}
 	}
 
