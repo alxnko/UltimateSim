@@ -449,3 +449,11 @@ type CrusaderEntity struct{}
 type CrusadeComponent struct {
 	TargetCityID uint32
 }
+
+// Phase 19.4: Advanced Biology (Vitals)
+type VitalsComponent struct {
+	Stamina       float32
+	Blood         float32
+	Pain          float32
+	Consciousness float32
+}

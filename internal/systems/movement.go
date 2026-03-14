@@ -46,6 +46,7 @@ func (s *MovementSystem) Update(world *ecs.World) {
 
 	// Phase 11.2: Check if possessed (to skip AI pathing)
 	possessedID := ecs.ComponentID[components.Possessed](world)
+	vitalsID := ecs.ComponentID[components.VitalsComponent](world)
 
 	// Iterate over all entities matching the filter
 	query := world.Query(s.filter)
@@ -126,6 +127,31 @@ func (s *MovementSystem) Update(world *ecs.World) {
 		}
 
 		// Apply velocity to position
+
+		// Phase 19.4: Advanced Biology (Vitals integration)
+		if query.Has(vitalsID) {
+			vitals := (*components.VitalsComponent)(query.Get(vitalsID))
+
+			if vitals.Consciousness <= 0 {
+				vel.X = 0
+				vel.Y = 0
+			} else {
+				// Stamina drain if moving
+				if vel.X != 0 || vel.Y != 0 {
+					vitals.Stamina -= 0.1
+					if vitals.Stamina < 0 {
+						vitals.Stamina = 0
+					}
+				}
+
+				// Apply movement penalty if low stamina
+				if vitals.Stamina < 10.0 {
+					vel.X *= 0.5
+					vel.Y *= 0.5
+				}
+			}
+		}
+
 		pos.X += vel.X
 		pos.Y += vel.Y
 

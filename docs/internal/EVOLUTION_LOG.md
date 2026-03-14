@@ -86,3 +86,17 @@ This file tracks autonomous additions to the total simulation that bridge gaps i
   - Unpaid workers quit and structurally receive a `StrikeMarker`.
   - When a business replaces the striker with a new NPC (a "Scab"), the `LaborUnionSystem` mathematically hooks them together using `engine.SparseHookGraph`, injecting a massive `-50` relationship hook.
   - This natively triggers the `BloodFeudSystem` logic. The starving, unpaid Striker procedurally murders the Scab in the street. This action triggers `JusticeSystem` logic, bringing Guards into the conflict natively.
+
+## Evolution: Phase 19.4 - Advanced Biology (Vitals)
+- **Goal:** Execute the "Systemic Emergence" objective by implementing the requested Depth feature: "Replacing a simple Health component with Vitals including stamina, blood, and pain."
+- **DOD Implementation:**
+  - Added `VitalsComponent` in `internal/components/basic.go` with 4 `float32` fields (Stamina, Blood, Pain, Consciousness), strictly adhering to 16-byte bounds.
+  - Verified sizes in `basic_test.go` using `unsafe.Sizeof` to ensure cache-line packing.
+  - Modified `MovementSystem` to drain Stamina actively when moving, halve speeds on low Stamina, and completely intercept physical velocity if Consciousness <= 0.
+  - Modified `MetabolismSystem` to detect starvation (`Food == 0`), applying massive Pain buildup, leading to an inevitable collapse of Consciousness.
+- **The Butterfly Effect:**
+  - Connects Physicality (Movement), Biology (Metabolism), and Economics (Food prices).
+  - If food is expensive and an NPC starves, they experience massive Pain.
+  - When Pain crosses 50.0, Consciousness rapidly drains.
+  - Once unconscious, the `MovementSystem` intercepts and forces the velocity vector to 0.
+  - The NPC is paralyzed, unable to trade or work, organically escalating their demise entirely through emergent systemic intersection rather than hardcoded event triggers. Verified completely via deterministic `go test ./internal/systems -run TestVitalsSystem_Integration`.

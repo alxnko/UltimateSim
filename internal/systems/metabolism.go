@@ -36,6 +36,7 @@ func NewMetabolismSystem(world *ecs.World, calendar *engine.Calendar) *Metabolis
 func (s *MetabolismSystem) Update(world *ecs.World) {
 	needsID := ecs.ComponentID[components.Needs](world)
 	geneticsID := ecs.ComponentID[components.GenomeComponent](world)
+	vitalsID := ecs.ComponentID[components.VitalsComponent](world)
 
 	query := world.Query(s.filter)
 	for query.Next() {
@@ -64,6 +65,34 @@ func (s *MetabolismSystem) Update(world *ecs.World) {
 		// Ensure it doesn't drop below 0
 		if needs.Food < 0 {
 			needs.Food = 0
+		}
+
+		// Phase 19.4: Advanced Biology (The Butterfly Effect: Starvation -> Pain -> Collapse)
+		if query.Has(vitalsID) {
+			vitals := (*components.VitalsComponent)(query.Get(vitalsID))
+
+			if needs.Food == 0 {
+				vitals.Pain += 0.5
+			} else {
+				// Recover pain slowly if fed
+				vitals.Pain -= 0.1
+				if vitals.Pain < 0 {
+					vitals.Pain = 0
+				}
+			}
+
+			if vitals.Pain > 50.0 {
+				vitals.Consciousness -= 0.5
+				if vitals.Consciousness < 0 {
+					vitals.Consciousness = 0
+				}
+			} else {
+				// Recover consciousness slowly if pain is low
+				vitals.Consciousness += 0.2
+				if vitals.Consciousness > 100.0 {
+					vitals.Consciousness = 100.0
+				}
+			}
 		}
 
 		// Optional: We could deduct rest and safety too, but sticking to Phase 3.3 Food logic
