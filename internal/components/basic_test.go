@@ -237,7 +237,15 @@ func TestComponentSizes(t *testing.T) {
 
 func TestDesperationComponentSize(t *testing.T) {
 	desperationSize := unsafe.Sizeof(DesperationComponent{})
+	jurisdictionSize := unsafe.Sizeof(JurisdictionComponent{})
+	ledgerSize := unsafe.Sizeof(LedgerComponent{})
 	if desperationSize > 1 {
 		t.Errorf("DesperationComponent too large! Got %d bytes, expected <= 1", desperationSize)
+	}
+	if jurisdictionSize != 16 {
+		t.Errorf("JurisdictionComponent size broke DOD alignment: expected 16, got %d", jurisdictionSize)
+	}
+	if ledgerSize != 24 {
+		t.Errorf("LedgerComponent size broke DOD alignment: expected 24, got %d", ledgerSize)
 	}
 }

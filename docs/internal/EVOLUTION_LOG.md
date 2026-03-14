@@ -23,3 +23,14 @@ This file tracks autonomous additions to the total simulation that bridge gaps i
   - If a wealthy NPC commits a crime or is marked for justice, they now Bribe the guard natively (losing wealth, ignoring banishment).
   - This local bribe generates a single `Corruption` point on the Country's Capital.
   - Over time, high `Corruption` acts as a frictional multiplier in `AdministrativeFractureSystem` against distance, causing once perfectly stable, distant sub-cities to prematurely secede, fracturing sprawling empires purely via localized street-level bribery.
+
+## Evolution: Phase 04.5 - The Epistemological Layer (Propaganda Erasure)
+- **Goal:** Execute the "Systemic Emergence" objective by implementing a completely new sub-system requested in the vision ("Conquerors can enact Propaganda & Erasure by killing elders and burning ledgers, actively overriding the historical memory of the younger generation").
+- **DOD Implementation:**
+  - Expanded `JurisdictionComponent` to include `BannedSecretID uint32` while maintaining exact 16-byte alignment.
+  - Added `LedgerComponent` (24-byte slice wrapper) and `Ledger` tag component to physicalize history into items.
+  - Created `PropagandaSystem` which iterates in O(N^2) against `Jurisdiction` entities mapping young and old NPCs, triggering memory slice truncation for the youth and O(1) Needs starvation execution for the elders.
+- **The Butterfly Effect:**
+  - Plugs deeply into Phase 18 (Justice/Jurisdiction), Phase 19 (Aging), Phase 03 (Death), and Phase 07 (Information Leakage).
+  - An administration can actively "ban" a secret in a radius. If an elder knows it, the state kills them. If a youth knows it, the state mind-wipes them. If a ledger (book) records it, the state burns it.
+  - Verified 100% deterministic through `go test ./internal/systems -v -run TestPropagandaSystem_Integration -count=2` without locking Arche-Go internal queries dynamically.

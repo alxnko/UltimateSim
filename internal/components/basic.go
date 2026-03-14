@@ -71,6 +71,17 @@ type Needs struct {
 }
 
 // Position component
+
+// Phase 04.5: The Epistemological Layer (Physical History)
+
+// Ledger is a tag component identifying physical records on the map.
+type Ledger struct{}
+
+// LedgerComponent represents materialized information (history, propaganda).
+type LedgerComponent struct {
+	Secrets []uint32
+}
+
 type Position struct {
 	X float32
 	Y float32
@@ -399,6 +410,7 @@ type JurisdictionComponent struct {
 	RadiusSquared    float32 // Squared radius mapped around the entity's Position
 	IllegalActionIDs uint32  // Bitmask of interaction types that are considered crimes (e.g. 1<<InteractionAssault)
 	Corruption       uint32  // Phase 22.1: The Corruption Engine
+	BannedSecretID   uint32  // Phase 04.5: The Epistemological Layer (Propaganda Erasure Target)
 }
 
 // Phase 18.2: Detection & The Guard System
