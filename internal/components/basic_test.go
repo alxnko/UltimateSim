@@ -234,3 +234,10 @@ func TestComponentSizes(t *testing.T) {
 		t.Errorf("ImmunityTag struct size too large: %d bytes (expected <= 24)", immunitySize)
 	}
 }
+
+func TestDesperationComponentSize(t *testing.T) {
+	desperationSize := unsafe.Sizeof(DesperationComponent{})
+	if desperationSize > 1 {
+		t.Errorf("DesperationComponent too large! Got %d bytes, expected <= 1", desperationSize)
+	}
+}

@@ -57,6 +57,7 @@ func main() {
 	tickManager.AddSystem(systems.NewSpoilageSystem(), engine.PhaseResolution)
 	tickManager.AddSystem(systems.NewRustSystem(), engine.PhaseResolution)
 	// --- PHASE: AI ---
+	tickManager.AddSystem(systems.NewDesperationSystem(world), engine.PhaseAI)
 	tickManager.AddSystem(systems.NewWanderSystem(world, grid, pathQueue), engine.PhaseAI)
 	tickManager.AddSystem(systems.NewNavalRoutingSystem(world, grid, pathQueue, calendar), engine.PhaseAI)
 
