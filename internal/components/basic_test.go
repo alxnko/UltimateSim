@@ -198,6 +198,19 @@ func TestComponentSizes(t *testing.T) {
 		t.Errorf("LoanContractComponent struct size too large: %d bytes (expected <= 24)", loanSize)
 	}
 
+	// Phase 15.3: CurrencyComponent
+	// IssuerID uint32 (4) + Value float32 (4) + Debasement float32 (4) = 12 bytes
+	currencySize := unsafe.Sizeof(CurrencyComponent{})
+	if currencySize > 12 {
+		t.Errorf("CurrencyComponent struct size too large: %d bytes (expected <= 12)", currencySize)
+	}
+
+	// Phase 16.1: CountryComponent
+	// StandardCurrencyID uint32 (4) + Debasement float32 (4) = 8 bytes
+	countrySize := unsafe.Sizeof(CountryComponent{})
+	if countrySize > 8 {
+		t.Errorf("CountryComponent struct size too large: %d bytes (expected <= 8)", countrySize)
+	}
 	// Phase 10.2: Bureaucratic Delay Components
 	orderEntitySize := unsafe.Sizeof(OrderEntity{})
 	if orderEntitySize > 0 {

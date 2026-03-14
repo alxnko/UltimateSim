@@ -47,5 +47,9 @@ func (s *PriceDiscoverySystem) Update(world *ecs.World) {
 		// Iron demand
 		ironDemand := float32(pop.Count) * 1.0
 		market.IronPrice = 1.0 * (ironDemand / (float32(storage.Iron) + 1.0))
+
+		// Phase 15.4: Organic Inflation via Debasement
+		// PriceDiscoverySystem does not know about physical coins locally,
+		// but InflationSystem forcibly modifies MarketComponent afterwards in the pipeline.
 	}
 }
