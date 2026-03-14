@@ -31,6 +31,7 @@ const (
 	InteractionLanguage uint8 = 2 // Phase 07.3: Linguistic Drift
 	InteractionAssault  uint8 = 3 // Phase 18.1: Law Definitions
 	InteractionTheft    uint8 = 4 // Phase 18.1: Law Definitions
+	InteractionMurder   uint8 = 5 // Phase 23.1: The Blood Feud Engine
 )
 
 // Identity component

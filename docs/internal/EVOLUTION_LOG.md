@@ -2,6 +2,17 @@
 
 This file tracks autonomous additions to the total simulation that bridge gaps identified in the vision.
 
+## Evolution: Phase 23.1 - The Blood Feud Engine
+- **Goal:** Execute the "Systemic Emergence" objective by implementing a completely new sub-system requested in the vision ("Blood Feuds: Unresolved murders before a state exists trigger Blood Feuds. The ECS memory ensures grandchildren of rival clans still possess deep Negative Hooks, leading to endless frontier violence.")
+- **DOD Implementation:**
+  - Expanded `internal/components/basic.go` with `InteractionMurder uint8 = 5`.
+  - Created `BloodFeudSystem` (`internal/systems/blood_feud.go`) operating on a strict flat iteration over NPC entities to compute squared distances.
+  - Used existing `engine.SparseHookGraph` to dynamically retrieve and spend deep negative hooks efficiently without introducing memory bottlenecks.
+- **The Butterfly Effect:**
+  - Deep grudges (Hook <= -50) automatically trigger murders.
+  - Murder immediately causes generational hatred: all nearby clan members of the victim receive a massive negative hook (-100) against the killer, and a secondary negative hook (-50) against the killer's clan members.
+  - This perfectly binds the Social Layer (Clans/Hooks) with Biology (Death) and Memory (InteractionMurder). Over time, as jurisdictions form (Phase 18 Justice), these generational murders are natively re-contextualized as Crimes, engaging guards and bounties emergently.
+
 ## Evolution: Phase 19.3 - Biological Entropy (Aging)
 - **Goal:** Fulfill the "Biology: aging" requirement from the `vision.md` golden rules, adding an inevitable ceiling to population bloat.
 - **DOD Implementation:**
