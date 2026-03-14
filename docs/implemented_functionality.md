@@ -6,6 +6,9 @@ This document serves as the comprehensive and definitive index of all actually i
 
 ---
 
+## Phase 23: The Blood Feud Engine
+- **Phase 23.1 - Blood Feuds & Generational Hatred**: Implemented `BloodFeudSystem` (`internal/systems/blood_feud.go`) mapping the `SparseHookGraph` to physical violence. NPCs continuously parse nearby entities using cache-friendly flat arrays. If a deep negative hook (`<= -50`) is detected, the NPC logs `InteractionMurder` inside their `Memory` buffer and starves the victim to death instantly (`Needs.Food = 0`). The system then iterates all surrounding clan members of the victim and massively depreciates their hook scores towards the killer and the killer's clan members (`-100` and `-50`, respectively). This forces a "Butterfly Effect" where one grudge spirals into a continuous frontier war.
+
 ## 5. Network (`internal/network`)
 
 - **`Server` (`server.go`)**: The primary multi-protocol orchestration server.
