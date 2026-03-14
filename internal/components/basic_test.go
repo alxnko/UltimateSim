@@ -268,4 +268,9 @@ func TestDesperationComponentSize(t *testing.T) {
 	if ledgerSize != 24 {
 		t.Errorf("LedgerComponent size broke DOD alignment: expected 24, got %d", ledgerSize)
 	}
+
+	vitalsSize := unsafe.Sizeof(VitalsComponent{})
+	if vitalsSize != 16 {
+		t.Errorf("VitalsComponent size broke DOD alignment: expected 16, got %d", vitalsSize)
+	}
 }
