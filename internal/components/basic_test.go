@@ -55,8 +55,8 @@ func TestComponentSanity(t *testing.T) {
 func TestComponentSizes(t *testing.T) {
 	// Verify sizes to enforce DOD flat memory limits
 
-	// Identity: uint64 (8) + string (16) + uint32 (4) = 28 bytes normally, but string can cause padding depending on order.
-	// Actually: uint64 (8), string (16), uint32 (4) -> 28 + 4 padding = 32 bytes on 64-bit architecture
+	// Identity: uint64 (8) + string (16) + uint32 (4) + uint16 (2) = 30 bytes normally, padded to 32 bytes.
+	// Actually: uint64 (8), string (16), uint32 (4), uint16 (2) -> 30 + 2 padding = 32 bytes on 64-bit architecture
 	idSize := unsafe.Sizeof(Identity{})
 	if idSize > 32 {
 		t.Errorf("Identity struct size too large: %d bytes (expected <= 32)", idSize)
@@ -125,10 +125,10 @@ func TestComponentSizes(t *testing.T) {
 		t.Errorf("PopulationComponent struct size too large: %d bytes (expected <= 32)", popSize)
 	}
 
-	// CitizenData: GenomeComponent (12) + uint32 (4) = 16 bytes
+	// CitizenData: GenomeComponent (12) + uint32 (4) + Age (2) + padding (2) = 20 bytes
 	citizenSize := unsafe.Sizeof(CitizenData{})
-	if citizenSize != 16 {
-		t.Errorf("CitizenData struct size should be exactly 16 bytes, got %d", citizenSize)
+	if citizenSize != 20 {
+		t.Errorf("CitizenData struct size should be exactly 20 bytes, got %d", citizenSize)
 	}
 
 	// Phase 05.2: Ruin Component Size
