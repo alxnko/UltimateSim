@@ -106,7 +106,8 @@ func TestJusticeSystem_Sentencing(t *testing.T) {
 	cAff.CityID = 1
 
 	cNeeds := (*components.Needs)(world.Get(criminal, needsID))
-	cNeeds.Wealth = 500.0
+	// Set wealth low enough to avoid bribery (bribe threshold = Bounty * 2.0 = 200.0)
+	cNeeds.Wealth = 150.0
 
 	cCrime := (*components.CrimeMarker)(world.Get(criminal, crimeID))
 	cCrime.Bounty = 100
@@ -148,7 +149,7 @@ func TestJusticeSystem_Sentencing(t *testing.T) {
 	// cNeeds pointer might have been invalidated if archetype changed during Update
 	cNeedsNew := (*components.Needs)(world.Get(criminal, needsID))
 
-	if cNeedsNew.Wealth != 400.0 {
+	if cNeedsNew.Wealth != 50.0 {
 		t.Errorf("Criminal should have been fined 100 wealth, got %f", cNeedsNew.Wealth)
 	}
 

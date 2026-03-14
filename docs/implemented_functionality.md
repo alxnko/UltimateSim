@@ -99,6 +99,9 @@ Raw numerical utilities strictly built for deterministic execution.
 ---
 
 
+## Phase 22: The Corruption Engine
+- **Phase 22.1 - Systemic Bribery & Fracture**: Deeply links Economy, Justice, and Sovereignty. Expanding `JurisdictionComponent` with a `Corruption` counter, `JusticeSystem` allows high-wealth criminals to bribe Guards, bypassing `CrimeMarker` punishment and directly incrementing `Corruption` on the local jurisdiction. The `AdministrativeFractureSystem` dynamically calculates effective physical distances modified by this `Corruption` scalar, natively forcing highly corrupt empires to shatter prematurely as the frictional decay overpowers their administrative grid bounds.
+
 ## Phase 21: Evolutionary System Integration
 - **Phase 21.1 - DesperationSystem**: Links Phase 13 Economy with Phase 18 Justice. Starving NPCs lacking wealth relative to local `MarketComponent` prices build `DesperationComponent.Level`. Once it reaches critical thresholds, they bypass trade loops, forcibly steal from nearest `Village` storages, and log `InteractionTheft`. The `JusticeSystem` naturally parses these events and unleashes guards, causing a completely emergent system response combining Famine, Prices, Crime, and Banishment loops.
 
