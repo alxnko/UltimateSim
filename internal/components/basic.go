@@ -18,6 +18,7 @@ const (
 	JobLumberjack uint8 = 2
 	JobArtisan    uint8 = 3 // A processing job that can be reverted
 	JobGuard      uint8 = 4 // Phase 18.2: The Guard System
+	JobPreacher   uint8 = 5 // Phase 20.1: Ideological Warfare
 )
 
 // Phase 09.5: Item Inheritance Threshold
@@ -395,4 +396,14 @@ type JurisdictionComponent struct {
 type CrimeMarker struct {
 	CrimeLevel uint8
 	Bounty     uint32
+}
+
+// Phase 20.1: Ideological Warfare
+
+// CrusaderEntity is a tag component attached to aggressive entities spawned during a Holy War.
+type CrusaderEntity struct{}
+
+// CrusadeComponent tracks the target city for aggressive spawns.
+type CrusadeComponent struct {
+	TargetCityID uint32
 }
