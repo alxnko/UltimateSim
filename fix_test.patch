@@ -1,0 +1,22 @@
+--- internal/systems/aging_test.go
++++ internal/systems/aging_test.go
+@@ -70,7 +70,8 @@
+	}
+
+	// At this point, running DeathSystem would despawn the entity, proving Integration
+-	deathSys := NewDeathSystem(&world)
++	hooks := engine.NewSparseHookGraph()
++	deathSys := NewDeathSystem(&world, hooks)
+	deathSys.Update(&world)
+
+	if world.Alive(entity) {
+--- internal/systems/traumatic_traditions_test.go
++++ internal/systems/traumatic_traditions_test.go
+@@ -65,7 +65,7 @@
+	needs2.Food = 100 // Survives
+
+	// Create systems
+-	deathSys := NewDeathSystem(&world)
++	deathSys := NewDeathSystem(&world, hookGraph)
+	traumaSys := NewTraumaticTraditionsSystem(&world)
+	xenoSys := NewXenophobiaSystem(&world, hookGraph)

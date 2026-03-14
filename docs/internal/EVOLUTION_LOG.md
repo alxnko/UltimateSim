@@ -100,3 +100,15 @@ This file tracks autonomous additions to the total simulation that bridge gaps i
   - When Pain crosses 50.0, Consciousness rapidly drains.
   - Once unconscious, the `MovementSystem` intercepts and forces the velocity vector to 0.
   - The NPC is paralyzed, unable to trade or work, organically escalating their demise entirely through emergent systemic intersection rather than hardcoded event triggers. Verified completely via deterministic `go test ./internal/systems -run TestVitalsSystem_Integration`.
+
+## Evolution: Phase 25.1 - Social Legacy & Succession Engine
+- **Goal:** Execute the "Systemic Emergence" objective by implementing a missing mechanic from the Vision ("When the player character dies, they continue the legacy as a child, inheriting not just items, but Social Standing and Debts.").
+- **DOD Implementation:**
+  - Expanded `DeathSystem` (`internal/systems/death.go`) to inject `engine.SparseHookGraph` dependency.
+  - Added `heirData` cache to `DeathSystem` struct to strictly avoid ECS structural query locking while accumulating data about dying NPCs.
+  - Added new iterative utility methods `GetAllHooks`, `GetAllIncomingHooks`, and `RemoveAllHooks` directly to the `SparseHookGraph` instance (`internal/engine/sparse_hook_graph.go`).
+- **The Butterfly Effect:**
+  - When an NPC starves or dies of old age, their `Prestige`, `InheritedDebt`, and all `SparseHookGraph` positive/negative relationships are queried.
+  - The system iterates over the entire `Map` looking for a suitable heir containing an identical `FamilyID`.
+  - The matching heir (a child or kin) inherently receives all the outgoing and incoming grudges, and all financial debt, from the parent.
+  - This profoundly binds Phase 23 (Blood Feuds) with Phase 03 (Death), ensuring that grudges outlive single entities and truly persist across generational divides, sparking endless frontier violence entirely driven by DOD logic.

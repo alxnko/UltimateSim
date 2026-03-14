@@ -1,0 +1,19 @@
+--- internal/systems/death_test.go
++++ internal/systems/death_test.go
+@@ -193,7 +193,7 @@
+	cLeg.Prestige = 10
+	cLeg.InheritedDebt = 0
+	cId := (*components.Identity)(world.Get(childEnt, identID))
+-	cId.ID = 102
++	cId.ID = 102
+	cAff := (*components.Affiliation)(world.Get(childEnt, affilID))
+	cAff.FamilyID = 99 // Same family as parent
+
+@@ -201,7 +201,7 @@
+	rNeeds := (*components.Needs)(world.Get(rivalEnt, needsID))
+	rNeeds.Food = 100.0
+	rId := (*components.Identity)(world.Get(rivalEnt, identID))
+-	rId.ID = 201
++	rId.ID = 201
+	rAff := (*components.Affiliation)(world.Get(rivalEnt, affilID))
+	rAff.FamilyID = 88 // Different family

@@ -70,7 +70,8 @@ func TestAgingSystem_ButterflyEffect(t *testing.T) {
 	}
 
 	// At this point, running DeathSystem would despawn the entity, proving Integration
-	deathSys := NewDeathSystem(&world)
+	hooks := engine.NewSparseHookGraph()
+	deathSys := NewDeathSystem(&world, hooks)
 	deathSys.Update(&world)
 
 	if world.Alive(entity) {
