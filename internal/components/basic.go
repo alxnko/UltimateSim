@@ -350,8 +350,9 @@ type CoinEntity struct{}
 
 // CurrencyComponent represents physical coins and their market value.
 type CurrencyComponent struct {
-	IssuerID uint32
-	Value    float32
+	IssuerID   uint32
+	Value      float32
+	Debasement float32
 }
 
 // Phase 16.1: The Country Entity (Macro-State)
@@ -359,6 +360,7 @@ type CurrencyComponent struct {
 // CountryComponent is a higher-level tag attached to a Capital entity that manages sub-affiliations.
 type CountryComponent struct {
 	StandardCurrencyID uint32
+	Debasement         float32
 }
 
 // Phase 16.2: Strategic Unions & Pacts

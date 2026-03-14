@@ -58,3 +58,15 @@ This file tracks autonomous additions to the total simulation that bridge gaps i
   - Plugs deeply into Phase 18 (Justice/Jurisdiction), Phase 19 (Aging), Phase 03 (Death), and Phase 07 (Information Leakage).
   - An administration can actively "ban" a secret in a radius. If an elder knows it, the state kills them. If a youth knows it, the state mind-wipes them. If a ledger (book) records it, the state burns it.
   - Verified 100% deterministic through `go test ./internal/systems -v -run TestPropagandaSystem_Integration -count=2` without locking Arche-Go internal queries dynamically.
+## Evolution: Phase 15.4 - Organic Inflation via Debasement
+- **Goal:** Execute the "Systemic Emergence" objective by implementing the missing Total Simulation mechanic: "If a King debases coinage (mixing lead with gold), NPCs detect it and cause organic Inflation."
+- **DOD Implementation:**
+  - Expanded `CurrencyComponent` and `CountryComponent` in `internal/components/basic.go` to include a `Debasement float32` field, adjusting DOD padding tests accordingly.
+  - Modified `MintingSystem` (Phase 15.3) so that if a Capital entity possesses a `CountryComponent` with `Debasement` > 0, the Iron cost to mint physically drops, allowing faster minting but directly stamping the physical `CoinEntity` with the debasement rate.
+  - Created `InflationSystem` (`internal/systems/inflation.go`) that iteratively evaluates all physical coins, aggregates their total debasement by specific `(X, Y)` grid coordinates, and unilaterally multipliers local `MarketComponent` prices by `1.0 + Average Debasement`.
+- **The Butterfly Effect:**
+  - A King decides to lower minting costs by debasing the currency (`CountryComponent.Debasement = 0.5`).
+  - The `MintingSystem` begins churning out cheaper physical coins.
+  - As these coins physically move across the map (e.g. via `Caravan` routing), `InflationSystem` detects their localized concentration in specific Villages.
+  - The Village's local `MarketComponent` prices organically skyrocket.
+  - This immediately hooks into Phase 21 (Desperation) and Phase 13.2 (Career Change), causing local starving NPCs to resort to crime and Blacksmiths to abandon their jobs, bridging Logistics and Sovereignty seamlessly.

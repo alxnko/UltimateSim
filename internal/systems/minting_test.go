@@ -17,6 +17,7 @@ func TestMintingSystem_DeterministicMinting(t *testing.T) {
 	// Register necessary components
 	villageID := ecs.ComponentID[components.Village](&world)
 	capitalID := ecs.ComponentID[components.CapitalComponent](&world)
+	countryID := ecs.ComponentID[components.CountryComponent](&world)
 	storageID := ecs.ComponentID[components.StorageComponent](&world)
 	affilID := ecs.ComponentID[components.Affiliation](&world)
 	posID := ecs.ComponentID[components.Position](&world)
@@ -24,7 +25,7 @@ func TestMintingSystem_DeterministicMinting(t *testing.T) {
 	currencyID := ecs.ComponentID[components.CurrencyComponent](&world)
 
 	// Create test capital entity
-	cityEntity := world.NewEntity(villageID, capitalID, storageID, affilID, posID)
+	cityEntity := world.NewEntity(villageID, capitalID, countryID, storageID, affilID, posID)
 	storage := (*components.StorageComponent)(world.Get(cityEntity, storageID))
 	storage.Iron = 150 // Enough to mint
 
