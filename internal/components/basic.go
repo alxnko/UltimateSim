@@ -39,13 +39,16 @@ type Identity struct {
 	BaseTraits uint32
 }
 
-// Genetics component
+// GenomeComponent component
 // Phase 03.1: Genesis Base Structs
-type Genetics struct {
+// Phase 19.1: Deep Genetics expansion
+type GenomeComponent struct {
 	Strength  uint8
 	Beauty    uint8
 	Health    uint8
 	Intellect uint8
+	Dominant  uint32
+	Recessive uint32
 }
 
 // Legacy component
@@ -155,7 +158,7 @@ type StorageComponent struct {
 
 // CitizenData stores genetic and trait data for individuals born within a settlement.
 type CitizenData struct {
-	Genetics   Genetics
+	Genetics   GenomeComponent
 	BaseTraits uint32
 }
 

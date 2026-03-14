@@ -37,7 +37,7 @@ func (s *WorkplaceSystem) Update(world *ecs.World) {
 	jobID := ecs.ComponentID[components.JobComponent](world)
 	posID := ecs.ComponentID[components.Position](world)
 	pathID := ecs.ComponentID[components.Path](world)
-	geneticsID := ecs.ComponentID[components.Genetics](world)
+	geneticsID := ecs.ComponentID[components.GenomeComponent](world)
 	idID := ecs.ComponentID[components.Identity](world)
 	businessID := ecs.ComponentID[components.BusinessComponent](world)
 	workplaceID := ecs.ComponentID[components.WorkplaceComponent](world)
@@ -85,7 +85,7 @@ func (s *WorkplaceSystem) Update(world *ecs.World) {
 
 		pos := (*components.Position)(eq.Get(posID))
 		path := (*components.Path)(eq.Get(pathID))
-		genetics := (*components.Genetics)(eq.Get(geneticsID))
+		genetics := (*components.GenomeComponent)(eq.Get(geneticsID))
 		id := (*components.Identity)(eq.Get(idID))
 
 		// Calculate distance once per NPC iteration

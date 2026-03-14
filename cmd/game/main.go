@@ -50,6 +50,9 @@ func main() {
 	calendar := engine.NewCalendar()
 	tickManager.AddSystem(systems.NewCalendarSystem(calendar), engine.PhaseInput)
 
+	// Phase 19.2: Ecological Drift
+	tickManager.AddSystem(systems.NewGlobalWeatherSystem(world, grid), engine.PhaseInput)
+
 	// Phase 09.2: Dynamic Attrition
 	tickManager.AddSystem(systems.NewSpoilageSystem(), engine.PhaseResolution)
 	tickManager.AddSystem(systems.NewRustSystem(), engine.PhaseResolution)

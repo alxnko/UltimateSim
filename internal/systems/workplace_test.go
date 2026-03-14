@@ -49,7 +49,7 @@ func TestWorkplaceSystem(t *testing.T) {
 		ecs.ComponentID[components.NPC](&world),
 		ecs.ComponentID[components.Position](&world),
 		ecs.ComponentID[components.Path](&world),
-		ecs.ComponentID[components.Genetics](&world),
+		ecs.ComponentID[components.GenomeComponent](&world),
 		ecs.ComponentID[components.JobComponent](&world),
 	)
 
@@ -64,7 +64,7 @@ func TestWorkplaceSystem(t *testing.T) {
 	npcJobComp.JobID = components.JobArtisan
 	npcJobComp.EmployerID = employerID
 
-	npcGeneticsComp := (*components.Genetics)(world.Get(npc, ecs.ComponentID[components.Genetics](&world)))
+	npcGeneticsComp := (*components.GenomeComponent)(world.Get(npc, ecs.ComponentID[components.GenomeComponent](&world)))
 	npcGeneticsComp.Strength = 50
 	npcGeneticsComp.Intellect = 50 // Boost should be 0.5 + 0.5 = 1.0 per tick at work
 

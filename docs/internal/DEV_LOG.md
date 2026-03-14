@@ -1,6 +1,8 @@
 # Developer Knowledge Base: Internal Activity Log
 
 ## Current Phase / Task
+- *Completed Phase 19.2: Ecological Drift (Climate Change)*
+- *Completed Phase 19.1: Deep Genetics (GenomeComponent)*
 - *Completed Phase 17.3: Maritime Attrition & Piracy*
 - *Completed Phase 17.2: Oceanic Pathfinding*
 - *Completed Phase 17.1: Coastal Ports & Ship Construction*
@@ -43,6 +45,10 @@
 - *Completed Phase 1: Initialization, Determinism, & ECS Bootstrapping*
 
 - **Phase 05.4: Birth & Genetics Math**: Implemented `BirthSystem` (`internal/systems/birth.go`) and expanded `PopulationComponent` with a dynamic `Citizens []CitizenData` array. `CitizenData` strictly follows DOD by embedding `Genetics` (four `uint8` fields) and `BaseTraits` (`uint32`). This creates a perfectly flat 8-byte structure, guaranteeing cache alignment and avoiding hidden compiler padding. The `BirthSystem` deterministically processes parent traits by sequentially iterating over arrays, maximizing CPU cache locality during the biological inheritance algorithms.
+
+## Design Decision Log (Phase 19):
+- **Phase 19.1: Deep Genetics (`GenomeComponent`)**: Refactored the core `Genetics` structure into `GenomeComponent`, embedding it securely within `CitizenData` while maintaining perfect 16-byte bounds. Introduced `Dominant uint32` and `Recessive uint32` bitmasks. Refactored `BirthSystem` to inherit parental bitmasks deterministically. Introduced rigorous "Inbreeding Penalties" - if parent dominant arrays are highly similar (< 5 divergent bits counted via `XOR`), the newborn receives a drastic 50% `Health` stat penalty. All logic remains entirely DOD-compliant and iterates purely across fast arrays. Tests updated and determinism intact.
+- **Phase 19.2: Ecological Drift (Climate Change)**: Implemented `GlobalWeatherSystem` which strictly executes an O(N) evaluation across `MapGrid.Tiles` flat structures once every 100,000 ticks. The system uniformly increments global Temperature maps by +5. Specifically targets `BiomeTemperateDeciduousForest` and `BiomeTemperateRainForest`. If the Temperature crosses a >165 boundary, the system automatically mutates the tile `BiomeID` to `BiomeGrassland` and deterministically drops the local `ResourceDepot.WoodValue` to `0`, successfully starving localized civilizations and triggering `CaravanEntity` fleets dynamically without breaking L1/L2 sequential lookup speeds. Validated by deterministic identical-seed E2E tests in `global_weather_test.go`.
 
 ## Design Decision Log (Phase 10):
 - **Phase 17.3: Maritime Attrition & Piracy**: Added `StormSystem` (`internal/systems/storm.go`) to orchestrate dynamic hull degradation on `ShipComponent` entities residing over `BiomeOcean` geometries based on deterministic stochastic models. Destroyed ships with hull integers reduced to zero are queued in pre-allocated O(1) DOD structures for query-safe removal. Added `NavalPiracySystem` (`internal/systems/naval_piracy.go`) governing rogue `NPC` logic, mapping flat iteration logic computing the nearest O(1) high-wealth ship based on combined `Payload` volume array variables, and aggressively overriding target routing. Re-factored `ShipComponent` with `Hull` metric structure. Validated mathematically via isolated deterministic E2E assertions inside `storm_test.go` and `naval_piracy_test.go`.

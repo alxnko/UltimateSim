@@ -126,7 +126,7 @@ func TestMetabolismAndDeathSystem_Deterministic(t *testing.T) {
 	runSim := func() int {
 		world := ecs.NewWorld()
 		needsID := ecs.ComponentID[components.Needs](&world)
-		geneticsID := ecs.ComponentID[components.Genetics](&world)
+		geneticsID := ecs.ComponentID[components.GenomeComponent](&world)
 
 		metabolismSys := systems.NewMetabolismSystem(&world, nil)
 		deathSys := systems.NewDeathSystem(&world)
@@ -135,7 +135,7 @@ func TestMetabolismAndDeathSystem_Deterministic(t *testing.T) {
 		for i := 0; i < 1000; i++ {
 			entity := world.NewEntity(needsID, geneticsID)
 			n := (*components.Needs)(world.Get(entity, needsID))
-			g := (*components.Genetics)(world.Get(entity, geneticsID))
+			g := (*components.GenomeComponent)(world.Get(entity, geneticsID))
 
 			// deterministic state based on index
 			n.Food = float32(i % 10) // Some will start with low food

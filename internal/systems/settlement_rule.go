@@ -69,7 +69,7 @@ func (s *SettlementRuleSystem) Update(world *ecs.World) {
 
 	// Optional inherited components (copy from parent)
 	idID := ecs.ComponentID[components.Identity](world)
-	genID := ecs.ComponentID[components.Genetics](world)
+	genID := ecs.ComponentID[components.GenomeComponent](world)
 	legID := ecs.ComponentID[components.Legacy](world)
 
 	for _, e := range s.toRemove {
@@ -77,14 +77,14 @@ func (s *SettlementRuleSystem) Update(world *ecs.World) {
 
 		// Extract some data
 		var inheritedID components.Identity
-		var inheritedGen components.Genetics
+		var inheritedGen components.GenomeComponent
 		var inheritedLeg components.Legacy
 
 		if world.Has(e, idID) {
 			inheritedID = *(*components.Identity)(world.Get(e, idID))
 		}
 		if world.Has(e, genID) {
-			inheritedGen = *(*components.Genetics)(world.Get(e, genID))
+			inheritedGen = *(*components.GenomeComponent)(world.Get(e, genID))
 		}
 		if world.Has(e, legID) {
 			inheritedLeg = *(*components.Legacy)(world.Get(e, legID))
@@ -132,7 +132,7 @@ func (s *SettlementRuleSystem) Update(world *ecs.World) {
 			}
 		}
 		if world.Has(newEntity, genID) {
-			*(*components.Genetics)(world.Get(newEntity, genID)) = inheritedGen
+			*(*components.GenomeComponent)(world.Get(newEntity, genID)) = inheritedGen
 		}
 		if world.Has(newEntity, legID) {
 			*(*components.Legacy)(world.Get(newEntity, legID)) = inheritedLeg

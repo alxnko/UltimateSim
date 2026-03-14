@@ -40,7 +40,7 @@ func TestNPCSpawner_E2E(t *testing.T) {
 	posID := ecs.ComponentID[components.Position](&world)
 	velID := ecs.ComponentID[components.Velocity](&world)
 	idID := ecs.ComponentID[components.Identity](&world)
-	genID := ecs.ComponentID[components.Genetics](&world)
+	genID := ecs.ComponentID[components.GenomeComponent](&world)
 	legID := ecs.ComponentID[components.Legacy](&world)
 	needsID := ecs.ComponentID[components.Needs](&world)
 	npcID := ecs.ComponentID[components.NPC](&world)
@@ -53,7 +53,7 @@ func TestNPCSpawner_E2E(t *testing.T) {
 		count++
 		pos := (*components.Position)(query.Get(posID))
 		id := (*components.Identity)(query.Get(idID))
-		gen := (*components.Genetics)(query.Get(genID))
+		gen := (*components.GenomeComponent)(query.Get(genID))
 		needs := (*components.Needs)(query.Get(needsID))
 		aff := (*components.Affiliation)(query.Get(affID))
 

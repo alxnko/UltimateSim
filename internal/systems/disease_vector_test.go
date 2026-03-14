@@ -85,11 +85,11 @@ func TestDiseaseVectorSystem_Lethality(t *testing.T) {
 	// Target 1: Will die (Low health)
 	t1 := world.NewEntity()
 	posID := ecs.ComponentID[components.Position](&world)
-	genID := ecs.ComponentID[components.Genetics](&world)
+	genID := ecs.ComponentID[components.GenomeComponent](&world)
 	world.Add(t1, posID, genID)
 	pos1 := (*components.Position)(world.Get(t1, posID))
 	pos1.X, pos1.Y = 5, 5
-	gen1 := (*components.Genetics)(world.Get(t1, genID))
+	gen1 := (*components.GenomeComponent)(world.Get(t1, genID))
 	gen1.Health = 1
 
 	// Target 2: Will survive due to artificially impossible health to guarantee survival if possible (though 255 lethality means it will fail if prng+health < 255. Let's make lethality lower to test survival).
@@ -99,7 +99,7 @@ func TestDiseaseVectorSystem_Lethality(t *testing.T) {
 	world.Add(t2, posID, genID)
 	pos2 := (*components.Position)(world.Get(t2, posID))
 	pos2.X, pos2.Y = 5, 5
-	gen2 := (*components.Genetics)(world.Get(t2, genID))
+	gen2 := (*components.GenomeComponent)(world.Get(t2, genID))
 	gen2.Health = 255 // Guaranteed survival: prng.IntN(100) + 255 >= 100
 
 	// Target 3: Immune
@@ -108,7 +108,7 @@ func TestDiseaseVectorSystem_Lethality(t *testing.T) {
 	world.Add(t3, posID, genID, immID)
 	pos3 := (*components.Position)(world.Get(t3, posID))
 	pos3.X, pos3.Y = 5, 5
-	gen3 := (*components.Genetics)(world.Get(t3, genID))
+	gen3 := (*components.GenomeComponent)(world.Get(t3, genID))
 	gen3.Health = 1 // Low health, would die if not immune
 	imm := (*components.ImmunityTag)(world.Get(t3, immID))
 	imm.ImmuneTo = []uint32{100}

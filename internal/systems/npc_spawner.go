@@ -60,7 +60,7 @@ func (s *NPCSpawnerSystem) Update(world *ecs.World) {
 	posID := ecs.ComponentID[components.Position](world)
 	velID := ecs.ComponentID[components.Velocity](world)
 	idID := ecs.ComponentID[components.Identity](world)
-	genID := ecs.ComponentID[components.Genetics](world)
+	genID := ecs.ComponentID[components.GenomeComponent](world)
 	legID := ecs.ComponentID[components.Legacy](world)
 	needsID := ecs.ComponentID[components.Needs](world)
 	pathID := ecs.ComponentID[components.Path](world)
@@ -102,12 +102,14 @@ func (s *NPCSpawnerSystem) Update(world *ecs.World) {
 			id.BaseTraits = uint32(engine.GetRandomInt()) // Random bitmask
 
 			// Set Genetics
-			gen := (*components.Genetics)(world.Get(entity, genID))
+			gen := (*components.GenomeComponent)(world.Get(entity, genID))
 			// Randomize Genetics via Bell Curve approximation (sum of 3 uniform / 3)
 			gen.Strength = uint8((engine.GetRandomInt()%101 + engine.GetRandomInt()%101 + engine.GetRandomInt()%101) / 3)
 			gen.Beauty = uint8((engine.GetRandomInt()%101 + engine.GetRandomInt()%101 + engine.GetRandomInt()%101) / 3)
 			gen.Health = uint8((engine.GetRandomInt()%101 + engine.GetRandomInt()%101 + engine.GetRandomInt()%101) / 3)
 			gen.Intellect = uint8((engine.GetRandomInt()%101 + engine.GetRandomInt()%101 + engine.GetRandomInt()%101) / 3)
+			gen.Dominant = uint32(engine.GetRandomInt())
+			gen.Recessive = uint32(engine.GetRandomInt())
 
 			// Set Legacy
 			leg := (*components.Legacy)(world.Get(entity, legID))
