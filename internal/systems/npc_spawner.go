@@ -100,6 +100,7 @@ func (s *NPCSpawnerSystem) Update(world *ecs.World) {
 			s.nextID++
 			id.Name = "NPC-" + strconv.FormatUint(id.ID, 10)
 			id.BaseTraits = uint32(engine.GetRandomInt()) // Random bitmask
+			id.Age = uint16(20 + engine.GetRandomInt()%30)
 
 			// Set Genetics
 			gen := (*components.GenomeComponent)(world.Get(entity, genID))

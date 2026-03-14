@@ -39,6 +39,7 @@ type Identity struct {
 	ID         uint64
 	Name       string
 	BaseTraits uint32
+	Age        uint16
 }
 
 // GenomeComponent component
@@ -162,6 +163,8 @@ type StorageComponent struct {
 type CitizenData struct {
 	Genetics   GenomeComponent
 	BaseTraits uint32
+	Age        uint16
+	_          uint16 // Padding to exactly 20 bytes
 }
 
 // PopulationComponent tracks headcount abstracting AI nodes inside city limits.

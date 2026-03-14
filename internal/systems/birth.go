@@ -106,6 +106,7 @@ func (s *BirthSystem) Update(world *ecs.World) {
 			newCitizen := components.CitizenData{
 				Genetics:   childGenetics,
 				BaseTraits: childTraits,
+				Age:        0,
 			}
 
 			pop.Citizens = append(pop.Citizens, newCitizen)
