@@ -29,6 +29,12 @@ type TileState struct {
 	FootTraffic uint32
 }
 
+// Phase 20.2: Abstract Physics (The "Magic" Expansion)
+// ManaData represents the numerical abstract magic limit of a grid tile. Kept parallel to TileData.
+type ManaData struct {
+	Value uint8
+}
+
 // MapGrid represents the game world map.
 // It uses a contiguous 1D array masquerading as a 2D matrix (Grid[y * width + x]).
 // This is dramatically faster for cache-lines than [][]Tile, adhering to Data-Oriented Design (DOD) principles.
@@ -38,6 +44,7 @@ type MapGrid struct {
 	Tiles      []TileData
 	Resources  []ResourceDepot
 	TileStates []TileState
+	Mana       []ManaData        // Phase 20.2: Abstract Physics
 	NavMesh    *hpa.AbstractGrid // Phase 17.2: Oceanic Pathfinding NavMesh
 }
 
@@ -64,6 +71,7 @@ func NewMapGrid(width, height int) *MapGrid {
 		Tiles:      make([]TileData, width*height),
 		Resources:  make([]ResourceDepot, width*height),
 		TileStates: make([]TileState, width*height),
+		Mana:       make([]ManaData, width*height),
 	}
 }
 

@@ -19,6 +19,7 @@ const (
 	JobArtisan    uint8 = 3 // A processing job that can be reverted
 	JobGuard      uint8 = 4 // Phase 18.2: The Guard System
 	JobPreacher   uint8 = 5 // Phase 20.1: Ideological Warfare
+	JobCaster     uint8 = 6 // Phase 20.2: Abstract Physics
 )
 
 // Phase 09.5: Item Inheritance Threshold
