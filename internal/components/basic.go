@@ -289,12 +289,21 @@ type MarketComponent struct {
 	StonePrice float32
 	IronPrice  float32
 	FoodPrice  float32
+	WageRate   float32
+	_          uint32 // Padding to exactly 24 bytes
 }
 
 // Phase 18.1: Contraband Logic
 // ContrabandComponent maintains local laws regarding illegal items.
 type ContrabandComponent struct {
 	Contraband uint32 // Bitmask flagging illegal ItemIDs
+}
+
+
+// Phase 24.1: The Labor Union Engine
+// StrikeMarker tags an NPC that has quit due to unpaid wages and is striking against a specific employer.
+type StrikeMarker struct {
+	TargetEmployerID uint64
 }
 
 // Phase 21.1: DesperationSystem

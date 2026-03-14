@@ -70,3 +70,19 @@ This file tracks autonomous additions to the total simulation that bridge gaps i
   - As these coins physically move across the map (e.g. via `Caravan` routing), `InflationSystem` detects their localized concentration in specific Villages.
   - The Village's local `MarketComponent` prices organically skyrocket.
   - This immediately hooks into Phase 21 (Desperation) and Phase 13.2 (Career Change), causing local starving NPCs to resort to crime and Blacksmiths to abandon their jobs, bridging Logistics and Sovereignty seamlessly.
+
+## Evolution: Phase 24.1 - The Labor Union Engine
+- **Goal:** Execute the "Systemic Emergence" objective by fulfilling the Vision's explicit requirement ("Plagues spread along trade routes causing massive labor shortages. Surviving peasants demand higher wages, spontaneously forming revolutionary Trade Unions") by connecting Biology, Economy, and Justice.
+- **DOD Implementation:**
+  - Expanded `MarketComponent` in `internal/components/basic.go` to include `WageRate float32`, correctly asserting 24-byte DOD packing constraints.
+  - Added `StrikeMarker` component to specifically track unpaid labor grudges against target employers.
+  - Modified `PriceDiscoverySystem` to deterministically calculate dynamic `WageRate` bounds scaling inversely with `Population.Count`, successfully integrating massive plagues directly into local macroeconomic costs.
+  - Modified `JobMarketSystem` to assign `StrikeMarker` structurally outside the active ECS lock when `Business` treasuries fail to cover spiked wages. Modified hiring loops to strictly ignore marked strikers using `filter.Without()`.
+  - Added `LaborUnionSystem` (`internal/systems/labor_union.go`) which extracts active strikes into a flat slice, tracking active jobs.
+- **The Butterfly Effect:**
+  - Plugs deeply into Phase 10 (Plagues), Phase 13 (Economy), Phase 15 (Employment), and Phase 23 (Blood Feuds).
+  - When a Plague decimates a population, `WageRate` deterministically spikes.
+  - Local businesses inevitably drain their `TreasuryComponent` and fail to pay wages.
+  - Unpaid workers quit and structurally receive a `StrikeMarker`.
+  - When a business replaces the striker with a new NPC (a "Scab"), the `LaborUnionSystem` mathematically hooks them together using `engine.SparseHookGraph`, injecting a massive `-50` relationship hook.
+  - This natively triggers the `BloodFeudSystem` logic. The starving, unpaid Striker procedurally murders the Scab in the street. This action triggers `JusticeSystem` logic, bringing Guards into the conflict natively.

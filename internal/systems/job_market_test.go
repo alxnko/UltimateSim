@@ -17,10 +17,23 @@ func TestJobMarketSystem(t *testing.T) {
 	idID := ecs.ComponentID[components.Identity](&world)
 	businessID := ecs.ComponentID[components.BusinessComponent](&world)
 	treasuryID := ecs.ComponentID[components.TreasuryComponent](&world)
+	affID := ecs.ComponentID[components.Affiliation](&world)
+	villageID := ecs.ComponentID[components.Village](&world)
+	marketID := ecs.ComponentID[components.MarketComponent](&world)
+	strikeID := ecs.ComponentID[components.StrikeMarker](&world)
+
+	// Create a City and Market for Wages
+	city := world.NewEntity(villageID, marketID, affID)
+	cAff := (*components.Affiliation)(world.Get(city, affID))
+	cAff.CityID = 1
+	cMarket := (*components.MarketComponent)(world.Get(city, marketID))
+	cMarket.WageRate = 1.0
 
 	// Create a Business
 	business := world.NewEntity()
-	world.Add(business, businessID, idID, treasuryID)
+	world.Add(business, businessID, idID, treasuryID, affID)
+	bAff := (*components.Affiliation)(world.Get(business, affID))
+	bAff.CityID = 1
 
 	id := (*components.Identity)(world.Get(business, idID))
 	id.ID = 100 // Business ID
@@ -33,7 +46,9 @@ func TestJobMarketSystem(t *testing.T) {
 	var npcs []ecs.Entity
 	for i := 0; i < 3; i++ {
 		npc := world.NewEntity()
-		world.Add(npc, npcID, idID, jobID, needsID)
+		world.Add(npc, npcID, idID, jobID, needsID, affID)
+		nAff := (*components.Affiliation)(world.Get(npc, affID))
+		nAff.CityID = 1
 
 		npcIDComp := (*components.Identity)(world.Get(npc, idID))
 		npcIDComp.ID = uint64(i + 1)
@@ -92,11 +107,15 @@ func TestJobMarketSystem(t *testing.T) {
 	sys.tickStamp = 69
 	sys.Update()
 
-	// Employees should quit since they couldn't be paid
+	// Employees should quit since they couldn't be paid and become strikers
 	for _, npc := range npcs {
 		job := (*components.JobComponent)(world.Get(npc, jobID))
 		if job.EmployerID != 0 || job.JobID != components.JobNone {
 			t.Errorf("NPC should have quit due to unpaid wages, but still employed by %d as %d", job.EmployerID, job.JobID)
+		}
+
+		if !world.Has(npc, strikeID) {
+			t.Errorf("NPC should have gained a StrikeMarker")
 		}
 	}
 }
