@@ -65,7 +65,7 @@ func TestTraumaticTraditions_Integration(t *testing.T) {
 	needs2.Food = 100 // Survives
 
 	// Create systems
-	deathSys := NewDeathSystem(&world)
+	deathSys := NewDeathSystem(&world, hookGraph)
 	traumaSys := NewTraumaticTraditionsSystem(&world)
 	xenoSys := NewXenophobiaSystem(&world, hookGraph)
 

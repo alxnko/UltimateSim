@@ -6,6 +6,9 @@ This document serves as the comprehensive and definitive index of all actually i
 
 ---
 
+## Phase 25: The Social Legacy & Succession Engine
+- **Phase 25.1 - Heir Inheritance**: Integrated directly into `DeathSystem` (Phase 03). When an NPC despawns via starvation or old age, the system pre-caches their `Prestige`, `InheritedDebt`, and entire array of `SparseHookGraph` incoming and outgoing edges into `heirData`. The system subsequently maps over all active living `NPC` entities to find a suitable match sharing the same `FamilyID` (Affiliation component). The heir instantly absorbs all debts, legacy prestige, and generational grudges (`AddHook`). The dying parent's physical existence is correctly cleaned up via `RemoveAllHooks`.
+
 ## Phase 23: The Blood Feud Engine
 - **Phase 23.1 - Blood Feuds & Generational Hatred**: Implemented `BloodFeudSystem` (`internal/systems/blood_feud.go`) mapping the `SparseHookGraph` to physical violence. NPCs continuously parse nearby entities using cache-friendly flat arrays. If a deep negative hook (`<= -50`) is detected, the NPC logs `InteractionMurder` inside their `Memory` buffer and starves the victim to death instantly (`Needs.Food = 0`). The system then iterates all surrounding clan members of the victim and massively depreciates their hook scores towards the killer and the killer's clan members (`-100` and `-50`, respectively). This forces a "Butterfly Effect" where one grudge spirals into a continuous frontier war.
 

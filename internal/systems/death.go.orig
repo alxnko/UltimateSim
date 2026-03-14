@@ -193,7 +193,7 @@ func (s *DeathSystem) Update(world *ecs.World) {
 		npcQuery := world.Query(ecs.All(npcID, identityID, affilID, legacyID))
 
 		for npcQuery.Next() {
-			if false { // npcQuery.Has(needsID) {
+			if npcQuery.Has(needsID) {
 				needs := (*components.Needs)(npcQuery.Get(needsID))
 				if needs.Food <= 0 {
 					continue
