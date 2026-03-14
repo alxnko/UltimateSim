@@ -277,6 +277,12 @@ type ContrabandComponent struct {
 	Contraband uint32 // Bitmask flagging illegal ItemIDs
 }
 
+// Phase 21.1: DesperationSystem
+// DesperationComponent represents an NPC's inclination towards crime due to starvation or poverty.
+type DesperationComponent struct {
+	Level uint8 // 0-100 bounds
+}
+
 // Phase 13.2: Labor Rebalancing
 // Phase 15.2: Employment & Wages (expanded)
 type JobComponent struct {

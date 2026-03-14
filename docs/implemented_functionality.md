@@ -99,6 +99,9 @@ Raw numerical utilities strictly built for deterministic execution.
 ---
 
 
+## Phase 21: Evolutionary System Integration
+- **Phase 21.1 - DesperationSystem**: Links Phase 13 Economy with Phase 18 Justice. Starving NPCs lacking wealth relative to local `MarketComponent` prices build `DesperationComponent.Level`. Once it reaches critical thresholds, they bypass trade loops, forcibly steal from nearest `Village` storages, and log `InteractionTheft`. The `JusticeSystem` naturally parses these events and unleashes guards, causing a completely emergent system response combining Famine, Prices, Crime, and Banishment loops.
+
 ## Phase 18: The Justice Engine & Legal Logic
 - **Phase 18.1 - Jurisdiction & Law Definitions**: Added `JurisdictionComponent` dictating squared radii bounds around Capital entities and tracking a bitmask of `IllegalActionIDs` (`InteractionAssault`, `InteractionTheft`). Refactored `MarketComponent` limits into a standalone `ContrabandComponent` struct tracking bits mapped to `ItemWood`, `ItemStone`, `ItemIron`, etc.
 - **Phase 18.2 - Detection & The Guard System**: Added `JusticeSystem` (`internal/systems/justice.go`). The system utilizes arche-go queries to compare `MemoryEvent` buffers against local `JurisdictionComponent` constraints, tagging offenders with a `CrimeMarker`. Implemented a `JobGuard` target mapping where idle Guards pathfind directly towards entities bearing the `CrimeMarker`.
