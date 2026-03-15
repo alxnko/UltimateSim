@@ -466,3 +466,16 @@ type VitalsComponent struct {
 	Pain          float32
 	Consciousness float32
 }
+
+// Phase 31: Systemic Entropy (Natural Disasters)
+
+// NaturalDisasterEntity is a tag component identifying an active disaster event on the map.
+type NaturalDisasterEntity struct{}
+
+// DisasterComponent tracks the properties of a natural disaster.
+type DisasterComponent struct {
+	RadiusSquared float32
+	Strength      float32
+	Type          uint32 // e.g., Earthquake, Flood, etc.
+	_             uint32 // Padding to exactly 16 bytes
+}

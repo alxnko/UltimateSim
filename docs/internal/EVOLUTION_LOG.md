@@ -224,3 +224,17 @@ Integrated the Justice pillar deeply into the Information (Secrets/Gossip) and S
 -   Passed the existing `SparseHookGraph` into `JusticeSystem` instead of inventing a new relational mapping system.
 -   Reused the existing `SecretRegistry` to intern the rumor string, generating a highly cache-friendly `uint32` SecretID.
 -   Maintained flat-array O(N) evaluations, ensuring no nested arche-go queries were required to evaluate social connections during the law enforcement phase.
+
+## Evolution: Phase 31 - Systemic Entropy (Natural Disasters)
+
+**The "Why" (Gap):**
+The simulation lacked true massive entropic events outside of human or biological (plague) causes. The Vision document specifies that "Natural Disasters shift basic map parameters, forcing massive population resets." The world map was too stable.
+
+**The "What" (Innovation):**
+Implemented a fully integrated `NaturalDisasterSystem`. This deterministic algorithm spawns massive destructive events (e.g., Earthquakes) that physically alter the grid and trigger cascading failures.
+1. **Map Modification:** The disaster zeroes out static resources (`WoodValue`, `StoneValue`) and destroys infrastructure (`FootTraffic`) across a massive radius.
+2. **Biological Damage:** The disaster evaluates all living NPCs caught in the radius and spikes their `VitalsComponent.Pain`, potentially leading to paralysis or death.
+3. **Economic Ruin:** Any `Village` caught in the blast radius has its `StorageComponent` wiped completely.
+
+**The Butterfly Effect:**
+This touches almost every system. A wiped `StorageComponent` causes immediate extreme famine, spiking local prices (`PriceDiscoverySystem`). Starving citizens reach critical desperation, becoming Bandits (`BanditrySystem`), which then attack Caravans. If an NPC dies from the disaster, the `Succession Engine` shifts their hooks and debts to their heirs. The loss of roads (`FootTraffic`) forces the HPA* pathfinding to calculate slower routes, further delaying rescue caravans.
