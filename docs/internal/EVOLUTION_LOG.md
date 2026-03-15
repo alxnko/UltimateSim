@@ -225,6 +225,20 @@ Integrated the Justice pillar deeply into the Information (Secrets/Gossip) and S
 -   Reused the existing `SecretRegistry` to intern the rumor string, generating a highly cache-friendly `uint32` SecretID.
 -   Maintained flat-array O(N) evaluations, ensuring no nested arche-go queries were required to evaluate social connections during the law enforcement phase.
 
+## Evolution: Phase 32 - Artifact Inheritance & Auras of Legitimacy
+
+**The "Why" (Gap):**
+The Vision document outlines that upon death, a player or NPC heir "inherits not just items, but Social Standing and Debts, and Artifacts (e.g., 'Sword of Bektur') that carry historical memory and grant 'Auras of Legitimacy.'" The succession system previously transferred hooks and legacy, but completely failed to link physical objects to the social pillar. Artifacts simply dropped to the map as `ItemEntity`.
+
+**The "What" (Innovation):**
+Implemented Phase 32.1. By creating an `EquipmentComponent`, artifacts are physically bound to NPCs. The `DeathSystem` was restructured so that heirs seamlessly inherit the equipped artifact. The massive structural innovation is bridging this physical artifact to the cognitive/memetic pillar.
+1. **Aura of Legitimacy (Gossip):** When an NPC spreads a secret, the `GossipDistributionSystem` now dynamically queries their `EquipmentComponent`. If they wield a legendary artifact (`Prestige >= 100`), they receive a massive 3x multiplier to gossip virality.
+2. **The Target (Jealousy):** Holding an artifact inherently paints a target on your back. `JealousyVulnerabilitySystem` now combines innate `Legacy.Prestige` with `EquipmentComponent.Weapon.Prestige`. This naturally causes adjacent neutral NPCs to rapidly generate negative blackmail and rumors against the wielder out of pure jealousy, balancing the massive power gain via the engine's negative feedback loop.
+
+**DOD Implementation:**
+-   `EquipmentComponent` was explicitly padded to equal exactly 40 bytes to ensure cache alignment.
+-   Avoided panics during the `DeathSystem` succession arche-go query loop by using a deferred `artifactAssignments` flat slice mapping to resolve equipment transfers natively without breaking ECS locks.
+
 ## Evolution: Phase 31 - Systemic Entropy (Natural Disasters)
 
 **The "Why" (Gap):**

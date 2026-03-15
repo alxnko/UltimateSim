@@ -198,6 +198,12 @@ func TestComponentSizes(t *testing.T) {
 		t.Errorf("ItemEntity struct size should be exactly 0 bytes (tag component), got %d", itemEntitySize)
 	}
 
+	// Phase 32.1: Artifact Equipment (Auras of Legitimacy)
+	equipmentSize := unsafe.Sizeof(EquipmentComponent{})
+	if equipmentSize != 40 {
+		t.Errorf("EquipmentComponent struct size should be exactly 40 bytes, got %d", equipmentSize)
+	}
+
 	// Phase 10.1: Debt Default Execution Component
 	// LoanContractComponent: uint64 (8) + uint64 (8) + uint32 (4) = 20 bytes -> padded to 24
 	loanSize := unsafe.Sizeof(LoanContractComponent{})

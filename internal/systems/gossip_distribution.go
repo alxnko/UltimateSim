@@ -43,19 +43,22 @@ func (s *GossipDistributionSystem) Update(world *ecs.World) {
 
 	// nodeData represents extracted data for DOD optimized proximity checking
 	type nodeData struct {
-		entity  ecs.Entity
-		pos     *components.Position
-		secret  *components.SecretComponent
-		memory  *components.Memory
-		ident   *components.Identity
-		culture *components.CultureComponent
-		belief  *components.BeliefComponent // Optional, might be nil
+		entity    ecs.Entity
+		pos       *components.Position
+		secret    *components.SecretComponent
+		memory    *components.Memory
+		ident     *components.Identity
+		culture   *components.CultureComponent
+		belief    *components.BeliefComponent // Optional, might be nil
+		equipment *components.EquipmentComponent
 	}
 
 	// Runs on a slower tick execution (every 10 Ticks)
 	if s.tickCounter%10 != 0 {
 		return
 	}
+
+	equipID := ecs.ComponentID[components.EquipmentComponent](world)
 
 	// Filter all valid actors capable of gossiping
 	filter := ecs.All(s.posID, s.secretID, s.memoryID, s.identID, s.cultureID).Without(s.ruinID)
@@ -71,14 +74,23 @@ func (s *GossipDistributionSystem) Update(world *ecs.World) {
 			belief = (*components.BeliefComponent)(query.Get(s.beliefID))
 		}
 
+		var equipment *components.EquipmentComponent
+		if query.Has(equipID) {
+			equip := (*components.EquipmentComponent)(query.Get(equipID))
+			if equip.Equipped {
+				equipment = equip
+			}
+		}
+
 		nodes = append(nodes, nodeData{
-			entity:  query.Entity(),
-			pos:     (*components.Position)(query.Get(s.posID)),
-			secret:  (*components.SecretComponent)(query.Get(s.secretID)),
-			memory:  (*components.Memory)(query.Get(s.memoryID)),
-			ident:   (*components.Identity)(query.Get(s.identID)),
-			culture: (*components.CultureComponent)(query.Get(s.cultureID)),
-			belief:  belief,
+			entity:    query.Entity(),
+			pos:       (*components.Position)(query.Get(s.posID)),
+			secret:    (*components.SecretComponent)(query.Get(s.secretID)),
+			memory:    (*components.Memory)(query.Get(s.memoryID)),
+			ident:     (*components.Identity)(query.Get(s.identID)),
+			culture:   (*components.CultureComponent)(query.Get(s.cultureID)),
+			belief:    belief,
+			equipment: equipment,
 		})
 	}
 
@@ -134,6 +146,12 @@ func (s *GossipDistributionSystem) Update(world *ecs.World) {
 					modifier := float32(1.0)
 					if sender.ident.BaseTraits&components.TraitGossip != 0 {
 						modifier = 2.0
+					}
+
+					// Phase 32.1: Aura of Legitimacy
+					// A highly prestigious artifact multiplies your influence
+					if sender.equipment != nil && sender.equipment.Weapon.Prestige >= components.ExtremePrestigeThreshold {
+						modifier *= 3.0
 					}
 
 					// RNG Pass

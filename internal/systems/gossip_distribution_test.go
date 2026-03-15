@@ -7,6 +7,80 @@ import (
 	"github.com/ALXNKO/UltimateSim/internal/engine"
 )
 
+// Phase 32.1: Aura of Legitimacy Test
+func TestGossipAuraOfLegitimacy(t *testing.T) {
+	// Initialize deterministic RNG
+	engine.InitializeRNG([32]byte{5, 5, 5}) // Using specific seed
+
+	world := ecs.NewWorld()
+
+	// Register components
+	posID := ecs.ComponentID[components.Position](&world)
+	secretID := ecs.ComponentID[components.SecretComponent](&world)
+	memoryID := ecs.ComponentID[components.Memory](&world)
+	identID := ecs.ComponentID[components.Identity](&world)
+	cultureID := ecs.ComponentID[components.CultureComponent](&world)
+	equipID := ecs.ComponentID[components.EquipmentComponent](&world)
+
+	hookGraph := engine.NewSparseHookGraph()
+
+	// Create Sender with Aura of Legitimacy (Sword of Bektur)
+	sender := world.NewEntity(posID, secretID, memoryID, identID, cultureID, equipID)
+
+	sPos := (*components.Position)(world.Get(sender, posID))
+	sPos.X, sPos.Y = 10, 10
+
+	sCulture := (*components.CultureComponent)(world.Get(sender, cultureID))
+	sCulture.LanguageID = 1
+
+	sIdent := (*components.Identity)(world.Get(sender, identID))
+	sIdent.ID = 1
+
+	sSecret := (*components.SecretComponent)(world.Get(sender, secretID))
+	sSecret.Secrets = append(sSecret.Secrets, components.Secret{
+		OriginID: 1,
+		SecretID: 99,
+		Virality: 50, // Moderately contagious
+	})
+
+	sEquip := (*components.EquipmentComponent)(world.Get(sender, equipID))
+	sEquip.Equipped = true
+	sEquip.Weapon = components.LegendComponent{
+		Prestige: components.ExtremePrestigeThreshold + 100, // Very prestigious
+	}
+
+	// Create Receiver
+	receiver := world.NewEntity(posID, secretID, memoryID, identID, cultureID)
+
+	rPos := (*components.Position)(world.Get(receiver, posID))
+	rPos.X, rPos.Y = 10, 10 // Exact same position
+
+	rCulture := (*components.CultureComponent)(world.Get(receiver, cultureID))
+	rCulture.LanguageID = 1 // Same language
+
+	rIdent := (*components.Identity)(world.Get(receiver, identID))
+	rIdent.ID = 2
+
+	rSecret := (*components.SecretComponent)(world.Get(receiver, secretID))
+	rSecret.Secrets = []components.Secret{}
+
+	system := NewGossipDistributionSystem(&world, hookGraph)
+
+	// Since Virality is 50, chance = 50/255 = ~19%
+	// The modifier from Aura is * 3.0 = ~58% chance
+	// We will run this over several ticks to ensure the secret is passed.
+	// Note: System runs every 10 ticks.
+	for i := 0; i < 50; i++ {
+		system.Update(&world)
+	}
+
+	rSecret = (*components.SecretComponent)(world.Get(receiver, secretID))
+
+	if len(rSecret.Secrets) == 0 {
+		t.Errorf("Expected receiver to gain the secret due to Aura multiplier")
+	}
+}
+
 func TestGossipDistributionSystem(t *testing.T) {
 	// Initialize deterministic RNG
 	engine.InitializeRNG([32]byte{1, 2, 3})
