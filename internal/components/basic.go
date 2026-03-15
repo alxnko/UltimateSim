@@ -20,6 +20,7 @@ const (
 	JobGuard      uint8 = 4 // Phase 18.2: The Guard System
 	JobPreacher   uint8 = 5 // Phase 20.1: Ideological Warfare
 	JobCaster     uint8 = 6 // Phase 20.2: Abstract Physics
+	JobBandit     uint8 = 7 // Phase 26.1: Caravan Banditry & Supply Chain Collapse
 )
 
 // Phase 09.5: Item Inheritance Threshold

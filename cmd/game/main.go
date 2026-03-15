@@ -58,6 +58,7 @@ func main() {
 	tickManager.AddSystem(systems.NewRustSystem(), engine.PhaseResolution)
 	// --- PHASE: AI ---
 	tickManager.AddSystem(systems.NewDesperationSystem(world), engine.PhaseAI)
+	tickManager.AddSystem(systems.NewBanditrySystem(world), engine.PhaseAI)
 	tickManager.AddSystem(systems.NewWanderSystem(world, grid, pathQueue), engine.PhaseAI)
 	tickManager.AddSystem(systems.NewNavalRoutingSystem(world, grid, pathQueue, calendar), engine.PhaseAI)
 
@@ -96,7 +97,7 @@ func main() {
 	tickManager.AddSystem(systems.NewLaborUnionSystem(world, hookGraph), engine.PhaseResolution)
 
 	// --- PHASE: CLEANUP ---
-	tickManager.AddSystem(systems.NewDeathSystem(world), engine.PhaseCleanup)
+	tickManager.AddSystem(systems.NewDeathSystem(world, hookGraph), engine.PhaseCleanup)
 	tickManager.AddSystem(systems.NewAgingSystem(world), engine.PhaseResolution)
 
 	// Phase 03.2: Genesis Spawner (Runs once at tick 0)
