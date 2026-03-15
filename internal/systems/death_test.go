@@ -57,12 +57,13 @@ func TestDeathSystem_ItemInheritance(t *testing.T) {
 	needsID := ecs.ComponentID[components.Needs](&world)
 	legacyID := ecs.ComponentID[components.Legacy](&world)
 	posID := ecs.ComponentID[components.Position](&world)
+	equipID := ecs.ComponentID[components.EquipmentComponent](&world)
 
 	hooks := engine.NewSparseHookGraph()
 	deathSystem := systems.NewDeathSystem(&world, hooks)
 
-	// Entity with High Prestige (should spawn item)
-	e1 := world.NewEntity(needsID, legacyID, posID)
+	// Entity with High Prestige and equipped item (should spawn item)
+	e1 := world.NewEntity(needsID, legacyID, posID, equipID)
 	n1 := (*components.Needs)(world.Get(e1, needsID))
 	n1.Food = 0.0 // Starving
 	l1 := (*components.Legacy)(world.Get(e1, legacyID))
@@ -70,9 +71,11 @@ func TestDeathSystem_ItemInheritance(t *testing.T) {
 	p1 := (*components.Position)(world.Get(e1, posID))
 	p1.X = 10.0
 	p1.Y = 20.0
+	equip1 := (*components.EquipmentComponent)(world.Get(e1, equipID))
+	equip1.Equipped = true
 
 	// Entity with Low Prestige (should not spawn item)
-	e2 := world.NewEntity(needsID, legacyID, posID)
+	e2 := world.NewEntity(needsID, legacyID, posID, equipID)
 	n2 := (*components.Needs)(world.Get(e2, needsID))
 	n2.Food = 0.0 // Starving
 	l2 := (*components.Legacy)(world.Get(e2, legacyID))
@@ -80,6 +83,8 @@ func TestDeathSystem_ItemInheritance(t *testing.T) {
 	p2 := (*components.Position)(world.Get(e2, posID))
 	p2.X = 5.0
 	p2.Y = 5.0
+	equip2 := (*components.EquipmentComponent)(world.Get(e2, equipID))
+	equip2.Equipped = true
 
 	// Pre-update item count
 	itemID := ecs.ComponentID[components.ItemEntity](&world)

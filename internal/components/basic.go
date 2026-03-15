@@ -205,6 +205,15 @@ type LegendComponent struct {
 	History  []uint32 // Array of EventIDs tracking the item's history
 }
 
+// Phase 32.1: Artifact Equipment (Auras of Legitimacy)
+type EquipmentComponent struct {
+	Weapon   LegendComponent // Embedded 32-byte artifact
+	Equipped bool            // 1 byte
+	_        uint8           // 1 byte padding
+	_        uint16          // 2 bytes padding
+	_        uint32          // 4 bytes padding to 40 bytes exactly
+}
+
 // Phase 09.1: The Caravan Entity
 
 // Caravan is a tag component identifying mobile logistics units.

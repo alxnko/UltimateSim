@@ -27,6 +27,7 @@ type heirData struct {
 	InheritedDebt uint32
 	OutgoingHooks map[uint64]int
 	IncomingHooks map[uint64]int
+	Artifact      *components.LegendComponent // Phase 32.1: Artifact Inheritance
 }
 
 type DeathSystem struct {
@@ -66,6 +67,9 @@ func (s *DeathSystem) Update(world *ecs.World) {
 	positionID := ecs.ComponentID[components.Position](world)
 	affilID := ecs.ComponentID[components.Affiliation](world)
 
+	// We must register Component IDs BEFORE query
+	equipID := ecs.ComponentID[components.EquipmentComponent](world)
+
 	// Collect entities to remove to avoid modifying the world while iterating
 	// Reset the slice length to 0, retaining capacity to avoid GC pressure
 	s.toRemove = s.toRemove[:0]
@@ -89,26 +93,31 @@ func (s *DeathSystem) Update(world *ecs.World) {
 			}
 
 			// Phase 09.5: Item Inheritance logic
+			// Only spawn if they actually have an equipped weapon
 			if query.Has(legacyID) {
 				legacy := (*components.Legacy)(query.Get(legacyID))
-				if legacy.Prestige >= components.ExtremePrestigeThreshold {
-					var nameID uint32 = 0
-					if query.Has(identityID) {
-						ident := (*components.Identity)(query.Get(identityID))
-						registry := engine.GetSecretRegistry()
-						nameID = registry.RegisterSecret(ident.Name)
-					}
 
+				var hasEquippedArtifact bool
+				var artifactNameID uint32
+				if query.Has(equipID) {
+					equip := (*components.EquipmentComponent)(query.Get(equipID))
+					if equip.Equipped {
+						hasEquippedArtifact = true
+						artifactNameID = equip.Weapon.NameID
+					}
+				}
+
+				if legacy.Prestige >= components.ExtremePrestigeThreshold && hasEquippedArtifact {
 					s.itemsToSpawn = append(s.itemsToSpawn, itemSpawnData{
 						posX:     posX,
 						posY:     posY,
 						prestige: legacy.Prestige,
-						nameID:   nameID,
+						nameID:   artifactNameID,
 					})
 				}
 			}
 
-			// Phase 25.1: Social Legacy & Succession Engine
+			// Phase 25.1 & Phase 32.1: Social Legacy, Succession Engine, and Artifact Inheritance
 			// Cache traits for potential heirs
 			if s.hookGraph != nil && query.Has(identityID) && query.Has(affilID) {
 				ident := (*components.Identity)(query.Get(identityID))
@@ -120,11 +129,20 @@ func (s *DeathSystem) Update(world *ecs.World) {
 					debt = leg.InheritedDebt
 				}
 
+				var artifact *components.LegendComponent
+				if query.Has(equipID) {
+					equip := (*components.EquipmentComponent)(query.Get(equipID))
+					if equip.Equipped {
+						artifactCopy := equip.Weapon // Struct copy to preserve data after despawn
+						artifact = &artifactCopy
+					}
+				}
+
 				outgoing := s.hookGraph.GetAllHooks(ident.ID)
 				incoming := s.hookGraph.GetAllIncomingHooks(ident.ID)
 
-				// Only trigger succession if there's a reason (hooks or debt or prestige)
-				if len(outgoing) > 0 || len(incoming) > 0 || pres > 0 || debt > 0 {
+				// Only trigger succession if there's a reason (hooks or debt or prestige or artifact)
+				if len(outgoing) > 0 || len(incoming) > 0 || pres > 0 || debt > 0 || artifact != nil {
 					s.heirs = append(s.heirs, heirData{
 						DeadID:        ident.ID,
 						FamilyID:      affil.FamilyID,
@@ -132,6 +150,7 @@ func (s *DeathSystem) Update(world *ecs.World) {
 						InheritedDebt: debt,
 						OutgoingHooks: outgoing,
 						IncomingHooks: incoming,
+						Artifact:      artifact,
 					})
 				}
 			}
@@ -192,6 +211,12 @@ func (s *DeathSystem) Update(world *ecs.World) {
 		npcID := ecs.ComponentID[components.NPC](world)
 		npcQuery := world.Query(ecs.All(npcID, identityID, affilID, legacyID))
 
+		type artifactAssignment struct {
+			entity   ecs.Entity
+			artifact *components.LegendComponent
+		}
+		var artifactAssignments []artifactAssignment
+
 		for npcQuery.Next() {
 			if false { // npcQuery.Has(needsID) {
 				needs := (*components.Needs)(npcQuery.Get(needsID))
@@ -222,6 +247,24 @@ func (s *DeathSystem) Update(world *ecs.World) {
 						}
 					}
 
+					// Phase 32.1: Transfer Artifact (Aura of Legitimacy)
+					if h.Artifact != nil {
+						artifactAssignments = append(artifactAssignments, artifactAssignment{
+							entity:   npcQuery.Entity(),
+							artifact: h.Artifact,
+						})
+
+						// We must also remove this artifact from the spawning pool so it isn't dropped on the map!
+						for j := 0; j < len(s.itemsToSpawn); j++ {
+							if s.itemsToSpawn[j].prestige == h.Prestige && s.itemsToSpawn[j].nameID == h.Artifact.NameID {
+								// Remove this element fast by swapping with the last
+								s.itemsToSpawn[j] = s.itemsToSpawn[len(s.itemsToSpawn)-1]
+								s.itemsToSpawn = s.itemsToSpawn[:len(s.itemsToSpawn)-1]
+								break
+							}
+						}
+					}
+
 					// Clear the dead ID so it's not inherited multiple times
 					s.heirs[i].DeadID = 0
 				}
@@ -231,6 +274,16 @@ func (s *DeathSystem) Update(world *ecs.World) {
 		// Clean up the dead ID's hooks
 		for _, deadID := range cleanupIDs {
 			s.hookGraph.RemoveAllHooks(deadID)
+		}
+
+		// Apply deferred Artifact Inheritance Mid-tick Phase
+		for _, assign := range artifactAssignments {
+			if !world.Has(assign.entity, equipID) {
+				world.Add(assign.entity, equipID)
+			}
+			equip := (*components.EquipmentComponent)(world.Get(assign.entity, equipID))
+			equip.Weapon = *assign.artifact
+			equip.Equipped = true
 		}
 	}
 
