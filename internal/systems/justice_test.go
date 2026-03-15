@@ -91,10 +91,17 @@ func TestJusticeSystem_Sentencing(t *testing.T) {
 	idID := ecs.ComponentID[components.Identity](&world)
 	jurID := ecs.ComponentID[components.JurisdictionComponent](&world)
 
+	treasuryID := ecs.ComponentID[components.TreasuryComponent](&world)
+
 	// Create Capital with Jurisdiction to satisfy empty return check
-	capEnt := world.NewEntity(posID, affID, jurID)
+	capEnt := world.NewEntity(posID, affID, jurID, treasuryID)
 	capJur := (*components.JurisdictionComponent)(world.Get(capEnt, jurID))
 	capJur.RadiusSquared = 10000.0 // Huge radius
+	capAff := (*components.Affiliation)(world.Get(capEnt, affID))
+	capAff.CityID = 1
+
+	capTreasury := (*components.TreasuryComponent)(world.Get(capEnt, treasuryID))
+	capTreasury.Wealth = 500.0
 
 	// Create Criminal (Tagged)
 	// We do not give them Memory or Storage in this test, so the detection step

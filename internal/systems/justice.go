@@ -13,12 +13,13 @@ import (
 // It also directs Guards towards entities tagged with a CrimeMarker to enforce punishments.
 
 type adminJurisdictionData struct {
-	Entity ecs.Entity
-	CityID uint32
-	X      float32
-	Y      float32
-	Radius float32
-	Laws   uint32
+	Entity   ecs.Entity
+	CityID   uint32
+	X        float32
+	Y        float32
+	Radius   float32
+	Laws     uint32
+	Treasury *components.TreasuryComponent // Pre-cached for Phase 18.3 Fines
 }
 
 type JusticeSystem struct {
@@ -54,6 +55,7 @@ func (s *JusticeSystem) Update(world *ecs.World) {
 	jurID := ecs.ComponentID[components.JurisdictionComponent](world)
 	posID := ecs.ComponentID[components.Position](world)
 	affID := ecs.ComponentID[components.Affiliation](world)
+	treasuryID := ecs.ComponentID[components.TreasuryComponent](world)
 
 	jurQuery := world.Query(ecs.All(jurID, posID, affID))
 	s.jurisdictions = s.jurisdictions[:0]
@@ -63,13 +65,19 @@ func (s *JusticeSystem) Update(world *ecs.World) {
 		pos := (*components.Position)(jurQuery.Get(posID))
 		aff := (*components.Affiliation)(jurQuery.Get(affID))
 
+		var treasury *components.TreasuryComponent
+		if world.Has(jurQuery.Entity(), treasuryID) {
+			treasury = (*components.TreasuryComponent)(jurQuery.Get(treasuryID))
+		}
+
 		s.jurisdictions = append(s.jurisdictions, adminJurisdictionData{
-			Entity: jurQuery.Entity(),
-			CityID: aff.CityID,
-			X:      pos.X,
-			Y:      pos.Y,
-			Radius: jur.RadiusSquared,
-			Laws:   jur.IllegalActionIDs,
+			Entity:   jurQuery.Entity(),
+			CityID:   aff.CityID,
+			X:        pos.X,
+			Y:        pos.Y,
+			Radius:   jur.RadiusSquared,
+			Laws:     jur.IllegalActionIDs,
+			Treasury: treasury,
 		})
 	}
 
@@ -292,6 +300,7 @@ func (s *JusticeSystem) Update(world *ecs.World) {
 
 					if !bribed {
 						// Apply standard Punishment (Banishment & Fines)
+						var collectedFine float32 = 0.0
 						if world.Has(c.Entity, needsID) {
 							cNeeds := (*components.Needs)(world.Get(c.Entity, needsID))
 							crimeMarker := (*components.CrimeMarker)(world.Get(c.Entity, crimeID))
@@ -299,8 +308,23 @@ func (s *JusticeSystem) Update(world *ecs.World) {
 							fine := float32(crimeMarker.Bounty)
 							if cNeeds.Wealth >= fine {
 								cNeeds.Wealth -= fine
+								collectedFine = fine
 							} else {
+								collectedFine = cNeeds.Wealth
 								cNeeds.Wealth = 0
+							}
+						}
+
+						// Phase 18.3: Sentencing & Prisons (Fines transfer wealth to the enforcing CityID)
+						if collectedFine > 0.0 && gAff != nil {
+							// Find the pre-cached TreasuryComponent of the Guard's City
+							for jIdx := 0; jIdx < len(s.jurisdictions); jIdx++ {
+								if s.jurisdictions[jIdx].CityID == gAff.CityID {
+									if s.jurisdictions[jIdx].Treasury != nil {
+										s.jurisdictions[jIdx].Treasury.Wealth += collectedFine
+									}
+									break
+								}
 							}
 						}
 
