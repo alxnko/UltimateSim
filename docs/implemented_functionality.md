@@ -56,6 +56,7 @@ All entities in the engine are composed of strict, flat-memory data structs stri
 - **`Possessed`**: Marker component bypassing AI for player-controlled entities.
 - **`JobComponent`**: Flag identifying an NPC's role (e.g. Farmer, Lumberjack, Artisan) to handle labor bounds.
 - **`CountryComponent`**: Higher-level tag struct (`StandardCurrencyID`) tracking macro-state parameters for Country capitals.
+- **`WarTrackerComponent`**: Phase 29 tracking struct attached to Country Capitals defining the target and active status of geopolitical resource wars.
 *(Add all other newly identified/created components here)*
 
 ---
@@ -108,6 +109,9 @@ Raw numerical utilities strictly built for deterministic execution.
 ---
 
 
+
+## Phase 29: Geopolitical Resource Wars
+- **Phase 29.1 - Geopolitical Famine Invasions**: Bridges Macro-Economics directly into the Blood Feud and Justice engines. Implemented `WarTrackerComponent` and `ResourceWarSystem`. When a Capital entity flags a severe local famine (`MarketComponent.FoodPrice > 8.0`) and is within striking distance (`RadiusSquared <= 2500.0`) of a wealthy neighbor (`StorageComponent.Food >= 1000`), the system triggers an invasion. Using `engine.SparseHookGraph`, it structurally seeds a massive `-100` relationship grudge across every `NPC` in the invading country against every `NPC` in the defending country. This bridges macro-state logic perfectly into individual `BloodFeudSystem` executions without writing massive new pathfinding loops.
 ## Phase 22: The Corruption Engine
 - **Phase 22.1 - Systemic Bribery & Fracture**: Deeply links Economy, Justice, and Sovereignty. Expanding `JurisdictionComponent` with a `Corruption` counter, `JusticeSystem` allows high-wealth criminals to bribe Guards, bypassing `CrimeMarker` punishment and directly incrementing `Corruption` on the local jurisdiction. The `AdministrativeFractureSystem` dynamically calculates effective physical distances modified by this `Corruption` scalar, natively forcing highly corrupt empires to shatter prematurely as the frictional decay overpowers their administrative grid bounds.
 

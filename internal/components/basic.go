@@ -373,6 +373,14 @@ type CountryComponent struct {
 	Debasement         float32
 }
 
+// Phase 29.1: Geopolitical Resource Wars
+type WarTrackerComponent struct {
+	TargetCountryID uint32
+	Active          bool
+	_               uint8
+	_               uint16
+}
+
 // Phase 16.2: Strategic Unions & Pacts
 
 // UnionType constants

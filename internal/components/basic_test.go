@@ -218,6 +218,14 @@ func TestComponentSizes(t *testing.T) {
 	if countrySize > 8 {
 		t.Errorf("CountryComponent struct size too large: %d bytes (expected <= 8)", countrySize)
 	}
+
+	// Phase 29.1: Geopolitical Resource Wars
+	// TargetCountryID uint32 (4) + Active bool (1) + padding uint8 (1) + padding uint16 (2) = 8 bytes
+	warTrackerSize := unsafe.Sizeof(WarTrackerComponent{})
+	if warTrackerSize != 8 {
+		t.Errorf("WarTrackerComponent struct size should be exactly 8 bytes, got %d", warTrackerSize)
+	}
+
 	// Phase 10.2: Bureaucratic Delay Components
 	orderEntitySize := unsafe.Sizeof(OrderEntity{})
 	if orderEntitySize > 0 {

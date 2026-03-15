@@ -2,6 +2,20 @@
 
 This file tracks autonomous additions to the total simulation that bridge gaps identified in the vision.
 
+## Evolution: Phase 29.1 - Geopolitical Resource Wars
+- **Goal:** Execute the "Systemic Emergence" objective by bridging the existing Macro-Economics (Famine and Storage) and Sovereignty (Countries) directly into the Justice and Blood Feud engines. Simulating how starving nations orchestrate invasions against wealthy neighbors.
+- **DOD Implementation:**
+  - Added `WarTrackerComponent` strictly mapped to 8-byte bounds.
+  - Implemented `ResourceWarSystem` (`internal/systems/resource_war.go`) adhering to `arche-go` ECS standards by extracting Country Capital metrics into a flat array (`[]capitalWarData`) to dodge nested queries.
+  - Sequentially parses `MarketComponent.FoodPrice` to trigger the invasion condition (`> 8.0`) mapping to high `StorageComponent.Food` targets.
+- **The Butterfly Effect:**
+  - Plugs deeply into Phase 13.1 (Market Logic), Phase 16.1 (Countries), Phase 18 (Justice), and Phase 23 (Blood Feuds).
+  - When a Capital experiences extreme famine, its local market `FoodPrice` inevitably skyrockets.
+  - If a wealthy neighbor is within logistical striking distance (`RadiusSquared <= 2500.0`), the system unilaterally declares a "Resource War".
+  - The `ResourceWarSystem` maps every `NPC` entity belonging to the starving country and uses the `SparseHookGraph` to inject a massive `-100` relationship hook against every `NPC` in the wealthy defending country.
+  - This natively and instantly triggers the `BloodFeudSystem` at a massive, population-wide scale. The entire starving populace paths towards and murders the defending populace to take their resources, turning localized crime into a full-scale geopolitical war purely through data thresholds.
+  - Verified completely via deterministic `go test ./internal/systems -run TestResourceWarSystem_Integration -count=2`.
+
 ## Evolution: Phase 15.3 - Predatory Lending Engine
 - **Goal:** Execute the "Systemic Emergence" objective by bridging the existing Economic Agency (Businesses) and State Failure (Debt Default) layers. Simulating how wealthy individuals or guilds trap desperate/starving citizens in predatory debt loops.
 - **DOD Implementation:**
