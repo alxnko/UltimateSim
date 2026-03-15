@@ -14,6 +14,11 @@ type BirthSystem struct {
 	filter ecs.Filter
 }
 
+// IsExpensive returns true to throttle this system during fast-forward.
+func (s *BirthSystem) IsExpensive() bool {
+	return true
+}
+
 func NewBirthSystem(world *ecs.World) *BirthSystem {
 	storageID := ecs.ComponentID[components.StorageComponent](world)
 	popID := ecs.ComponentID[components.PopulationComponent](world)

@@ -103,31 +103,31 @@ func (s *NaturalDisasterSystem) Update(world *ecs.World) {
 				// Systemic Emergence: If pain is extreme, they might die instantly or be incapacitated
 				// DeathSystem handles starvation, but we can also use MetabolismSystem's pain mechanic
 				// or just rely on the existing vitals integration.
-			}
-		}
+				}
+				}
 
-		// Villages
-		villageID := ecs.ComponentID[components.Village](world)
-		storageID := ecs.ComponentID[components.StorageComponent](world)
+				// Villages
+				villageID := ecs.ComponentID[components.Village](world)
+				storageID := ecs.ComponentID[components.StorageComponent](world)
 
-		villageFilter := ecs.All(villageID, posID, storageID)
-		villageQuery := world.Query(villageFilter)
+				villageFilter := ecs.All(villageID, posID, storageID)
+				villageQuery := world.Query(villageFilter)
 
-		for villageQuery.Next() {
-			villagePos := (*components.Position)(villageQuery.Get(posID))
-			dx := villagePos.X - pos.X
-			dy := villagePos.Y - pos.Y
-			if dx*dx + dy*dy <= disaster.RadiusSquared {
+				for villageQuery.Next() {
+				villagePos := (*components.Position)(villageQuery.Get(posID))
+				dx := villagePos.X - pos.X
+				dy := villagePos.Y - villagePos.Y
+				if dx*dx+dy*dy <= disaster.RadiusSquared {
 				storage := (*components.StorageComponent)(villageQuery.Get(storageID))
 				// Massive destruction of storage
 				storage.Food = 0
 				storage.Wood = 0
 				storage.Stone = 0
 				storage.Iron = 0
-			}
-		}
+				}
+				}
 
-		// Despawn the disaster entity since its effect is instant
-		world.RemoveEntity(e)
-	}
-}
+				// Despawn the disaster entity since its effect is instant
+				world.RemoveEntity(e)
+				}
+				}

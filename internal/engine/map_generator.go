@@ -99,6 +99,11 @@ func GenerateMap(grid *MapGrid, seed [32]byte) {
 					grid.Resources[i].IronValue = uint8(20 + localRNG.IntN(81)) // 20-100 Iron
 				}
 			}
+
+			// Add to FoodCache if food is present
+			if grid.Resources[i].FoodValue > 0 {
+				grid.FoodCache = append(grid.FoodCache, i)
+			}
 		}
 	}
 }

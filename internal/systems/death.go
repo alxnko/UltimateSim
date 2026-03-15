@@ -39,6 +39,11 @@ type DeathSystem struct {
 	heirs        []heirData
 }
 
+// IsExpensive returns true to throttle this system during fast-forward.
+func (s *DeathSystem) IsExpensive() bool {
+	return true
+}
+
 // NewDeathSystem creates a new DeathSystem.
 func NewDeathSystem(world *ecs.World, hooks *engine.SparseHookGraph) *DeathSystem {
 	// Query entities that have Needs
@@ -199,91 +204,78 @@ func (s *DeathSystem) Update(world *ecs.World) {
 		}
 	}
 
-	// Phase 25.1: Execute Succession
+	// Phase 25.1: Execute Succession - Optimized to O(NPCs)
 	if len(s.heirs) > 0 {
-		// Create a separate array of initial dead IDs for cleanup
-		var cleanupIDs []uint64
-		for _, h := range s.heirs {
-			cleanupIDs = append(cleanupIDs, h.DeadID)
-		}
+		// 1. Build a map of FamilyID -> Living NPC Entities
+		familyMap := make(map[uint32][]ecs.Entity)
 
-		// We need to iterate over all living NPCs to find suitable heirs
 		npcID := ecs.ComponentID[components.NPC](world)
 		npcQuery := world.Query(ecs.All(npcID, identityID, affilID, legacyID))
 
-		type artifactAssignment struct {
-			entity   ecs.Entity
-			artifact *components.LegendComponent
+		// Map dying entities for fast lookup during family map build
+		dyingMap := make(map[ecs.Entity]bool)
+		for _, e := range s.toRemove {
+			dyingMap[e] = true
 		}
-		var artifactAssignments []artifactAssignment
 
 		for npcQuery.Next() {
-			if false { // npcQuery.Has(needsID) {
-				needs := (*components.Needs)(npcQuery.Get(needsID))
-				if needs.Food <= 0 {
-					continue
-				}
+			ent := npcQuery.Entity()
+			if dyingMap[ent] {
+				continue // Heirs must be alive
 			}
 			affil := (*components.Affiliation)(npcQuery.Get(affilID))
-			ident := (*components.Identity)(npcQuery.Get(identityID))
-			legacy := (*components.Legacy)(npcQuery.Get(legacyID))
+			familyMap[affil.FamilyID] = append(familyMap[affil.FamilyID], ent)
+		}
 
-			for i := 0; i < len(s.heirs); i++ {
-				h := s.heirs[i]
-				if h.FamilyID == affil.FamilyID && h.DeadID != ident.ID && s.heirs[i].DeadID != 0 {
-					// Found an heir! Transfer Legacy
-					legacy.Prestige += h.Prestige
-					legacy.InheritedDebt += h.InheritedDebt
+		// 2. Process succession using the map
+		for _, h := range s.heirs {
+			if heirs, exists := familyMap[h.FamilyID]; exists && len(heirs) > 0 {
+				// For now, pick the first available heir in the family
+				heirEnt := heirs[0]
 
-					// Transfer Hooks
-					for target, points := range h.OutgoingHooks {
-						if target != ident.ID { // Don't hook yourself
-							s.hookGraph.AddHook(ident.ID, target, points)
+				legacy := (*components.Legacy)(world.Get(heirEnt, legacyID))
+				ident := (*components.Identity)(world.Get(heirEnt, identityID))
+
+				// Transfer Legacy
+				legacy.Prestige += h.Prestige
+				legacy.InheritedDebt += h.InheritedDebt
+
+				// Transfer Hooks
+				for target, points := range h.OutgoingHooks {
+					if target != ident.ID {
+						s.hookGraph.AddHook(ident.ID, target, points)
+					}
+				}
+				for source, points := range h.IncomingHooks {
+					if source != ident.ID {
+						s.hookGraph.AddHook(source, ident.ID, points)
+					}
+				}
+
+				// Phase 32.1: Transfer Artifact
+				if h.Artifact != nil {
+					if !world.Has(heirEnt, equipID) {
+						world.Add(heirEnt, equipID)
+					}
+					equip := (*components.EquipmentComponent)(world.Get(heirEnt, equipID))
+					equip.Weapon = *h.Artifact
+					equip.Equipped = true
+
+					// Remove from spawning items pool
+					for j := 0; j < len(s.itemsToSpawn); j++ {
+						if s.itemsToSpawn[j].prestige == h.Prestige && s.itemsToSpawn[j].nameID == h.Artifact.NameID {
+							s.itemsToSpawn[j] = s.itemsToSpawn[len(s.itemsToSpawn)-1]
+							s.itemsToSpawn = s.itemsToSpawn[:len(s.itemsToSpawn)-1]
+							break
 						}
 					}
-					for source, points := range h.IncomingHooks {
-						if source != ident.ID {
-							s.hookGraph.AddHook(source, ident.ID, points)
-						}
-					}
-
-					// Phase 32.1: Transfer Artifact (Aura of Legitimacy)
-					if h.Artifact != nil {
-						artifactAssignments = append(artifactAssignments, artifactAssignment{
-							entity:   npcQuery.Entity(),
-							artifact: h.Artifact,
-						})
-
-						// We must also remove this artifact from the spawning pool so it isn't dropped on the map!
-						for j := 0; j < len(s.itemsToSpawn); j++ {
-							if s.itemsToSpawn[j].prestige == h.Prestige && s.itemsToSpawn[j].nameID == h.Artifact.NameID {
-								// Remove this element fast by swapping with the last
-								s.itemsToSpawn[j] = s.itemsToSpawn[len(s.itemsToSpawn)-1]
-								s.itemsToSpawn = s.itemsToSpawn[:len(s.itemsToSpawn)-1]
-								break
-							}
-						}
-					}
-
-					// Clear the dead ID so it's not inherited multiple times
-					s.heirs[i].DeadID = 0
 				}
 			}
 		}
 
-		// Clean up the dead ID's hooks
-		for _, deadID := range cleanupIDs {
-			s.hookGraph.RemoveAllHooks(deadID)
-		}
-
-		// Apply deferred Artifact Inheritance Mid-tick Phase
-		for _, assign := range artifactAssignments {
-			if !world.Has(assign.entity, equipID) {
-				world.Add(assign.entity, equipID)
-			}
-			equip := (*components.EquipmentComponent)(world.Get(assign.entity, equipID))
-			equip.Weapon = *assign.artifact
-			equip.Equipped = true
+		// 3. Clean up the dead ID's hooks
+		for _, h := range s.heirs {
+			s.hookGraph.RemoveAllHooks(h.DeadID)
 		}
 	}
 

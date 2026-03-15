@@ -15,6 +15,12 @@ type WanderSystem struct {
 	pathQueue   *engine.PathRequestQueue
 	filter      ecs.Filter
 	pendingReqs map[uint64]ecs.Entity
+	tickCounter uint64
+}
+
+// IsExpensive returns true to throttle this system during fast-forward.
+func (s *WanderSystem) IsExpensive() bool {
+	return true
 }
 
 // NewWanderSystem creates a new WanderSystem.
@@ -35,11 +41,13 @@ func NewWanderSystem(world *ecs.World, mapGrid *engine.MapGrid, pathQueue *engin
 		pathQueue:   pathQueue,
 		filter:      &mask,
 		pendingReqs: make(map[uint64]ecs.Entity),
+		tickCounter: 0,
 	}
 }
 
 // Update executes the system logic per tick.
 func (s *WanderSystem) Update(world *ecs.World) {
+	s.tickCounter++
 	posID := ecs.ComponentID[components.Position](world)
 	idID := ecs.ComponentID[components.Identity](world)
 	needsID := ecs.ComponentID[components.Needs](world)
@@ -77,11 +85,19 @@ DrainLoop:
 
 	// 2. Iterate entities to generate new path requests
 	query := world.Query(s.filter)
+	npcIndex := 0
 	for query.Next() {
+		npcIndex++
 		path := (*components.Path)(query.Get(pathID))
 
 		// Only process entities that do not currently have a path pending or active
 		if path.HasPath {
+			continue
+		}
+
+		// Phase 31.1: Throttle AI evaluations
+		// Only evaluate a fraction of entities each tick to maintain 60 TPS during heavy simulation.
+		if (s.tickCounter + uint64(npcIndex)) % 30 != 0 {
 			continue
 		}
 
@@ -96,36 +112,32 @@ DrainLoop:
 			var bestScore float32 = math.MaxFloat32
 			foundTarget := false
 
-			// Sequential DOD iteration over the 1D map array
-			for i := 0; i < len(s.mapGrid.Resources); i++ {
-				if s.mapGrid.Resources[i].FoodValue > 0 {
-					y := i / s.mapGrid.Width
-					x := i % s.mapGrid.Width
+			// Optimized with FoodCache and sampling (check every 8th food source)
+			step := 8
+			for i := 0; i < len(s.mapGrid.FoodCache); i += step {
+				idx := s.mapGrid.FoodCache[i]
+				x := idx % s.mapGrid.Width
+				y := idx / s.mapGrid.Width
 
-					// Base euclidean distance
-					dx := float32(x) - pos.X
-					dy := float32(y) - pos.Y
-					dist := float32(math.Sqrt(float64(dx*dx + dy*dy)))
+				// Base euclidean distance
+				dx := float32(x) - pos.X
+				dy := float32(y) - pos.Y
+				dist := float32(math.Sqrt(float64(dx*dx + dy*dy)))
 
-					// Apply Traits
-					// To actually influence targeting instead of uniformly scaling all distances,
-					// we apply a deterministic positional variance representing unknown terrain or perceived safety.
-					variance := float32((x*17 + y*31) % 15)
+				// Apply Traits
+				variance := float32((x*17 + y*31) % 15)
 
-					if (id.BaseTraits & components.TraitCautious) != 0 {
-						// Penalize certain arbitrary regions (representing distant unknown clusters)
-						dist += variance
-					} else if (id.BaseTraits & components.TraitRiskTaker) != 0 {
-						// Reward certain distant areas unpredictably to drive exploration
-						dist -= variance
-					}
+				if (id.BaseTraits & components.TraitCautious) != 0 {
+					dist += variance
+				} else if (id.BaseTraits & components.TraitRiskTaker) != 0 {
+					dist -= variance
+				}
 
-					if dist < bestScore {
-						bestScore = dist
-						bestX = x
-						bestY = y
-						foundTarget = true
-					}
+				if dist < bestScore {
+					bestScore = dist
+					bestX = x
+					bestY = y
+					foundTarget = true
 				}
 			}
 

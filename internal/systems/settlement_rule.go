@@ -16,6 +16,16 @@ type SettlementRuleSystem struct {
 	toRemove []ecs.Entity // Collect entities for removal after the iteration loop
 }
 
+// IsExpensive returns true to throttle this system during fast-forward.
+func (s *SettlementRuleSystem) IsExpensive() bool {
+	return true
+}
+
+// IsNonEssential returns true to skip this system during fast-forward.
+func (s *SettlementRuleSystem) IsNonEssential() bool {
+	return true
+}
+
 func NewSettlementRuleSystem(mapGrid *engine.MapGrid) *SettlementRuleSystem {
 	return &SettlementRuleSystem{
 		mapGrid:  mapGrid,

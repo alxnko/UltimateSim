@@ -50,6 +50,11 @@ func NewJusticeSystem(world *ecs.World, hooks *engine.SparseHookGraph) *JusticeS
 	}
 }
 
+// IsExpensive returns true to throttle this system during fast-forward.
+func (s *JusticeSystem) IsExpensive() bool {
+	return true
+}
+
 func (s *JusticeSystem) Update(world *ecs.World) {
 	// Step 1: Pre-cache all Jurisdiction boundaries to dodge nested queries
 	jurID := ecs.ComponentID[components.JurisdictionComponent](world)

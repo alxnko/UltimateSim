@@ -46,6 +46,7 @@ type MapGrid struct {
 	TileStates []TileState
 	Mana       []ManaData        // Phase 20.2: Abstract Physics
 	NavMesh    *hpa.AbstractGrid // Phase 17.2: Oceanic Pathfinding NavMesh
+	FoodCache  []int             // NEW: Indices of tiles with FoodValue > 0
 }
 
 // BuildOceanicNavMesh iterates over the generated grid map and calculates

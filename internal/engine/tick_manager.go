@@ -2,6 +2,7 @@ package engine
 
 import (
 	"fmt"
+	"sync"
 	"time"
 
 	"github.com/mlange-42/arche/ecs"
@@ -13,6 +14,16 @@ import (
 // System interface that all ECS systems must implement.
 type System interface {
 	Update(world *ecs.World)
+}
+
+// ThrottledSystem allows systems to opt-in to slower execution during fast-forward.
+type ThrottledSystem interface {
+	IsExpensive() bool
+}
+
+// NonEssentialSystem allows systems to be skipped entirely during fast-forward.
+type NonEssentialSystem interface {
+	IsNonEssential() bool
 }
 
 // Phase 01.3: SystemRunner phase definitions
@@ -34,12 +45,14 @@ type TickManager struct {
 	TPS     int
 	Alpha   float64
 
-	IsPaused bool // Phase 12: Simulation Controls
+	IsPaused      bool // Phase 12: Simulation Controls
+	IsFastForward bool // Phase 31: Performance mode for history simulation
 
 	Ticks uint64 // Global tick counter exposed for UI
 
 	lastTick time.Time
 	tickTime time.Duration
+	Mutex    sync.Mutex // NEW: Protects access to TickManager and World
 }
 
 // NewTickManager creates a new TickManager initialized with a new ECS world.
@@ -56,13 +69,26 @@ func NewTickManager(tps int) *TickManager {
 
 // AddSystem registers a new system to the TickManager under a specific phase.
 func (tm *TickManager) AddSystem(sys System, phase SystemPhase) {
+	tm.Mutex.Lock()
+	defer tm.Mutex.Unlock()
 	if phase >= 0 && phase < numPhases {
 		tm.Systems[phase] = append(tm.Systems[phase], sys)
 	}
 }
 
+// AddSystems registers multiple systems to the TickManager under a specific phase.
+func (tm *TickManager) AddSystems(phase SystemPhase, systems ...System) {
+	tm.Mutex.Lock()
+	defer tm.Mutex.Unlock()
+	if phase >= 0 && phase < numPhases {
+		tm.Systems[phase] = append(tm.Systems[phase], systems...)
+	}
+}
+
 // Tick executes a single simulation tick by iterating through phases sequentially.
 func (tm *TickManager) Tick() {
+	tm.Mutex.Lock()
+	defer tm.Mutex.Unlock()
 	if tm.IsPaused {
 		return
 	}
@@ -71,6 +97,20 @@ func (tm *TickManager) Tick() {
 
 	for phase := PhaseInput; phase < numPhases; phase++ {
 		for _, sys := range tm.Systems[phase] {
+			if tm.IsFastForward {
+				// Phase 31.3: Aggressive System Skipping
+				if nes, ok := sys.(NonEssentialSystem); ok && nes.IsNonEssential() {
+					continue
+				}
+
+				// Phase 31.2: System Throttling during FastForward
+				// Expensive systems are throttled to 1/20th speed during history simulation.
+				if ts, ok := sys.(ThrottledSystem); ok && ts.IsExpensive() {
+					if tm.Ticks%20 != 0 {
+						continue
+					}
+				}
+			}
 			sys.Update(tm.World)
 		}
 	}

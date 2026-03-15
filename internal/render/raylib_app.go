@@ -2,7 +2,9 @@ package render
 
 import (
 	"fmt"
+	"strconv"
 	"sync"
+	"time"
 
 	"github.com/ALXNKO/UltimateSim/internal/components"
 	"github.com/ALXNKO/UltimateSim/internal/engine"
@@ -27,12 +29,24 @@ type GameState int
 const (
 	StateMainMenu GameState = iota
 	StateWorldGen
+	StateLoading
 	StatePlaying
 	StatePaused
 )
 
-// BuildSimFunc is the function type to construct the engine.
-type BuildSimFunc func(gridWidth, gridHeight int, seedVal byte) (*engine.TickManager, *engine.MapGrid)
+// LoadingStatus tracks the progress of the engine build.
+type LoadingStatus struct {
+	Progress    float32 // 0.0 to 1.0
+	Message     string
+	Done        bool
+	TM          *engine.TickManager
+	Grid        *engine.MapGrid
+	Mutex       sync.Mutex
+	TargetState GameState
+}
+
+// BuildSimFunc is the function type to construct the engine with progress reporting.
+type BuildSimFunc func(gridWidth, gridHeight int, seedVal byte, status *LoadingStatus)
 
 // RunRaylibApp is the unified rendering loop using Raylib for both 2D (Map Mode) and 3D (Possession Mode).
 // Phase 11: Switch Pattern & Instanced 3D Control
@@ -44,11 +58,15 @@ func RunRaylibApp(buildSim BuildSimFunc) {
 
 	currentState := StateMainMenu
 	simulateYears := 10 // Default to 10 years of simulation in WorldGen
+	simulateYearsStr := "10"
 
 	// World Gen settings
 	gridSizeStr := "Medium (256x256)"
 	gridSize := 256
 	seedVal := byte(1)
+	seedStr := "1"
+
+	activeInput := 0 // 0: none, 1: seed, 2: simulateYears
 
 	var tm *engine.TickManager
 	var mapGrid *engine.MapGrid
@@ -57,6 +75,7 @@ func RunRaylibApp(buildSim BuildSimFunc) {
 	isSimulating := false
 	ticksSimulated := 0
 	ticksToSimulate := 0
+	isSimulatingGoroutineStarted := false
 
 	// Map Lenses
 	type LensType int
@@ -109,6 +128,9 @@ func RunRaylibApp(buildSim BuildSimFunc) {
 	isPossessionMode := false
 	selection := SelectionState{}
 
+	// Async Loading State
+	loadingStatus := LoadingStatus{}
+
 	for !rl.WindowShouldClose() {
 		var world *ecs.World
 		if tm != nil {
@@ -137,31 +159,54 @@ func RunRaylibApp(buildSim BuildSimFunc) {
 				if rl.CheckCollisionPointRec(mousePos, newGameBtn) {
 					currentState = StateWorldGen
 				} else if rl.CheckCollisionPointRec(mousePos, loadGameBtn) {
-					// Load Game logic
-					db, err := engine.InitDB("test_save.db")
-					if err == nil {
-						// Extract saved map parameters
+					// Async Load
+					loadingStatus = LoadingStatus{TargetState: StatePlaying}
+					currentState = StateLoading
+					go func() {
+						update := func(progress float32, msg string) {
+							loadingStatus.Mutex.Lock()
+							loadingStatus.Progress = progress
+							loadingStatus.Message = msg
+							loadingStatus.Mutex.Unlock()
+						}
+
+						update(0.1, "Opening Database...")
+						db, err := engine.InitDB("test_save.db")
+						if err != nil {
+							update(1.0, "Load Failed: " + err.Error())
+							loadingStatus.Mutex.Lock()
+							loadingStatus.Done = true
+							loadingStatus.Mutex.Unlock()
+							return
+						}
+
+						update(0.3, "Analyzing Game State...")
 						_, savedW, savedH, savedSeed, errState := engine.LoadGameState(db)
 						if errState != nil {
 							savedW, savedH, savedSeed = 256, 256, 1
 						}
 
-						// Setup base engine with matching dimensions and seed
-						tm, mapGrid = buildSim(savedW, savedH, savedSeed)
+						update(0.5, "Assembling Engine...")
+						tempStatus := &LoadingStatus{}
+						buildSim(savedW, savedH, savedSeed, tempStatus)
 
-						// Clear world and load entities
-						err = engine.LoadWorld(tm, db)
-						if err == nil {
-							world = tm.World
-							currentState = StatePlaying
-							fmt.Println("Game Loaded Successfully")
-						} else {
-							fmt.Println("Failed to load world:", err)
-						}
+						update(0.8, "Populating World...")
+						err = engine.LoadWorld(tempStatus.TM, db)
 						db.Close()
-					} else {
-						fmt.Println("Failed to open DB:", err)
-					}
+
+						if err != nil {
+							update(1.0, "Load Failed: " + err.Error())
+						} else {
+							update(1.0, "World Restored.")
+						}
+
+						loadingStatus.Mutex.Lock()
+						loadingStatus.TM = tempStatus.TM
+						loadingStatus.Grid = tempStatus.Grid
+						loadingStatus.Done = true
+						loadingStatus.Mutex.Unlock()
+					}()
+					continue
 				} else if rl.CheckCollisionPointRec(mousePos, settingsBtn) {
 					// Placeholder for settings
 					fmt.Println("Settings Clicked")
@@ -171,6 +216,12 @@ func RunRaylibApp(buildSim BuildSimFunc) {
 			rl.EndDrawing()
 			continue
 		} else if currentState == StateWorldGen {
+			// If simulation just finished, transition to playing
+			if tm != nil && !isSimulating && isSimulatingGoroutineStarted == false && ticksSimulated >= ticksToSimulate && (ticksToSimulate > 0 || tm.Ticks > 0) {
+				currentState = StatePlaying
+				continue
+			}
+
 			rl.BeginDrawing()
 			rl.ClearBackground(rl.Black)
 
@@ -205,17 +256,76 @@ func RunRaylibApp(buildSim BuildSimFunc) {
 			// Conceptual Scale UI
 			rl.DrawText("Conceptual Scale: 1 Tile = 100m", 450, 210, 14, rl.DarkGray)
 
+			// --- Input Handling for Text Fields ---
+			if activeInput > 0 {
+				key := rl.GetCharPressed()
+				for key > 0 {
+					if key >= 48 && key <= 57 { // 0-9
+						if activeInput == 1 && len(seedStr) < 3 {
+							seedStr += string(key)
+						} else if activeInput == 2 && len(simulateYearsStr) < 3 {
+							simulateYearsStr += string(key)
+						}
+					}
+					key = rl.GetCharPressed()
+				}
+
+				if rl.IsKeyPressed(rl.KeyBackspace) {
+					if activeInput == 1 && len(seedStr) > 0 {
+						seedStr = seedStr[:len(seedStr)-1]
+					} else if activeInput == 2 && len(simulateYearsStr) > 0 {
+						simulateYearsStr = simulateYearsStr[:len(simulateYearsStr)-1]
+					}
+				}
+
+				// Parse strings back to values
+				if s, err := strconv.Atoi(seedStr); err == nil {
+					if s > 255 { s = 255 }
+					seedVal = byte(s)
+				}
+				if y, err := strconv.Atoi(simulateYearsStr); err == nil {
+					if y > 500 { y = 500 }
+					simulateYears = y
+				}
+			}
+
 			// Seed UI
-			rl.DrawText(fmt.Sprintf("Seed: %d", seedVal), 450, 230, 20, rl.LightGray)
+			rl.DrawText("Seed:", 450, 230, 20, rl.LightGray)
+			seedInputRect := rl.Rectangle{X: 520, Y: 225, Width: 100, Height: 30}
+			if rl.IsMouseButtonPressed(rl.MouseLeftButton) {
+				if rl.CheckCollisionPointRec(mousePos, seedInputRect) {
+					activeInput = 1
+				}
+			}
+			rl.DrawRectangleRec(seedInputRect, rl.DarkGray)
+			borderColor := rl.LightGray
+			if activeInput == 1 { borderColor = rl.Gold }
+			rl.DrawRectangleLinesEx(seedInputRect, 2, borderColor)
+			rl.DrawText(seedStr, int32(seedInputRect.X+5), int32(seedInputRect.Y+5), 20, rl.RayWhite)
+
 			seedBtn := rl.Rectangle{X: 750, Y: 225, Width: 100, Height: 30}
 			drawButton(seedBtn, "Random", mousePos)
 
 			if rl.IsMouseButtonPressed(rl.MouseLeftButton) && rl.CheckCollisionPointRec(mousePos, seedBtn) {
 				seedVal = byte(rl.GetRandomValue(1, 255))
+				seedStr = strconv.Itoa(int(seedVal))
 			}
 
 			// Simulate Years UI
-			rl.DrawText(fmt.Sprintf("Simulate History: %d Years", simulateYears), 450, 280, 20, rl.LightGray)
+			rl.DrawText("Simulate History:", 450, 280, 20, rl.LightGray)
+			yearsInputRect := rl.Rectangle{X: 630, Y: 275, Width: 100, Height: 30}
+			if rl.IsMouseButtonPressed(rl.MouseLeftButton) {
+				if rl.CheckCollisionPointRec(mousePos, yearsInputRect) {
+					activeInput = 2
+				} else if !rl.CheckCollisionPointRec(mousePos, seedInputRect) && !rl.CheckCollisionPointRec(mousePos, seedBtn) {
+					activeInput = 0 // Deselect if clicking elsewhere
+				}
+			}
+			rl.DrawRectangleRec(yearsInputRect, rl.DarkGray)
+			borderColor = rl.LightGray
+			if activeInput == 2 { borderColor = rl.Gold }
+			rl.DrawRectangleLinesEx(yearsInputRect, 2, borderColor)
+			rl.DrawText(simulateYearsStr, int32(yearsInputRect.X+5), int32(yearsInputRect.Y+5), 20, rl.RayWhite)
 
 			minusBtn := rl.Rectangle{X: 400, Y: 275, Width: 30, Height: 30}
 			plusBtn := rl.Rectangle{X: 750, Y: 275, Width: 30, Height: 30}
@@ -226,55 +336,112 @@ func RunRaylibApp(buildSim BuildSimFunc) {
 			if rl.IsMouseButtonPressed(rl.MouseLeftButton) {
 				if rl.CheckCollisionPointRec(mousePos, minusBtn) && simulateYears > 0 {
 					simulateYears--
+					simulateYearsStr = strconv.Itoa(simulateYears)
 				} else if rl.CheckCollisionPointRec(mousePos, plusBtn) && simulateYears < 500 {
 					simulateYears++
+					simulateYearsStr = strconv.Itoa(simulateYears)
 				}
 			}
 
-			if !isSimulating {
+			if isSimulating {
+				if !isSimulatingGoroutineStarted {
+					isSimulatingGoroutineStarted = true
+					tm.IsFastForward = true // Enable throttling of expensive systems
+					go func() {
+						for {
+							if tm.IsPaused {
+								time.Sleep(10 * time.Millisecond)
+								continue
+							}
+
+							tm.Mutex.Lock()
+							if ticksSimulated >= ticksToSimulate {
+								tm.IsFastForward = false // Disable throttling after FF
+								tm.Mutex.Unlock()
+								break
+							}
+
+							// Phase 31.5: Batch Ticking
+							batch := 1000
+							if ticksToSimulate-ticksSimulated < batch {
+								batch = ticksToSimulate - ticksSimulated
+							}
+							tm.Mutex.Unlock()
+
+							for i := 0; i < batch; i++ {
+								tm.Tick()
+							}
+
+							tm.Mutex.Lock()
+							ticksSimulated += batch
+							tm.Mutex.Unlock()
+						}
+						isSimulating = false
+						isSimulatingGoroutineStarted = false
+					}()
+				}
+
+				// Draw Progress Bar (Main Thread)
+				rl.DrawText("Simulating History...", 500, 400, 20, rl.RayWhite)
+				tm.Mutex.Lock()
+				progress := float32(ticksSimulated) / float32(ticksToSimulate)
+				tm.Mutex.Unlock()
+				rl.DrawRectangle(440, 430, 400, 30, rl.DarkGray)
+				rl.DrawRectangle(440, 430, int32(400*progress), 30, rl.Green)
+				rl.DrawRectangleLines(440, 430, 400, 30, rl.RayWhite)
+				rl.DrawText(fmt.Sprintf("%d %%", int(progress*100)), 600, 435, 20, rl.RayWhite)
+
+				if !isSimulating {
+					currentState = StatePlaying
+				}
+			} else {
 				startBtn := rl.Rectangle{X: 540, Y: 380, Width: 200, Height: 50}
 				drawButton(startBtn, "GENERATE", mousePos)
 
 				if rl.IsMouseButtonPressed(rl.MouseLeftButton) && rl.CheckCollisionPointRec(mousePos, startBtn) {
-					rl.DrawText("Building Engine... Please wait.", 500, 450, 20, rl.Yellow)
-					rl.EndDrawing() // Force draw before blocking
-
-					tm, mapGrid = buildSim(gridSize, gridSize, seedVal)
-
-					// Re-fetch world after build
-					world = tm.World
-
-					if simulateYears > 0 {
-						// Fast-forward simulation: 1 year = TicksPerDay * 6 (days) * 4 (months)
-						ticksToSimulate = simulateYears * engine.TicksPerDay * 6 * 4
-						ticksSimulated = 0
-						isSimulating = true
-					} else {
-						currentState = StatePlaying
-					}
-					continue // Skip the rest of the loop for this frame
+					// Async start
+					loadingStatus = LoadingStatus{}
+					currentState = StateLoading
+					go buildSim(gridSize, gridSize, seedVal, &loadingStatus)
+					continue
 				}
-			} else {
-				// Process a chunk of ticks per frame to prevent freezing
-				chunkSize := 10000
-				for i := 0; i < chunkSize; i++ {
-					if ticksSimulated < ticksToSimulate {
-						tm.Tick()
-						ticksSimulated++
-					} else {
-						break
-					}
-				}
+			}
 
-				// Draw Progress Bar
-				rl.DrawText("Simulating History...", 500, 400, 20, rl.RayWhite)
-				progress := float32(ticksSimulated) / float32(ticksToSimulate)
-				rl.DrawRectangle(440, 430, int32(400*progress), 30, rl.Green)
-				rl.DrawRectangleLines(440, 430, 400, 30, rl.RayWhite)
-				rl.DrawText(fmt.Sprintf("%d %%", int(progress*100)), 600, 435, 20, rl.Black)
+			rl.EndDrawing()
+			continue
+		} else if currentState == StateLoading {
+			rl.BeginDrawing()
+			rl.ClearBackground(rl.Black)
 
-				if ticksSimulated >= ticksToSimulate {
-					isSimulating = false
+			loadingStatus.Mutex.Lock()
+			progress := loadingStatus.Progress
+			msg := loadingStatus.Message
+			done := loadingStatus.Done
+			if done {
+				tm = loadingStatus.TM
+				mapGrid = loadingStatus.Grid
+			}
+			loadingStatus.Mutex.Unlock()
+
+			rl.DrawText("ASSEMBLING WORLD ENGINE", 350, 250, 40, rl.RayWhite)
+
+			// sleek progress bar
+			rl.DrawRectangle(340, 350, 600, 40, rl.DarkGray)
+			rl.DrawRectangle(340, 350, int32(600*progress), 40, rl.Gold)
+			rl.DrawRectangleLines(340, 350, 600, 40, rl.RayWhite)
+
+			rl.DrawText(msg, 340, 410, 20, rl.LightGray)
+			rl.DrawText(fmt.Sprintf("%d%%", int(progress*100)), 610, 360, 20, rl.RayWhite)
+
+			if done {
+				if loadingStatus.TargetState == StatePlaying {
+					currentState = StatePlaying
+				} else if simulateYears > 0 {
+					ticksToSimulate = simulateYears * engine.TicksPerDay * 6 * 4
+					ticksSimulated = 0
+					isSimulating = true
+					currentState = StateWorldGen // Return to show simulation progress
+				} else {
 					currentState = StatePlaying
 				}
 			}
@@ -341,6 +508,7 @@ func RunRaylibApp(buildSim BuildSimFunc) {
 				a := (*components.Affiliation)(vq.Get(aID))
 				villages = append(villages, vData{x: p.X, y: p.Y, ctry: a.CountryID})
 			}
+			vq.Close()
 
 			// Offload heavy distance calculations to goroutine
 			mapW := mapGrid.Width
@@ -412,6 +580,7 @@ func RunRaylibApp(buildSim BuildSimFunc) {
 					}
 				}
 			}
+			pq.Close()
 			lastHeatmapTick = tm.Ticks
 		}
 
@@ -634,7 +803,7 @@ func RunRaylibApp(buildSim BuildSimFunc) {
 
 			if len(transforms) > 0 {
 				cubeMaterial.Maps.Color = rl.Blue
-				rl.DrawMeshInstanced(cubeMesh, cubeMaterial, transforms, len(transforms))
+				rl.DrawMeshInstanced(cubeMesh, cubeMaterial, transforms, int32(len(transforms)))
 			}
 
 			// Draw possessed entity (drawn normally to easily distinct it)

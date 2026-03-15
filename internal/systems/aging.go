@@ -11,13 +11,19 @@ import (
 // and dramatically increasing sudden death probability (Needs.Food = 0) after age 80.
 
 type AgingSystem struct {
-	npcFilter ecs.Filter
-	popFilter ecs.Filter
+	npcFilter   ecs.Filter
+	popFilter   ecs.Filter
 	tickCounter uint64
+	tm          *engine.TickManager
+}
+
+// IsExpensive returns true to throttle this system during fast-forward.
+func (s *AgingSystem) IsExpensive() bool {
+	return true
 }
 
 // NewAgingSystem creates a new AgingSystem.
-func NewAgingSystem(world *ecs.World) *AgingSystem {
+func NewAgingSystem(world *ecs.World, tm *engine.TickManager) *AgingSystem {
 	idID := ecs.ComponentID[components.Identity](world)
 	genID := ecs.ComponentID[components.GenomeComponent](world)
 	needsID := ecs.ComponentID[components.Needs](world)
@@ -31,9 +37,10 @@ func NewAgingSystem(world *ecs.World) *AgingSystem {
 	popMask := ecs.All(popID, villageID).Without(ruinID)
 
 	return &AgingSystem{
-		npcFilter: &npcMask,
-		popFilter: &popMask,
+		npcFilter:   &npcMask,
+		popFilter:   &popMask,
 		tickCounter: 0,
+		tm:          tm,
 	}
 }
 
@@ -82,13 +89,22 @@ func (s *AgingSystem) Update(world *ecs.World) {
 	for popQuery.Next() {
 		pop := (*components.PopulationComponent)(popQuery.Get(popID))
 
-		if len(pop.Citizens) == 0 {
+		count := len(pop.Citizens)
+		if count == 0 {
 			continue
+		}
+
+		// Phase 31.7: Statistical Aging Sampling during FastForward
+		// If population is huge, we only process 10% and extrapolate.
+		useSampling := s.tm != nil && s.tm.IsFastForward && count > 1000
+		step := 1
+		if useSampling {
+			step = 10
 		}
 
 		survivingCitizens := pop.Citizens[:0] // Retain capacity
 
-		for i := 0; i < len(pop.Citizens); i++ {
+		for i := 0; i < count; i += step {
 			cit := pop.Citizens[i]
 			cit.Age++
 
@@ -103,14 +119,32 @@ func (s *AgingSystem) Update(world *ecs.World) {
 				deathChance := float32(cit.Age-80)*0.01 + 0.05
 				if engine.GetRandomFloat32() < deathChance {
 					survives = false
-					if pop.Count > 0 {
-						pop.Count--
-					}
 				}
 			}
 
 			if survives {
 				survivingCitizens = append(survivingCitizens, cit)
+				// If sampling, we "keep" the others by assuming they lived if this one lived
+				if useSampling {
+					for j := 1; j < step && (i+j) < count; j++ {
+						// Simple clone of neighboring citizen to maintain count
+						// (Statistical approximation of genetic diversity)
+						survivingCitizens = append(survivingCitizens, pop.Citizens[i+j])
+					}
+				}
+			} else {
+				// Citizen died. If sampling, we assume 'step' people died.
+				if useSampling {
+					if pop.Count >= uint32(step) {
+						pop.Count -= uint32(step)
+					} else {
+						pop.Count = 0
+					}
+				} else {
+					if pop.Count > 0 {
+						pop.Count--
+					}
+				}
 			}
 		}
 

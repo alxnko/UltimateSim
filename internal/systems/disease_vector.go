@@ -21,6 +21,16 @@ type DiseaseVectorSystem struct {
 	toImmunize []immuneData
 }
 
+// IsExpensive returns true to throttle this system during fast-forward.
+func (s *DiseaseVectorSystem) IsExpensive() bool {
+	return true
+}
+
+// IsNonEssential returns true to skip this system during fast-forward.
+func (s *DiseaseVectorSystem) IsNonEssential() bool {
+	return true
+}
+
 type immuneData struct {
 	entity    ecs.Entity
 	diseaseID uint32

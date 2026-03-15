@@ -13,10 +13,16 @@ import (
 type MetabolismSystem struct {
 	filter   ecs.Filter
 	calendar *engine.Calendar
+	tm       *engine.TickManager
+}
+
+// IsExpensive returns true to throttle this system during fast-forward.
+func (s *MetabolismSystem) IsExpensive() bool {
+	return true
 }
 
 // NewMetabolismSystem creates a new MetabolismSystem.
-func NewMetabolismSystem(world *ecs.World, calendar *engine.Calendar) *MetabolismSystem {
+func NewMetabolismSystem(world *ecs.World, calendar *engine.Calendar, tm *engine.TickManager) *MetabolismSystem {
 	// Query entities that have both Needs and Genetics
 	needsID := ecs.ComponentID[components.Needs](world)
 	geneticsID := ecs.ComponentID[components.GenomeComponent](world)
@@ -29,6 +35,7 @@ func NewMetabolismSystem(world *ecs.World, calendar *engine.Calendar) *Metabolis
 	return &MetabolismSystem{
 		filter:   &mask,
 		calendar: calendar,
+		tm:       tm,
 	}
 }
 
@@ -37,7 +44,10 @@ func (s *MetabolismSystem) Update(world *ecs.World) {
 	needsID := ecs.ComponentID[components.Needs](world)
 	geneticsID := ecs.ComponentID[components.GenomeComponent](world)
 	vitalsID := ecs.ComponentID[components.VitalsComponent](world)
+	popID := ecs.ComponentID[components.PopulationComponent](world)
+	storageID := ecs.ComponentID[components.StorageComponent](world)
 
+	// 1. Process active NPCs (entities with Needs)
 	query := world.Query(s.filter)
 	for query.Next() {
 		needs := (*components.Needs)(query.Get(needsID))
@@ -94,7 +104,37 @@ func (s *MetabolismSystem) Update(world *ecs.World) {
 				}
 			}
 		}
+	}
 
-		// Optional: We could deduct rest and safety too, but sticking to Phase 3.3 Food logic
+	// 2. Process abstracted Citizens in Settlements (Village Metabolism)
+	popFilter := ecs.All(popID, storageID)
+	popQuery := world.Query(popFilter)
+
+	multiplier := float32(1.0)
+	if s.calendar != nil && s.calendar.IsWinter {
+		multiplier = 1.5
+	}
+
+	for popQuery.Next() {
+		pop := (*components.PopulationComponent)(popQuery.Get(popID))
+		storage := (*components.StorageComponent)(popQuery.Get(storageID))
+
+		// Each citizen consumes food. Total consumption based on headcount.
+		foodNeeded := float32(len(pop.Citizens)) * 0.05 * multiplier
+
+		if float32(storage.Food) >= foodNeeded {
+			storage.Food -= uint32(foodNeeded)
+		} else {
+			// Starvation: Food storage is empty.
+			storage.Food = 0
+			// Random death chance during starvation (1% per tick during starvation)
+			if len(pop.Citizens) > 0 && engine.GetRandomInt()%100 == 0 {
+				pop.Count--
+				// Remove random citizen from the abstracted pool
+				idx := engine.GetRandomInt() % len(pop.Citizens)
+				pop.Citizens[idx] = pop.Citizens[len(pop.Citizens)-1]
+				pop.Citizens = pop.Citizens[:len(pop.Citizens)-1]
+			}
+		}
 	}
 }

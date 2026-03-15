@@ -14,6 +14,16 @@ type InfrastructureWearSystem struct {
 	mapGrid *engine.MapGrid
 }
 
+// IsExpensive returns true to throttle this system during fast-forward.
+func (s *InfrastructureWearSystem) IsExpensive() bool {
+	return true
+}
+
+// IsNonEssential returns true to skip this system during fast-forward.
+func (s *InfrastructureWearSystem) IsNonEssential() bool {
+	return true
+}
+
 // NewInfrastructureWearSystem creates a new InfrastructureWearSystem.
 func NewInfrastructureWearSystem(mapGrid *engine.MapGrid) *InfrastructureWearSystem {
 	return &InfrastructureWearSystem{

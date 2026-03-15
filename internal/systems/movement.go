@@ -20,6 +20,11 @@ type MovementSystem struct {
 	calendar *engine.Calendar
 }
 
+// IsExpensive returns true to throttle this system during fast-forward.
+func (s *MovementSystem) IsExpensive() bool {
+	return true
+}
+
 // NewMovementSystem creates a new MovementSystem.
 func NewMovementSystem(world *ecs.World, mapGrid *engine.MapGrid, calendar *engine.Calendar) *MovementSystem {
 	// Enforce strict 'arche-go' filter usage to query specific components and prevent 'Zombie Entity' processing.

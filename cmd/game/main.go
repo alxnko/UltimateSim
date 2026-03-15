@@ -15,24 +15,40 @@ import (
 // Phase 01.6: Telemetry & Profiling
 // Phase 11.1: Raylib rendering architecture
 
-func BuildSimulation(gridWidth, gridHeight int, seedVal byte) (*engine.TickManager, *engine.MapGrid) {
+func BuildSimulation(gridWidth, gridHeight int, seedVal byte, status *render.LoadingStatus) {
+	update := func(progress float32, msg string) {
+		status.Mutex.Lock()
+		status.Progress = progress
+		status.Message = msg
+		status.Mutex.Unlock()
+	}
+
+	update(0.1, "Initializing Map Grid...")
 	// Phase 02: Map Generation
 	// Phase 02.1: Map Scaling support configurable grid sizes and scales
 	grid := engine.NewMapGrid(gridWidth, gridHeight)
-	seed := [32]byte{seedVal, seedVal+1, seedVal+2, seedVal+3, seedVal+4} // Deterministic seed based on input
+
+	update(0.2, "Initializing RNG & Seed...")
+	seed := [32]byte{seedVal, seedVal + 1, seedVal + 2, seedVal + 3, seedVal + 4} // Deterministic seed based on input
 	engine.InitializeRNG(seed)
+
+	update(0.3, "Generating Tectonic & Biome Data...")
 	engine.GenerateMap(grid, seed)
 
+	update(0.5, "Building Oceanic Nav Mesh...")
 	// Phase 17.2: Build Secondary Nav Mesh for Oceanic Pathfinding
 	engine.BuildOceanicNavMesh(grid)
 
+	update(0.6, "Starting Pathfinding Workers...")
 	// Phase 04.2: Async Path Queue Pool
 	pathQueue := engine.NewPathRequestQueue(1000, runtime.NumCPU())
 	pathQueue.StartWorkers()
 
+	update(0.7, "Initializing Social Hook Graph...")
 	// Phase 06.3: Sparse Hook Graph
 	hookGraph := engine.NewSparseHookGraph()
 
+	update(0.8, "Assembling ECS Engine & Systems...")
 	// Phase 01.3: Initialize the TickManager with 60 TPS
 	tickManager := engine.NewTickManager(60)
 	world := tickManager.World
@@ -59,7 +75,7 @@ func BuildSimulation(gridWidth, gridHeight int, seedVal byte) (*engine.TickManag
 	tickManager.AddSystem(systems.NewInfrastructureWearSystem(grid), engine.PhaseMovement)
 
 	// --- PHASE: RESOLUTION ---
-	tickManager.AddSystem(systems.NewMetabolismSystem(world, calendar), engine.PhaseResolution)
+	tickManager.AddSystem(systems.NewMetabolismSystem(world, calendar, tickManager), engine.PhaseResolution)
 	// Phase 17.3: Maritime Attrition & Piracy
 	tickManager.AddSystem(systems.NewStormSystem(grid), engine.PhaseResolution)
 	tickManager.AddSystem(systems.NewNavalPiracySystem(), engine.PhaseResolution)
@@ -103,12 +119,18 @@ func BuildSimulation(gridWidth, gridHeight int, seedVal byte) (*engine.TickManag
 
 	// --- PHASE: CLEANUP ---
 	tickManager.AddSystem(systems.NewDeathSystem(world, hookGraph), engine.PhaseCleanup)
-	tickManager.AddSystem(systems.NewAgingSystem(world), engine.PhaseResolution)
+	tickManager.AddSystem(systems.NewAgingSystem(world, tickManager), engine.PhaseResolution)
 
 	// Phase 03.2: Genesis Spawner (Runs once at tick 0)
 	tickManager.AddSystem(systems.NewNPCSpawnerSystem(world, grid), engine.PhaseCleanup)
 
-	return tickManager, grid
+	update(1.0, "Engine Assembly Complete.")
+
+	status.Mutex.Lock()
+	status.TM = tickManager
+	status.Grid = grid
+	status.Done = true
+	status.Mutex.Unlock()
 }
 
 func main() {
