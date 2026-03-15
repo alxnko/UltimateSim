@@ -140,6 +140,20 @@ This file tracks autonomous additions to the total simulation that bridge gaps i
   - The `Caravan` entity is structurally wiped from the ECS (`world.RemoveEntity`), meaning the targeted `Village` expecting those trade goods will inevitably suffer famine in the following ticks.
   - The `JusticeSystem` (Phase 18) instantly parses the new `CrimeMarker` and dispatches Guards to physically hunt the new Bandit.
 
+## Evolution: Phase 28.1 - The Vassal Rebellion Engine
+- **Goal:** Execute the "Systemic Emergence" objective by bridging the existing Logistics/Economy (Debasement and Famine), Sovereignty (Loyalty and Countries), and Justice (Blood Feuds) loops. Simulating how bad economic conditions organically lead to secessions and rebellions.
+- **DOD Implementation:**
+  - Implemented `VassalRebellionSystem` in `internal/systems/vassal_rebellion.go` adhering to `arche-go` ECS standards by preventing nested queries.
+  - Used pre-allocated maps `capitalDataMap` and `secededVillages` to map Country logic outside of the iteration loops.
+  - Iterates through all Villages sequentially, evaluating `LoyaltyComponent` drain based on `Debasement` and `FoodPrice`.
+- **The Butterfly Effect:**
+  - Integrates seamlessly with Phase 15.4 (Organic Inflation), Phase 21 (Desperation), and Phase 23.1 (The Blood Feud Engine).
+  - A Capital enacts high debasement (`Debasement > 0.0`) or experiences famine (`FoodPrice > 5.0`).
+  - Sub-cities suffer `LoyaltyComponent` drain. When it reaches 0, the village unilaterally secedes (`CountryID = 0`).
+  - `DesperationComponent.Level >= 50` citizens within the seceding village immediately seed a `-100` relationship hook into the `SparseHookGraph` against the Capital's ruler ID.
+  - This natively triggers the `BloodFeudSystem` which causes the citizens to form a rebellion force actively fighting the administration they used to belong to.
+  - Verified 100% deterministic through `go test ./internal/systems -v -run TestVassalRebellion -count=2`.
+
 ## Evolution: Phase 27.1 - The Military Revolt Engine
 - **Goal:** Execute the "Systemic Emergence" objective by implementing a missing mechanic from the Vision ("Kings rule via Legitimacy Scores; if a deadly secret is gossiped about the King, the standing army revolts.").
 - **DOD Implementation:**

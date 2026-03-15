@@ -85,6 +85,9 @@ func main() {
 	tickManager.AddSystem(systems.NewLendingSystem(world), engine.PhaseResolution)
 	tickManager.AddSystem(systems.NewDebtDefaultSystem(), engine.PhaseResolution)
 
+	// Phase 28.1: The Vassal Rebellion Engine
+	tickManager.AddSystem(systems.NewVassalRebellionSystem(world, hookGraph), engine.PhaseResolution)
+
 	// Register Gossip
 	tickManager.AddSystem(systems.NewGossipDistributionSystem(world, hookGraph), engine.PhaseResolution)
 
