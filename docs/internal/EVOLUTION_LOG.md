@@ -126,3 +126,17 @@ This file tracks autonomous additions to the total simulation that bridge gaps i
   - The system dynamically injects an `InteractionTheft` struct into the NPC's `Memory` buffer and attaches a `CrimeMarker` with a massive 250 Bounty.
   - The `Caravan` entity is structurally wiped from the ECS (`world.RemoveEntity`), meaning the targeted `Village` expecting those trade goods will inevitably suffer famine in the following ticks.
   - The `JusticeSystem` (Phase 18) instantly parses the new `CrimeMarker` and dispatches Guards to physically hunt the new Bandit.
+
+## Evolution: Phase 27.1 - The Military Revolt Engine
+- **Goal:** Execute the "Systemic Emergence" objective by implementing a missing mechanic from the Vision ("Kings rule via Legitimacy Scores; if a deadly secret is gossiped about the King, the standing army revolts.").
+- **DOD Implementation:**
+  - Designed `MilitaryRevoltSystem` (`internal/systems/military_revolt.go`) adhering to `arche-go` ECS standards by preventing nested queries.
+  - Used pre-allocated slice `[]adminJurisdictionRevoltData` to map `JurisdictionComponent.BannedSecretID` per ticks.
+  - Iterates flat slice of `militaryRevoltNodeData` checking for `JobGuard` status and `SecretComponent` overlaps.
+- **The Butterfly Effect:**
+  - Ties directly into Phase 07 (Information Leakage), Phase 18 (Justice/Jurisdiction), and Phase 23 (Blood Feuds).
+  - A Capital actively tries to suppress a `BannedSecretID` (via `PropagandaSystem`).
+  - However, if the `GossipDistributionSystem` successfully slips the secret past censors and a `JobGuard` NPC learns the truth, they revolt natively.
+  - The Guard instantly drops their `JobGuard` status (switching to `JobBandit`) and severs `EmployerID`.
+  - More destructively, it immediately seeds a `-100` relationship hook into the `SparseHookGraph` against the Capital's ruler ID, triggering the `BloodFeudSystem` which causes the former military force to actively murder the administration it used to protect.
+  - Verified 100% deterministic through `go test ./internal/systems -v -run TestMilitaryRevoltSystem_Integration -count=2`.
