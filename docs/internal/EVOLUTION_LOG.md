@@ -1,5 +1,19 @@
 # Evolution Log
 
+## Evolution: Phase 18.3 / Phase 30.2 - Sentencing & Prisons (Fines & Wealth Transfer)
+- **Goal:** Execute the "Systemic Emergence" objective by bridging the existing Justice Engine (Phase 18) and the Economic layers (Phase 15/16). Simulating how legal enforcement acts as a mechanism of wealth transfer, enriching the state while punishing criminals with poverty.
+- **DOD Implementation:**
+  - Expanded `adminJurisdictionData` cache inside `internal/systems/justice.go` to hold a pre-cached pointer to the jurisdiction's `TreasuryComponent`.
+  - Avoided nested `arche-go` queries by using this O(1) pointer map during the O(G*C) Guard-vs-Criminal evaluation loop.
+  - When a Guard successfully sentences a Criminal, the system calculates a `fine` based on the `CrimeMarker.Bounty`. The criminal's `Needs.Wealth` is drained, and the `collectedFine` is explicitly added to the pre-cached `TreasuryComponent.Wealth` belonging to the Guard's `CityID`.
+- **The Butterfly Effect:**
+  - Plugs deeply into Phase 15.3 (Predatory Lending), Phase 21 (Desperation), and Phase 26 (Banditry).
+  - Starving NPCs steal to survive, triggering a `CrimeMarker`.
+  - Guards catch them. Instead of just banishing them, the state actively confiscates their remaining physical wealth (`Needs.Wealth`) as a fine, enriching the Country's Treasury.
+  - The State grows richer, enabling more infrastructure/armies, while the criminal becomes completely destitute (0.0 Wealth).
+  - The newly impoverished and banished NPC, with skyrocketing `DesperationComponent.Level`, is forced to seek out Predatory Lenders (Phase 15.3) or turn to full-scale Banditry (Phase 26) on the frontiers.
+  - Thus, strict law enforcement organically fuels peripheral crime and indentured servitude loops without hardcoded narratives.
+
 ## Evolution: Phase 30.1 - Ideological Economy (The Tithe Engine)
 - **Goal:** Execute the "Systemic Emergence" objective by bridging the existing Memetic Engine (Phase 07/20) and Economic Engine (Phase 13/15). Simulating how religious devotion natively acts as a macroeconomic tax draining localized wealth.
 - **DOD Implementation:**
