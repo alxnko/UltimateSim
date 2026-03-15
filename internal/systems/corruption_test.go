@@ -3,6 +3,7 @@ package systems
 import (
 	"testing"
 	"github.com/ALXNKO/UltimateSim/internal/components"
+	"github.com/ALXNKO/UltimateSim/internal/engine"
 	"github.com/mlange-42/arche/ecs"
 )
 
@@ -14,7 +15,7 @@ func TestCorruption_ButterflyEffect(t *testing.T) {
 	world := ecs.NewWorld()
 
 	// Initialize Systems
-	justiceSys := NewJusticeSystem(&world)
+	justiceSys := NewJusticeSystem(&world, engine.NewSparseHookGraph())
 	adminSys := NewAdministrativeFractureSystem(&world)
 
 	// Fetch Component IDs

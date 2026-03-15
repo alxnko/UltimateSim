@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/ALXNKO/UltimateSim/internal/components"
+	"github.com/ALXNKO/UltimateSim/internal/engine"
 	"github.com/mlange-42/arche/ecs"
 )
 
@@ -59,7 +60,7 @@ func TestDesperationSystem_Integration(t *testing.T) {
 
 	// Systems
 	despSys := NewDesperationSystem(&world)
-	justiceSys := NewJusticeSystem(&world)
+	justiceSys := NewJusticeSystem(&world, engine.NewSparseHookGraph())
 
 	// Update Desperation - This should push Level to 50, trigger theft, update Memory, lower Storage, raise Needs
 	despSys.Update(&world)

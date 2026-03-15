@@ -3,12 +3,13 @@ package systems
 import (
 	"testing"
 	"github.com/ALXNKO/UltimateSim/internal/components"
+	"github.com/ALXNKO/UltimateSim/internal/engine"
 	"github.com/mlange-42/arche/ecs"
 )
 
 func TestJusticeSystem_DetectionAndContraband(t *testing.T) {
 	world := ecs.NewWorld()
-	sys := NewJusticeSystem(&world)
+	sys := NewJusticeSystem(&world, engine.NewSparseHookGraph())
 
 	posID := ecs.ComponentID[components.Position](&world)
 	affID := ecs.ComponentID[components.Affiliation](&world)
@@ -78,7 +79,7 @@ func TestJusticeSystem_DetectionAndContraband(t *testing.T) {
 
 func TestJusticeSystem_Sentencing(t *testing.T) {
 	world := ecs.NewWorld()
-	sys := NewJusticeSystem(&world)
+	sys := NewJusticeSystem(&world, engine.NewSparseHookGraph())
 
 	posID := ecs.ComponentID[components.Position](&world)
 	affID := ecs.ComponentID[components.Affiliation](&world)
@@ -161,5 +162,113 @@ func TestJusticeSystem_Sentencing(t *testing.T) {
 	cVelNew := (*components.Velocity)(world.Get(criminal, velID))
 	if cVelNew.X == 0 && cVelNew.Y == 0 {
 		t.Errorf("Criminal should be fleeing (velocity set), got X: %f Y: %f", cVelNew.X, cVelNew.Y)
+	}
+}
+
+func TestJusticeSystem_CarceralResentmentAndBlackmail(t *testing.T) {
+	world := ecs.NewWorld()
+	hooks := engine.NewSparseHookGraph()
+	sys := NewJusticeSystem(&world, hooks)
+
+	posID := ecs.ComponentID[components.Position](&world)
+	affID := ecs.ComponentID[components.Affiliation](&world)
+	crimeID := ecs.ComponentID[components.CrimeMarker](&world)
+	jobID := ecs.ComponentID[components.JobComponent](&world)
+	pathID := ecs.ComponentID[components.Path](&world)
+	velID := ecs.ComponentID[components.Velocity](&world)
+	needsID := ecs.ComponentID[components.Needs](&world)
+	idID := ecs.ComponentID[components.Identity](&world)
+	jurID := ecs.ComponentID[components.JurisdictionComponent](&world)
+	secID := ecs.ComponentID[components.SecretComponent](&world)
+
+	// Create Capital with Jurisdiction
+	capEnt := world.NewEntity(posID, affID, jurID)
+	capJur := (*components.JurisdictionComponent)(world.Get(capEnt, jurID))
+	capJur.RadiusSquared = 10000.0 // Huge radius
+
+	// Create Criminal A (Poor, will be punished)
+	crimA := world.NewEntity(posID, affID, crimeID, needsID, velID, idID, secID)
+	cAPos := (*components.Position)(world.Get(crimA, posID))
+	cAPos.X, cAPos.Y = 10, 10
+	cAAff := (*components.Affiliation)(world.Get(crimA, affID))
+	cAAff.CityID = 1
+	cANeeds := (*components.Needs)(world.Get(crimA, needsID))
+	cANeeds.Wealth = 50.0 // Too poor for 200 bribe
+	cACrime := (*components.CrimeMarker)(world.Get(crimA, crimeID))
+	cACrime.Bounty = 100
+	cAId := (*components.Identity)(world.Get(crimA, idID))
+	cAId.ID = 1001
+
+	// Create Criminal B (Rich, will bribe)
+	crimB := world.NewEntity(posID, affID, crimeID, needsID, velID, idID, secID)
+	cBPos := (*components.Position)(world.Get(crimB, posID))
+	cBPos.X, cBPos.Y = 12, 10
+	cBAff := (*components.Affiliation)(world.Get(crimB, affID))
+	cBAff.CityID = 1
+	cBNeeds := (*components.Needs)(world.Get(crimB, needsID))
+	cBNeeds.Wealth = 500.0 // Rich enough for 200 bribe
+	cBCrime := (*components.CrimeMarker)(world.Get(crimB, crimeID))
+	cBCrime.Bounty = 100
+	cBId := (*components.Identity)(world.Get(crimB, idID))
+	cBId.ID = 1002
+
+	// Create Guard 1 next to Crim A
+	guardA := world.NewEntity(posID, affID, jobID, pathID, velID, idID)
+	gAPos := (*components.Position)(world.Get(guardA, posID))
+	gAPos.X, gAPos.Y = 10, 10
+	gAJob := (*components.JobComponent)(world.Get(guardA, jobID))
+	gAJob.JobID = components.JobGuard
+	gAAff := (*components.Affiliation)(world.Get(guardA, affID))
+	gAAff.CityID = 1
+	gAId := (*components.Identity)(world.Get(guardA, idID))
+	gAId.ID = 2001
+
+	// Create Guard 2 next to Crim B
+	guardB := world.NewEntity(posID, affID, jobID, pathID, velID, idID)
+	gBPos := (*components.Position)(world.Get(guardB, posID))
+	gBPos.X, gBPos.Y = 12, 10
+	gBJob := (*components.JobComponent)(world.Get(guardB, jobID))
+	gBJob.JobID = components.JobGuard
+	gBAff := (*components.Affiliation)(world.Get(guardB, affID))
+	gBAff.CityID = 1
+	gBId := (*components.Identity)(world.Get(guardB, idID))
+	gBId.ID = 2002
+
+	// Run system
+	sys.Update(&world)
+
+	// --- Asserts for Criminal A (Punished) ---
+	if world.Has(crimA, crimeID) {
+		t.Errorf("Criminal A should no longer have CrimeMarker (punished)")
+	}
+	hookA := hooks.GetHook(1001, 2001)
+	if hookA != -50 {
+		t.Errorf("Expected Criminal A to have -50 hook on Guard A, got %d", hookA)
+	}
+
+	// --- Asserts for Criminal B (Bribed) ---
+	if world.Has(crimB, crimeID) {
+		t.Errorf("Criminal B should no longer have CrimeMarker (bribed/cleared)")
+	}
+	hookB := hooks.GetHook(1002, 2002)
+	if hookB != 50 {
+		t.Errorf("Expected Criminal B to have 50 hook on Guard B, got %d", hookB)
+	}
+
+	// Check if secret was generated
+	cBSecNew := (*components.SecretComponent)(world.Get(crimB, secID))
+	if len(cBSecNew.Secrets) == 0 {
+		t.Errorf("Expected Criminal B to have generated a Secret about Guard B")
+	} else {
+		sec := cBSecNew.Secrets[0]
+		if sec.OriginID != 1002 {
+			t.Errorf("Expected secret origin ID to be Criminal B (1002)")
+		}
+		// Check registry
+		registry := engine.GetSecretRegistry()
+		text, exists := registry.GetSecret(sec.SecretID)
+		if !exists || text != "guard_2002_corrupted" {
+			t.Errorf("Expected rumor 'guard_2002_corrupted' in registry, got '%s'", text)
+		}
 	}
 }

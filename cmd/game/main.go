@@ -98,7 +98,7 @@ func main() {
 	tickManager.AddSystem(systems.NewLanguageDriftSystem(world), engine.PhaseResolution)
 
 	// Phase 18: Justice Engine
-	tickManager.AddSystem(systems.NewJusticeSystem(world), engine.PhaseResolution)
+	tickManager.AddSystem(systems.NewJusticeSystem(world, hookGraph), engine.PhaseResolution)
 
 	// Phase 27.1: The Military Revolt Engine
 	tickManager.AddSystem(systems.NewMilitaryRevoltSystem(world, hookGraph), engine.PhaseResolution)
