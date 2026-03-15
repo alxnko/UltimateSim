@@ -1,5 +1,19 @@
 # Evolution Log
 
+## Evolution: Phase 30.1 - Ideological Economy (The Tithe Engine)
+- **Goal:** Execute the "Systemic Emergence" objective by bridging the existing Memetic Engine (Phase 07/20) and Economic Engine (Phase 13/15). Simulating how religious devotion natively acts as a macroeconomic tax draining localized wealth.
+- **DOD Implementation:**
+  - Designed `TitheSystem` (`internal/systems/tithe.go`) adhering to `arche-go` ECS constraints.
+  - The system iterates over `JobPreacher` entities, caching their positions and their primary `Belief` (highest weight) into a flat `[]preacherData` array to dodge nested queries.
+  - Sequentially parses all devout NPCs (`Needs.Wealth > 0`) and iterates over the cached preachers to find spatial overlap (`distSq < 25.0`) with a matching primary belief.
+- **The Butterfly Effect:**
+  - Plugs deeply into Phase 21 (Desperation) and Phase 26 (Banditry).
+  - A charismatic preacher spreads an ideology, converting a village.
+  - The `TitheSystem` inherently activates, and devout citizens continuously transfer 10% of their physical `Needs.Wealth` to the preacher every 50 ticks.
+  - Over time, this wealth extraction mathematically bankrupts the devout citizens.
+  - Now impoverished, they cannot afford local `MarketComponent` food prices when winter hits. They starve, building `DesperationComponent.Level`.
+  - The `DesperationSystem` naturally intercepts this poverty, converting the devout-but-starving citizens into `JobBandit` entities (Phase 26) who ravage local logistics. Religion organically and mathematically drives localized crime loops without scripted events.
+
 This file tracks autonomous additions to the total simulation that bridge gaps identified in the vision.
 
 ## Evolution: Phase 29.1 - Geopolitical Resource Wars
