@@ -2,6 +2,19 @@
 
 This file tracks autonomous additions to the total simulation that bridge gaps identified in the vision.
 
+## Evolution: Phase 15.3 - Predatory Lending Engine
+- **Goal:** Execute the "Systemic Emergence" objective by bridging the existing Economic Agency (Businesses) and State Failure (Debt Default) layers. Simulating how wealthy individuals or guilds trap desperate/starving citizens in predatory debt loops.
+- **DOD Implementation:**
+  - Designed `LendingSystem` (`internal/systems/lending.go`) adhering to `arche-go` ECS constraints.
+  - The system iterates over potential `Creditors` (Wealth >= 500.0) mapping their values to a flat cache `[]lendingNodeData` outside the nested query loops.
+  - Sequentially parses `Debtors` (Wealth < 50.0 and `DesperationComponent.Level` >= 20) and mathematically evaluates spatial distances to wealthy Creditors.
+- **The Butterfly Effect:**
+  - Integrates seamlessly with Phase 21 (Desperation) and Phase 10.1 (Debt Default).
+  - When an NPC reaches starvation bounds (`Desperation >= 20`), they are intercepted by a wealthy `Creditor` before they can resort to Phase 26 `Banditry`.
+  - The `LendingSystem` physically transfers 100.0 Wealth to the Debtor and attaches a `LoanContractComponent` to them, effectively resetting their famine state but assigning a massive liability.
+  - If the NPC cannot generate enough physical resources (`StorageComponent`) to repay the loan by the `DueTick`, the `DebtDefaultSystem` evaluates the breach of contract.
+  - The default natively executes the transfer of the Debtor's `Affiliation.GuildID` to match the Creditor's `AssetID`, effectively chaining the bankrupt citizen to the Creditor's guild as an indentured servant, perfectly simulating the math limits of medieval debt structures.
+
 ## Evolution: Phase 20.3 - Traumatic Traditions (Ideological Xenophobia)
 - **Goal:** Execute the "Systemic Emergence" objective by bridging Biological entropy with the Memetic engine ("Massive societal trauma (plague) causes algorithmic Traumatic Traditions (e.g., permanent Xenophobia)").
 - **DOD Implementation:**
