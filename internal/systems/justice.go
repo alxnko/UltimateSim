@@ -1,7 +1,10 @@
 package systems
 
 import (
+	"fmt"
+
 	"github.com/ALXNKO/UltimateSim/internal/components"
+	"github.com/ALXNKO/UltimateSim/internal/engine"
 	"github.com/mlange-42/arche/ecs"
 )
 
@@ -23,9 +26,10 @@ type JusticeSystem struct {
 	guardFilter   ecs.Filter
 	crimeFilter   ecs.Filter
 	targetMapping map[uint64]bool // To prevent multiple guards targeting the same criminal instantly
+	hooks         *engine.SparseHookGraph
 }
 
-func NewJusticeSystem(world *ecs.World) *JusticeSystem {
+func NewJusticeSystem(world *ecs.World, hooks *engine.SparseHookGraph) *JusticeSystem {
 	jobID := ecs.ComponentID[components.JobComponent](world)
 	posID := ecs.ComponentID[components.Position](world)
 	pathID := ecs.ComponentID[components.Path](world)
@@ -41,6 +45,7 @@ func NewJusticeSystem(world *ecs.World) *JusticeSystem {
 		guardFilter:   &gMask,
 		crimeFilter:   &cMask,
 		targetMapping: make(map[uint64]bool),
+		hooks:         hooks,
 	}
 }
 
@@ -188,6 +193,8 @@ func (s *JusticeSystem) Update(world *ecs.World) {
 		velID := ecs.ComponentID[components.Velocity](world)
 		needsID := ecs.ComponentID[components.Needs](world)
 		jurID := ecs.ComponentID[components.JurisdictionComponent](world)
+		identID := ecs.ComponentID[components.Identity](world)
+		secID := ecs.ComponentID[components.SecretComponent](world)
 
 		guardQuery := world.Query(s.guardFilter)
 
@@ -205,6 +212,11 @@ func (s *JusticeSystem) Update(world *ecs.World) {
 			var gAff *components.Affiliation
 			if guardQuery.Has(affID) {
 				gAff = (*components.Affiliation)(guardQuery.Get(affID))
+			}
+
+			var gIdent *components.Identity
+			if guardQuery.Has(identID) {
+				gIdent = (*components.Identity)(guardQuery.Get(identID))
 			}
 
 			// Find closest non-targeted criminal
@@ -255,6 +267,26 @@ func (s *JusticeSystem) Update(world *ecs.World) {
 									}
 								}
 							}
+
+							// Phase 30: Blackmail Engine
+							if gIdent != nil && s.hooks != nil {
+								s.hooks.AddHook(c.ID, gIdent.ID, 50)
+
+								// Generate Rumor
+								if world.Has(c.Entity, secID) {
+									sec := (*components.SecretComponent)(world.Get(c.Entity, secID))
+									registry := engine.GetSecretRegistry()
+									if registry != nil {
+										rumorText := fmt.Sprintf("guard_%d_corrupted", gIdent.ID)
+										secretID := registry.RegisterSecret(rumorText)
+										sec.Secrets = append(sec.Secrets, components.Secret{
+											OriginID: c.ID,
+											SecretID: secretID,
+											Virality: 255,
+										})
+									}
+								}
+							}
 						}
 					}
 
@@ -288,6 +320,11 @@ func (s *JusticeSystem) Update(world *ecs.World) {
 							if dx == 0 && dy == 0 { dx = 1 } // prevent div by zero
 							cVel.X = -dx * 2.0
 							cVel.Y = -dy * 2.0
+						}
+
+						// Phase 30: Carceral Resentment
+						if gIdent != nil && s.hooks != nil {
+							s.hooks.AddHook(c.ID, gIdent.ID, -50)
 						}
 					}
 

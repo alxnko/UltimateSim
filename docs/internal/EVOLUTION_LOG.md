@@ -195,3 +195,18 @@ This file tracks autonomous additions to the total simulation that bridge gaps i
   - The Guard instantly drops their `JobGuard` status (switching to `JobBandit`) and severs `EmployerID`.
   - More destructively, it immediately seeds a `-100` relationship hook into the `SparseHookGraph` against the Capital's ruler ID, triggering the `BloodFeudSystem` which causes the former military force to actively murder the administration it used to protect.
   - Verified 100% deterministic through `go test ./internal/systems -v -run TestMilitaryRevoltSystem_Integration -count=2`.
+
+## Phase 30: The Carceral State & Blackmail Engine (Integration)
+
+**The "Why" (Gap):**
+The Justice system (Guards punishing/fining/banishing Criminals) was acting as a flat loop—while bribes modified an abstract `Corruption` counter, there was no tangible social fallout or individual leverage created. Furthermore, the act of a guard banishing a criminal simply despawned them from the city without any personal consequence, leaving the `BloodFeudSystem` entirely disconnected from the justice/law pillar.
+
+**The "What" (Innovation):**
+Integrated the Justice pillar deeply into the Information (Secrets/Gossip) and Social Hierarchy (SparseHookGraph) systems.
+1.  **Carceral Resentment:** When a criminal is punished (fined and banished) by a Guard, they naturally harbor deep hatred towards their punisher. The ECS now injects a severe `-50` hook against the enforcing Guard. This natively hooks into the `BloodFeudSystem` (Phase 23), meaning a starving NPC caught stealing bread will now attempt to murder the Guard who exiled them, sparking a clan-wide frontier war entirely emergently.
+2.  **Corruption Blackmail:** When a wealthy criminal successfully bribes a Guard, the criminal gains blackmail leverage. The ECS injects a `+50` hook over the Guard and simultaneously generates a new `Secret` (e.g. "guard_2001_corrupted") into the `SecretRegistry`. This rumor is deposited directly into the criminal's `SecretComponent`, allowing the `GossipDistributionSystem` to spread the Guard's corruption dynamically across the city.
+
+**DOD & Scalability Strategy:**
+-   Passed the existing `SparseHookGraph` into `JusticeSystem` instead of inventing a new relational mapping system.
+-   Reused the existing `SecretRegistry` to intern the rumor string, generating a highly cache-friendly `uint32` SecretID.
+-   Maintained flat-array O(N) evaluations, ensuring no nested arche-go queries were required to evaluate social connections during the law enforcement phase.
