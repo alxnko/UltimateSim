@@ -97,6 +97,9 @@ func main() {
 	// Register Language Drift
 	tickManager.AddSystem(systems.NewLanguageDriftSystem(world), engine.PhaseResolution)
 
+	// Phase 30.1: Ideological Economy
+	tickManager.AddSystem(systems.NewTitheSystem(world), engine.PhaseResolution)
+
 	// Phase 18: Justice Engine
 	tickManager.AddSystem(systems.NewJusticeSystem(world), engine.PhaseResolution)
 
