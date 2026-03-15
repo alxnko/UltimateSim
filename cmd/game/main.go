@@ -55,6 +55,7 @@ func main() {
 
 	// Phase 09.2: Dynamic Attrition
 	tickManager.AddSystem(systems.NewSpoilageSystem(), engine.PhaseResolution)
+	tickManager.AddSystem(systems.NewNaturalDisasterSystem(world, grid), engine.PhaseResolution)
 	tickManager.AddSystem(systems.NewRustSystem(), engine.PhaseResolution)
 	// --- PHASE: AI ---
 	tickManager.AddSystem(systems.NewDesperationSystem(world), engine.PhaseAI)

@@ -281,4 +281,9 @@ func TestDesperationComponentSize(t *testing.T) {
 	if vitalsSize != 16 {
 		t.Errorf("VitalsComponent size broke DOD alignment: expected 16, got %d", vitalsSize)
 	}
+
+	disasterSize := unsafe.Sizeof(DisasterComponent{})
+	if disasterSize != 16 {
+		t.Errorf("DisasterComponent size broke DOD alignment: expected 16, got %d", disasterSize)
+	}
 }
