@@ -6,6 +6,9 @@ This document serves as the comprehensive and definitive index of all actually i
 
 ---
 
+## Phase 28: The Vassal Rebellion Engine
+- **Phase 28.1 - The Vassal Rebellion Engine**: Implemented `VassalRebellionSystem` linking Economy (Inflation/Debasement), Sovereignty (Loyalty/Secession), and Justice (Blood Feuds). High debasement or extreme local food prices continuously drain a Village's `LoyaltyComponent`. When `LoyaltyComponent.Value` drops to 0, the village secedes from the Country (`Affiliation.CountryID = 0`). The system then iterates through the Village's citizens who are highly desperate (`DesperationComponent.Level >= 50`) and adds a massive negative hook (-100) via `engine.SparseHookGraph` against the Country Capital's ruler ID. This organically hooks into the `BloodFeudSystem` (Phase 23) causing a secessionist war.
+
 ## Phase 25: The Social Legacy & Succession Engine
 - **Phase 25.1 - Heir Inheritance**: Integrated directly into `DeathSystem` (Phase 03). When an NPC despawns via starvation or old age, the system pre-caches their `Prestige`, `InheritedDebt`, and entire array of `SparseHookGraph` incoming and outgoing edges into `heirData`. The system subsequently maps over all active living `NPC` entities to find a suitable match sharing the same `FamilyID` (Affiliation component). The heir instantly absorbs all debts, legacy prestige, and generational grudges (`AddHook`). The dying parent's physical existence is correctly cleaned up via `RemoveAllHooks`.
 
