@@ -88,6 +88,9 @@ func main() {
 	// Phase 28.1: The Vassal Rebellion Engine
 	tickManager.AddSystem(systems.NewVassalRebellionSystem(world, hookGraph), engine.PhaseResolution)
 
+	// Phase 29.1: Geopolitical Resource Wars
+	tickManager.AddSystem(systems.NewResourceWarSystem(world, hookGraph), engine.PhaseResolution)
+
 	// Register Gossip
 	tickManager.AddSystem(systems.NewGossipDistributionSystem(world, hookGraph), engine.PhaseResolution)
 
