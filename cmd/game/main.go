@@ -15,20 +15,11 @@ import (
 // Phase 01.6: Telemetry & Profiling
 // Phase 11.1: Raylib rendering architecture
 
-func main() {
-	// Phase 01.6: Telemetry & Profiling
-	// Boot net/http/pprof instance on localhost:6060
-	go func() {
-		log.Println("Starting pprof server on localhost:6060")
-		if err := http.ListenAndServe("localhost:6060", nil); err != nil {
-			log.Fatalf("pprof server failed: %v", err)
-		}
-	}()
-
+func BuildSimulation(gridWidth, gridHeight int, seedVal byte) (*engine.TickManager, *engine.MapGrid) {
 	// Phase 02: Map Generation
-	// Instantiate MapGrid and generate terrain deterministically
-	grid := engine.NewMapGrid(100, 100)
-	seed := [32]byte{1, 2, 3, 4, 5} // Deterministic seed
+	// Phase 02.1: Map Scaling support configurable grid sizes and scales
+	grid := engine.NewMapGrid(gridWidth, gridHeight)
+	seed := [32]byte{seedVal, seedVal+1, seedVal+2, seedVal+3, seedVal+4} // Deterministic seed based on input
 	engine.InitializeRNG(seed)
 	engine.GenerateMap(grid, seed)
 
@@ -117,19 +108,19 @@ func main() {
 	// Phase 03.2: Genesis Spawner (Runs once at tick 0)
 	tickManager.AddSystem(systems.NewNPCSpawnerSystem(world, grid), engine.PhaseCleanup)
 
-	/*
-		// Simulation Goroutine
-		go func() {
-			// Phase 01.4: Hardware Affinity
-			// Pin this goroutine to an OS thread to prevent cache invalidations
-			runtime.LockOSThread()
+	return tickManager, grid
+}
 
-			fmt.Println("Simulation Goroutine locked to OS thread.")
+func main() {
+	// Phase 01.6: Telemetry & Profiling
+	// Boot net/http/pprof instance on localhost:6060
+	go func() {
+		log.Println("Starting pprof server on localhost:6060")
+		if err := http.ListenAndServe("localhost:6060", nil); err != nil {
+			log.Fatalf("pprof server failed: %v", err)
+		}
+	}()
 
-			// Run simulation loop indefinitely
-			tickManager.Run(-1)
-		}()
-	*/
 	// NOTE: Simulation is now driven manually by the render loop to prevent race conditions in the ECS world.
 
 	// Phase 11.1: Switch Pattern Loop -> Unified Raylib loop
@@ -137,5 +128,7 @@ func main() {
 	// Phase 01.4: Hardware Affinity
 	// Pin the Window Context Goroutine to prevent OS-level cache invalidations on multicore CPUs
 	runtime.LockOSThread()
-	render.RunRaylibApp(tickManager, grid)
+
+	// Delegate state management entirely to RaylibApp, passing the factory function
+	render.RunRaylibApp(BuildSimulation)
 }

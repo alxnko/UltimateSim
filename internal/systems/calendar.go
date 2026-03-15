@@ -28,6 +28,18 @@ func (s *CalendarSystem) Update(world *ecs.World) {
 
 	s.calendar.Ticks++
 
+	if s.calendar.Ticks%engine.TicksPerDay == 0 {
+		s.calendar.Days++
+		if s.calendar.Days > 6 {
+			s.calendar.Days = 1
+			s.calendar.Months++
+			if s.calendar.Months > 4 {
+				s.calendar.Months = 1
+				s.calendar.Years++
+			}
+		}
+	}
+
 	// Toggle season exactly on boundaries.
 	if s.calendar.Ticks%engine.SeasonDuration == 0 {
 		s.calendar.IsWinter = !s.calendar.IsWinter

@@ -36,6 +36,8 @@ type TickManager struct {
 
 	IsPaused bool // Phase 12: Simulation Controls
 
+	Ticks uint64 // Global tick counter exposed for UI
+
 	lastTick time.Time
 	tickTime time.Duration
 }
@@ -64,6 +66,9 @@ func (tm *TickManager) Tick() {
 	if tm.IsPaused {
 		return
 	}
+
+	tm.Ticks++
+
 	for phase := PhaseInput; phase < numPhases; phase++ {
 		for _, sys := range tm.Systems[phase] {
 			sys.Update(tm.World)
