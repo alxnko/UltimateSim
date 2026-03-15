@@ -112,3 +112,17 @@ This file tracks autonomous additions to the total simulation that bridge gaps i
   - The system iterates over the entire `Map` looking for a suitable heir containing an identical `FamilyID`.
   - The matching heir (a child or kin) inherently receives all the outgoing and incoming grudges, and all financial debt, from the parent.
   - This profoundly binds Phase 23 (Blood Feuds) with Phase 03 (Death), ensuring that grudges outlive single entities and truly persist across generational divides, sparking endless frontier violence entirely driven by DOD logic.
+
+## Evolution: Phase 26.1 - Caravan Banditry & Supply Chain Collapse
+- **Goal:** Execute the "Systemic Emergence" objective by bridging the existing Logistics (Caravan Routes), Economy (Desperation/Needs), and Justice (CrimeMarker) layers. Simulating how starvation forces individuals to become bandits disrupting cross-map logistics.
+- **DOD Implementation:**
+  - Expanded `JobComponent` constants in `internal/components/basic.go` to include `JobBandit uint8 = 7`.
+  - Implemented `BanditrySystem` in `internal/systems/banditry.go` strictly adhering to Arche-Go ECS standards.
+  - The system pre-caches all `Caravan` entities and their physical `Payload` into a flat array (`cData`) outside the nested query loop for O(1) matching.
+- **The Butterfly Effect:**
+  - Integrates seamlessly with Phase 21 (Desperation). When an NPC reaches `Desperation.Level >= 50`, they are dynamically assigned `JobBandit`.
+  - Bandits mathematically calculate squared distances to `Caravan` arrays traversing the HPA* nodes.
+  - If a Caravan passes too closely (`distSq < 2.0`), the Bandit intercepts the node, completely draining the caravan's physical `Food` into their own `Needs`, resetting their starvation limits.
+  - The system dynamically injects an `InteractionTheft` struct into the NPC's `Memory` buffer and attaches a `CrimeMarker` with a massive 250 Bounty.
+  - The `Caravan` entity is structurally wiped from the ECS (`world.RemoveEntity`), meaning the targeted `Village` expecting those trade goods will inevitably suffer famine in the following ticks.
+  - The `JusticeSystem` (Phase 18) instantly parses the new `CrimeMarker` and dispatches Guards to physically hunt the new Bandit.
