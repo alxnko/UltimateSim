@@ -803,7 +803,7 @@ func RunRaylibApp(buildSim BuildSimFunc) {
 
 			if len(transforms) > 0 {
 				cubeMaterial.Maps.Color = rl.Blue
-				rl.DrawMeshInstanced(cubeMesh, cubeMaterial, transforms, int32(len(transforms)))
+				rl.DrawMeshInstanced(cubeMesh, cubeMaterial, transforms, len(transforms))
 			}
 
 			// Draw possessed entity (drawn normally to easily distinct it)
