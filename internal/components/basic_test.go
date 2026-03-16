@@ -249,6 +249,12 @@ func TestComponentSizes(t *testing.T) {
 		t.Errorf("CapitalComponent struct size should be exactly 0 bytes (tag component), got %d", capitalEntitySize)
 	}
 
+	// Phase 35.1: Sovereign Legitimacy Engine
+	legitimacyCompSize := unsafe.Sizeof(LegitimacyComponent{})
+	if legitimacyCompSize != 8 {
+		t.Errorf("LegitimacyComponent size broke DOD alignment: expected exactly 8 bytes, got %d", legitimacyCompSize)
+	}
+
 	// LoyaltyComponent: uint32 (4) = 4 bytes
 	loyaltyCompSize := unsafe.Sizeof(LoyaltyComponent{})
 	if loyaltyCompSize != 4 {

@@ -29,6 +29,7 @@ type adminJurisdictionRevoltData struct {
 	RadiusSquared  float32
 	BannedSecretID uint32
 	CityID         uint32
+	Legitimacy     uint32 // Phase 35.1: Sovereign Legitimacy Engine
 }
 
 type MilitaryRevoltSystem struct {
@@ -44,6 +45,7 @@ type MilitaryRevoltSystem struct {
 	affID     ecs.ID
 	jurID     ecs.ID
 	capID     ecs.ID
+	legitID   ecs.ID
 }
 
 // NewMilitaryRevoltSystem creates a new MilitaryRevoltSystem.
@@ -60,6 +62,7 @@ func NewMilitaryRevoltSystem(world *ecs.World, hooks *engine.SparseHookGraph) *M
 		affID:     ecs.ComponentID[components.Affiliation](world),
 		jurID:     ecs.ComponentID[components.JurisdictionComponent](world),
 		capID:     ecs.ComponentID[components.CapitalComponent](world),
+		legitID:   ecs.ComponentID[components.LegitimacyComponent](world),
 	}
 }
 
@@ -71,13 +74,22 @@ func (s *MilitaryRevoltSystem) Update(world *ecs.World) {
 		return
 	}
 
-	// 1. Pre-cache all Jurisdiction boundaries that have a BannedSecretID
+	// 1. Pre-cache all Jurisdiction boundaries that have a BannedSecretID or LegitimacyComponent
 	s.jurisdictions = s.jurisdictions[:0]
 	jurQuery := world.Query(ecs.All(s.jurID, s.posID, s.identID))
 	for jurQuery.Next() {
 		jur := (*components.JurisdictionComponent)(jurQuery.Get(s.jurID))
-		if jur.BannedSecretID == 0 {
-			continue // No active secret that threatens the state
+
+		var legitimacy uint32 = 100 // Default high if no component exists
+		hasLegitimacy := false
+		if world.Has(jurQuery.Entity(), s.legitID) {
+			legitComp := (*components.LegitimacyComponent)(world.Get(jurQuery.Entity(), s.legitID))
+			legitimacy = legitComp.Score
+			hasLegitimacy = true
+		}
+
+		if jur.BannedSecretID == 0 && !hasLegitimacy {
+			continue // No active secret that threatens the state, and no legitimacy to fail
 		}
 
 		pos := (*components.Position)(jurQuery.Get(s.posID))
@@ -97,6 +109,7 @@ func (s *MilitaryRevoltSystem) Update(world *ecs.World) {
 			RadiusSquared:  jur.RadiusSquared,
 			BannedSecretID: jur.BannedSecretID,
 			CityID:         cityID,
+			Legitimacy:     legitimacy,
 		})
 	}
 
@@ -119,11 +132,7 @@ func (s *MilitaryRevoltSystem) Update(world *ecs.World) {
 		secret := (*components.SecretComponent)(guardQuery.Get(s.secretID))
 		aff := (*components.Affiliation)(guardQuery.Get(s.affID))
 
-		// Check if they hold any secrets at all
-		if len(secret.Secrets) == 0 {
-			continue
-		}
-
+		// We still process guards with no secrets now, because Legitimacy drop can trigger revolt even without secrets.
 		guards = append(guards, militaryRevoltNodeData{
 			entity: guardQuery.Entity(),
 			id:     ident.ID,
@@ -159,26 +168,32 @@ func (s *MilitaryRevoltSystem) Update(world *ecs.World) {
 		}
 
 		if targetJur != nil {
-			// Check if Guard holds the banned secret
-			hasSecret := false
-			for k := 0; k < len(guard.secret.Secrets); k++ {
-				if guard.secret.Secrets[k].SecretID == targetJur.BannedSecretID {
-					hasSecret = true
-					break
+			// Phase 35.1: Revolt due to Low Legitimacy (Score < 20)
+			if targetJur.Legitimacy < 20 {
+				guard.job.JobID = components.JobBandit
+				guard.job.EmployerID = 0
+				if s.hooks != nil {
+					s.hooks.AddHook(guard.id, targetJur.ID, -100)
 				}
+				continue // Already revolted
 			}
 
-			if hasSecret {
-				// The Guard learns the truth and revolts!
+			// Phase 27.1: Revolt due to Banned Secret
+			if targetJur.BannedSecretID != 0 {
+				hasSecret := false
+				for k := 0; k < len(guard.secret.Secrets); k++ {
+					if guard.secret.Secrets[k].SecretID == targetJur.BannedSecretID {
+						hasSecret = true
+						break
+					}
+				}
 
-				// 1. Strip JobGuard status, become a Bandit
-				guard.job.JobID = components.JobBandit
-				guard.job.EmployerID = 0 // Sever employment
-
-				// 2. Generate a massive negative hook against the ruler/capital entity
-				if s.hooks != nil {
-					// -100 hook triggers BloodFeudSystem (which checks for <= -50)
-					s.hooks.AddHook(guard.id, targetJur.ID, -100)
+				if hasSecret {
+					guard.job.JobID = components.JobBandit
+					guard.job.EmployerID = 0
+					if s.hooks != nil {
+						s.hooks.AddHook(guard.id, targetJur.ID, -100)
+					}
 				}
 			}
 		}
