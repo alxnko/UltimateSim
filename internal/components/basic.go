@@ -141,6 +141,13 @@ type OrderComponent struct {
 // CapitalComponent is a tag component identifying a central governing city.
 type CapitalComponent struct{}
 
+// Phase 35.1: Sovereign Legitimacy Engine
+// LegitimacyComponent tracks the physical and social authority of a ruling entity (e.g. a King or Capital).
+type LegitimacyComponent struct {
+	Score uint32
+	_     uint32 // Padding to maintain 8-byte alignment
+}
+
 // LoyaltyComponent determines the threshold before a city ignores or intercepts orders.
 type LoyaltyComponent struct {
 	Value uint32

@@ -1,5 +1,18 @@
 # Evolution Log
 
+## Evolution: Phase 35.1 - Sovereign Legitimacy Engine
+- **Goal:** Execute the "Systemic Emergence" objective by implementing a missing mechanic from the Vision ("Kings rule via Legitimacy Scores; if a deadly secret is gossiped about the King, the standing army revolts.").
+- **DOD Implementation:**
+  - Added `LegitimacyComponent` in `internal/components/basic.go` with exact 8-byte DOD padding bounds.
+  - Implemented `LegitimacySystem` which runs on offset ticks to calculate an O(1) Legitimacy `Score` by querying `TreasuryComponent`, `JurisdictionComponent.Corruption`, and summing the inverse of public sentiment mapping directly out of `engine.SparseHookGraph`.
+  - Modified `MilitaryRevoltSystem` to cache the `LegitimacyComponent` dynamically without locked queries and forced Guards to drop `JobGuard` status if the target Ruler falls below 20 legitimacy, entirely bypassing the previous strict requirement for a `BannedSecretID`.
+- **The Butterfly Effect:**
+  - Plugs deeply into Phase 15.1 (Economy), Phase 18.2 (Justice/Guards), Phase 22.1 (Corruption), and Phase 06.3 (Sparse Hooks).
+  - A massive economic downturn or widespread public unrest (massive negative hooks applied to a King) mathematically lowers the `LegitimacyComponent.Score`.
+  - Once the score drops below the 20-point threshold, the `MilitaryRevoltSystem` intercepts this state change. The entire standing army (Guards) immediately deserts their posts, converts to `JobBandit`, and applies `-100` Grudges to the ruler.
+  - This natively spirals into a violent Blood Feud (Phase 23) revolution where the former guards execute their own corrupt King, without any hardcoded event popups.
+  - Verified 100% deterministic through `go test ./internal/systems -v -run TestLegitimacySystem_Integration -count=2`.
+
 ## Evolution: Phase 18.3 / Phase 30.2 - Sentencing & Prisons (Fines & Wealth Transfer)
 - **Goal:** Execute the "Systemic Emergence" objective by bridging the existing Justice Engine (Phase 18) and the Economic layers (Phase 15/16). Simulating how legal enforcement acts as a mechanism of wealth transfer, enriching the state while punishing criminals with poverty.
 - **DOD Implementation:**
