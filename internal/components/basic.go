@@ -235,6 +235,18 @@ type RuinComponent struct {
 	FormerName string
 }
 
+// Phase 33: The Refugee Crisis
+// RefugeeCluster is a tag component identifying displaced populations.
+type RefugeeCluster struct{}
+
+// RefugeeData tracks a moving population that has lost its Village entity.
+type RefugeeData struct {
+	Count    uint32           // 4 bytes
+	_        uint32           // 4 bytes padding to align CultureComponent to 8 bytes
+	Culture  CultureComponent // 16 bytes
+	Citizens []CitizenData    // 24 bytes
+}
+
 // Phase 07.1: Secret Registry (String Interning)
 
 // Secret represents a known piece of information mapped from the SecretRegistry.

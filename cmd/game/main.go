@@ -64,6 +64,9 @@ func BuildSimulation(gridWidth, gridHeight int, seedVal byte, status *render.Loa
 	tickManager.AddSystem(systems.NewSpoilageSystem(), engine.PhaseResolution)
 	tickManager.AddSystem(systems.NewNaturalDisasterSystem(world, grid), engine.PhaseResolution)
 	tickManager.AddSystem(systems.NewRustSystem(), engine.PhaseResolution)
+
+	// Phase 33: The Refugee Crisis
+	tickManager.AddSystem(systems.NewRefugeeMigrationSystem(hookGraph), engine.PhaseMovement)
 	// --- PHASE: AI ---
 	tickManager.AddSystem(systems.NewDesperationSystem(world), engine.PhaseAI)
 	tickManager.AddSystem(systems.NewBanditrySystem(world), engine.PhaseAI)

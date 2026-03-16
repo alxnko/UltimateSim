@@ -40,8 +40,18 @@ func TestWanderSystem_E2E(t *testing.T) {
 	path1 := (*components.Path)(world.Get(entity1, pathID))
 	path1.HasPath = false
 
-	// Tick once to dispatch request
-	wanderSys.Update(&world)
+	// Tick loop to guarantee the entity gets processed despite AI throttling:
+	// WanderSystem uses `if (s.tickCounter + uint64(npcIndex)) % 30 != 0 { continue }`
+	// Need to ensure FoodCache is available as WanderSystem uses it now.
+	// Oh, WanderSystem relies on MapGrid.FoodCache! It's empty in this test.
+	mapGrid.FoodCache = append(mapGrid.FoodCache, 5*10+5)
+
+	for i := 0; i < 35; i++ {
+		wanderSys.Update(&world)
+		if path1.HasPath {
+			break
+		}
+	}
 
 	// Validate target selection occurred properly
 	if !path1.HasPath {
@@ -107,7 +117,12 @@ func TestWanderSystem_Deterministic(t *testing.T) {
 			path.HasPath = false
 		}
 
-		wanderSys.Update(&world)
+		mapGrid.FoodCache = append(mapGrid.FoodCache, 5*10+5)
+
+		// Loop up to 35 times so all entities cross the AI evaluation tick boundary
+		for t := 0; t < 35; t++ {
+			wanderSys.Update(&world)
+		}
 		// Wait for workers
 		time.Sleep(200 * time.Millisecond)
 		wanderSys.Update(&world)

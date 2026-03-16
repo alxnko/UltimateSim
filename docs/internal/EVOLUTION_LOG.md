@@ -252,3 +252,18 @@ Implemented a fully integrated `NaturalDisasterSystem`. This deterministic algor
 
 **The Butterfly Effect:**
 This touches almost every system. A wiped `StorageComponent` causes immediate extreme famine, spiking local prices (`PriceDiscoverySystem`). Starving citizens reach critical desperation, becoming Bandits (`BanditrySystem`), which then attack Caravans. If an NPC dies from the disaster, the `Succession Engine` shifts their hooks and debts to their heirs. The loss of roads (`FootTraffic`) forces the HPA* pathfinding to calculate slower routes, further delaying rescue caravans.
+
+## Evolution: Phase 33 - The Refugee Crisis (Integration)
+
+**The "Why" (Gap):**
+When a city's economy completely collapsed (famine or natural disaster) and its Population reached 0, the `RuinTransformationSystem` wiped its needs and tagged it a Ruin. However, the simulation failed to represent the physical displacement of those survivors who were starved out of their homes. A critical piece of a living world is the geopolitical and social fallout of mass migration into neighboring, established territories.
+
+**The "What" (Innovation):**
+Implemented a systemic bridge between the Ruins (Phase 5), the Justice/Banditry Engine (Phase 18/26), and the Cultural/Trauma layers (Phase 7/20).
+1.  **Displacement:** `RuinTransformationSystem` now checks for surviving abstracted citizens. It pulls their `CultureComponent` and wraps them in a `RefugeeData` struct mapped to a `RefugeeCluster` tag, launching them dynamically towards the nearest surviving wealthy Village.
+2.  **The Integration Check:** The `RefugeeMigrationSystem` paths them to the new city. It reads the target city's `JurisdictionComponent.Trauma` level and its `StorageComponent.Food`.
+3.  **The Butterfly Effect:** If a destination city is starving or heavily traumatized (Xenophobic), they reject the refugees. The engine automatically seeds a massive `-50` blood feud hook via `SparseHookGraph` and physically converts the rejected refugees into `JobBandit` entities on the city border. If accepted, the refugees natively increment the target city's population and heavily bias their `CultureComponent` towards foreign language drift (Pidgins).
+
+**DOD Implementation:**
+- Designed `RefugeeCluster` (0-byte tag) and `RefugeeData` (exactly 48 bytes padded) within `basic.go`, ensuring arrays do not violate cache-line iterations. Tested directly via byte-alignment sanity checks in `basic_test.go`.
+- Avoided locked ECS queries inside `RefugeeMigrationSystem` by deferring bandit instantiations to a pre-allocated flat slice array `toSpawnBandits` executed completely after `world.Query().Close()`.

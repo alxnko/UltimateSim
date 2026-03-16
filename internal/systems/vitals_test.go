@@ -17,10 +17,10 @@ func TestVitalsSystem_Integration(t *testing.T) {
 	mapGrid := engine.NewMapGrid(10, 10)
 	calendar := engine.NewCalendar()
 
-	metabolism1 := NewMetabolismSystem(&world1, calendar)
+	metabolism1 := NewMetabolismSystem(&world1, calendar, nil)
 	movement1 := NewMovementSystem(&world1, mapGrid, calendar)
 
-	metabolism2 := NewMetabolismSystem(&world2, calendar)
+	metabolism2 := NewMetabolismSystem(&world2, calendar, nil)
 	movement2 := NewMovementSystem(&world2, mapGrid, calendar)
 
 	// Simulate 350 ticks (enough to drop consciousness to 0)
