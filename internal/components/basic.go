@@ -485,6 +485,13 @@ type VitalsComponent struct {
 	Consciousness float32
 }
 
+// Phase 36.1: The Scapegoat & Witch Hunt Engine
+type ScapegoatComponent struct {
+	TargetBeliefID uint32
+	Active         bool
+	_              [3]byte // Pad to 8 bytes
+}
+
 // Phase 31: Systemic Entropy (Natural Disasters)
 
 // NaturalDisasterEntity is a tag component identifying an active disaster event on the map.
