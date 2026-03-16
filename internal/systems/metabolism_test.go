@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/ALXNKO/UltimateSim/internal/components"
+	"github.com/ALXNKO/UltimateSim/internal/engine"
 	"github.com/ALXNKO/UltimateSim/internal/systems"
 	"github.com/mlange-42/arche/ecs"
 )
@@ -15,7 +16,8 @@ func TestMetabolismSystem_E2E(t *testing.T) {
 	needsID := ecs.ComponentID[components.Needs](&world)
 	geneticsID := ecs.ComponentID[components.GenomeComponent](&world)
 
-	metabolismSystem := systems.NewMetabolismSystem(&world, nil)
+	tm := engine.NewTickManager(60)
+	metabolismSystem := systems.NewMetabolismSystem(&world, nil, tm)
 
 	// Entity 1: High Health (100)
 	e1 := world.NewEntity(needsID, geneticsID)

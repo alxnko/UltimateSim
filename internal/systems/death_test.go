@@ -136,8 +136,9 @@ func TestMetabolismAndDeathSystem_Deterministic(t *testing.T) {
 		needsID := ecs.ComponentID[components.Needs](&world)
 		geneticsID := ecs.ComponentID[components.GenomeComponent](&world)
 
+		tm := engine.NewTickManager(60)
 		hooks := engine.NewSparseHookGraph()
-		metabolismSys := systems.NewMetabolismSystem(&world, nil)
+		metabolismSys := systems.NewMetabolismSystem(&world, nil, tm)
 		deathSys := systems.NewDeathSystem(&world, hooks)
 
 		// Spawn identical entities

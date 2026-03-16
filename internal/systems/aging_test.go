@@ -32,7 +32,8 @@ func TestAgingSystem_ButterflyEffect(t *testing.T) {
 	needs.Food = 100.0
 
 	// Create system
-	sys := NewAgingSystem(&world)
+	tm := engine.NewTickManager(60)
+	sys := NewAgingSystem(&world, tm)
 
 	// Run system for one "year" (360 ticks)
 	for i := 0; i < 360; i++ {

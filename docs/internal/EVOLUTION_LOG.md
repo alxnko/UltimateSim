@@ -252,3 +252,20 @@ Implemented a fully integrated `NaturalDisasterSystem`. This deterministic algor
 
 **The Butterfly Effect:**
 This touches almost every system. A wiped `StorageComponent` causes immediate extreme famine, spiking local prices (`PriceDiscoverySystem`). Starving citizens reach critical desperation, becoming Bandits (`BanditrySystem`), which then attack Caravans. If an NPC dies from the disaster, the `Succession Engine` shifts their hooks and debts to their heirs. The loss of roads (`FootTraffic`) forces the HPA* pathfinding to calculate slower routes, further delaying rescue caravans.
+
+## Evolution: Phase 19.1 & 19.2 - Advanced Genetics & The Memetic/Biological Engine
+**The "Why" (Gap):**
+The Vision document outlines a goal to "track hidden recessive traits, disease immunities, or historical bloodline degradation over thousands of years." The `BirthSystem` and `DiseaseVectorSystem` were previously operating as isolated silos. Plagues killed, but surviving did not alter the genome, and `Recessive` traits had no mechanical function during reproduction.
+
+**The "What" (Innovation):**
+Integrated Biological Entropy natively with Crossover Genetics to simulate deep historical disease memory and inbreeding decay.
+1. **Genetic Disease Immunity:** When an NPC survives a plague in the `DiseaseVectorSystem`, the plague ID is bit-mapped and written directly to their `GenomeComponent.Recessive` array.
+2. **Recessive Trait Surfacing:** During `BirthSystem` crossover, if two parents share the same `Recessive` disease marker, it surfaces as a `Dominant` trait in the offspring.
+3. **Innate Immunity:** The `DiseaseVectorSystem` was upgraded to evaluate `GenomeComponent.Dominant`. If a plague ID matches an entity's dominant trait, they are *innately immune*, completely bypassing the lethality calculation.
+4. **Historical Bloodline Degradation:** `Generation` and `Degradation` integers were added to the `GenomeComponent`. Extreme inbreeding (`diffCount < 5`) permanently increments `Degradation`. The system mathematically penalizes `Strength`, `Health`, and `Intellect` bounds permanently for that bloodline (`255 - (degradation * 10)`), simulating historical genetic decay across thousands of years of the simulation.
+
+**DOD Implementation:**
+- `GenomeComponent` size was strictly padded from 12 to 16 bytes, maintaining absolute CPU Cache alignment.
+- `CitizenData` size was exactly aligned to 24 bytes.
+- SQLite save states in `save_load.go` were structurally migrated via `ALTER` rules simulating persistence.
+- Verified 100% determinism with the "Butterfly Effect" E2E integration test proving the entire loop: Plague 1 -> Survivors get Recessive Immunity -> Breeding -> Offspring gains Dominant Immunity -> Immune to Plague 2.

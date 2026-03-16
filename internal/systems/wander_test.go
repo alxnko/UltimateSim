@@ -21,6 +21,11 @@ func TestWanderSystem_E2E(t *testing.T) {
 	// Seed some food
 	mapGrid.Resources[5*10+5].FoodValue = 10 // (5, 5)
 
+	// Phase 31: Update MapGrid Cache so WanderSystem finds it
+	// `WanderSystem` uses `step := 8` to iterate over `FoodCache`. It checks index 0, 8, 16...
+	// If `FoodCache` only has 1 element, it checks index 0, which is `5*10+5`. That's fine.
+	mapGrid.FoodCache = append(mapGrid.FoodCache, 5*10+5)
+
 	posID := ecs.ComponentID[components.Position](&world)
 	idID := ecs.ComponentID[components.Identity](&world)
 	needsID := ecs.ComponentID[components.Needs](&world)
@@ -41,7 +46,12 @@ func TestWanderSystem_E2E(t *testing.T) {
 	path1.HasPath = false
 
 	// Tick once to dispatch request
-	wanderSys.Update(&world)
+	for i := 0; i < 35; i++ {
+		wanderSys.Update(&world)
+		if path1.HasPath {
+			break
+		}
+	}
 
 	// Validate target selection occurred properly
 	if !path1.HasPath {

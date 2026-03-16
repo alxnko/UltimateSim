@@ -79,17 +79,16 @@ func (s *BirthSystem) Update(world *ecs.World) {
 			domMask := uint32(engine.GetRandomInt())
 			recMask := uint32(engine.GetRandomInt())
 
-			// Calculate child genetics (Average of parents +/- 5 points mutation)
-			childGenetics := components.GenomeComponent{
-				Strength:  clampGenetics(int(p1Gen.Strength)+int(p2Gen.Strength), engine.GetRandomInt()),
-				Beauty:    clampGenetics(int(p1Gen.Beauty)+int(p2Gen.Beauty), engine.GetRandomInt()),
-				Health:    clampGenetics(int(p1Gen.Health)+int(p2Gen.Health), engine.GetRandomInt()),
-				Intellect: clampGenetics(int(p1Gen.Intellect)+int(p2Gen.Intellect), engine.GetRandomInt()),
-				Dominant:  (p1Gen.Dominant & domMask) | (p2Gen.Dominant & ^domMask),
-				Recessive: (p1Gen.Recessive & recMask) | (p2Gen.Recessive & ^recMask),
+			// Calculate maximum generation
+			maxGen := p1Gen.Generation
+			if p2Gen.Generation > maxGen {
+				maxGen = p2Gen.Generation
 			}
 
-			// Phase 19.1: Inbreeding Penalties
+			// Inherit degradation (sum of parents if we need it)
+			childDegradation := p1Gen.Degradation
+
+			// Phase 19.1: Inbreeding Penalties & Historical Bloodline Degradation
 			// Calculate similarity between parent Dominant arrays.
 			// The XOR result will have 0s where bits are identical. We count differences (1s).
 			diffCount := 0
@@ -99,7 +98,28 @@ func (s *BirthSystem) Update(world *ecs.World) {
 				xorRes >>= 1
 			}
 
-			// If parents share extremely similar dominant traits (< 5 bits difference), penalize health.
+			// Extreme inbreeding permanently increments Degradation
+			if diffCount < 5 {
+				childDegradation = p1Gen.Degradation + p2Gen.Degradation + 1
+			}
+
+			// Phase 19.2: Recessive Traits Surfacing
+			// If both parents share a recessive bit (e.g. immunity), it surfaces as a Dominant trait
+			sharedRecessive := p1Gen.Recessive & p2Gen.Recessive
+
+			// Calculate child genetics
+			childGenetics := components.GenomeComponent{
+				Strength:    clampGenetics(int(p1Gen.Strength)+int(p2Gen.Strength), engine.GetRandomInt(), childDegradation),
+				Beauty:      clampGenetics(int(p1Gen.Beauty)+int(p2Gen.Beauty), engine.GetRandomInt(), childDegradation),
+				Health:      clampGenetics(int(p1Gen.Health)+int(p2Gen.Health), engine.GetRandomInt(), childDegradation),
+				Intellect:   clampGenetics(int(p1Gen.Intellect)+int(p2Gen.Intellect), engine.GetRandomInt(), childDegradation),
+				Dominant:    (p1Gen.Dominant & domMask) | (p2Gen.Dominant & ^domMask) | sharedRecessive,
+				Recessive:   (p1Gen.Recessive & recMask) | (p2Gen.Recessive & ^recMask),
+				Generation:  maxGen + 1,
+				Degradation: childDegradation,
+			}
+
+			// Apply immediate health penalty for severe inbreeding on top of permanent degradation
 			if diffCount < 5 {
 				childGenetics.Health /= 2
 			}
@@ -119,8 +139,8 @@ func (s *BirthSystem) Update(world *ecs.World) {
 	}
 }
 
-// clampGenetics takes the sum of two parent traits, averages them, applies mutation, and clamps to 0-255.
-func clampGenetics(sum int, mutationRoll int) uint8 {
+// clampGenetics takes the sum of two parent traits, averages them, applies mutation, and clamps to bounds defined by degradation.
+func clampGenetics(sum int, mutationRoll int, degradation uint16) uint8 {
 	avg := sum / 2
 	mutation := (mutationRoll % 11) - 5 // Range -5 to +5
 	val := avg + mutation
@@ -128,8 +148,16 @@ func clampGenetics(sum int, mutationRoll int) uint8 {
 	if val < 0 {
 		return 0
 	}
-	if val > 255 {
-		return 255
+
+	// Historical Bloodline Degradation: Limit max stats
+	maxStat := 255 - int(degradation*10)
+	if maxStat < 1 {
+		maxStat = 1 // Prevent negative or 0 max limit
 	}
+
+	if val > maxStat {
+		return uint8(maxStat)
+	}
+
 	return uint8(val)
 }
