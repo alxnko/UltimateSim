@@ -1,5 +1,19 @@
 # Evolution Log
 
+## Evolution: Phase 36.1 - The Scapegoat & Witch Hunt Engine
+- **Goal:** Execute the "Systemic Emergence" objective by implementing a missing mechanic from the Vision where Jurisdictions actively react to extreme systemic stress (Trauma) by persecuting ideological minorities.
+- **DOD Implementation:**
+  - Added a cache-friendly `ScapegoatComponent` (exactly 8 bytes) in `internal/components/basic.go`.
+  - Implemented `ScapegoatSystem` which runs on an offset tick loop to detect traumatized Jurisdictions (`Trauma >= 15`), iterate over local NPCs to map demographic `BeliefID` distributions, and identify a minority target (<30% but >0).
+  - Modified `JusticeSystem` (Phase 18) to immediately criminalize any NPC holding the active `TargetBeliefID` within the Scapegoat's active Jurisdiction.
+- **The Butterfly Effect:**
+  - Plugs directly into Phase 31 (Disasters), Phase 20 (Traumatic Traditions), Phase 18 (Justice/Enforcement), and Phase 23 (Blood Feuds).
+  - A Natural Disaster hits a City, instantly spiking its `Trauma`. The `ScapegoatSystem` kicks in, finding that a small percentage of the surviving population holds a foreign belief (e.g. from Linguistic Drift or a Wandering Preacher).
+  - The State sets the Scapegoat Target, experiencing temporary Catharsis (`Trauma` decreases) but unleashing the Guards.
+  - Guards violently fine and banish the minorities. This confiscates minority wealth directly into the City's Treasury, funding further expansion.
+  - The banished refugees flee to the frontiers, carrying massive `-50` Blood Feud Grudges against the enforcing Guards, organically generating a pipeline for peripheral Banditry and Holy Wars (Phase 29).
+  - Verified 100% deterministic through `go test ./internal/systems -v -run TestScapegoatSystem_Integration -count=2`.
+
 ## Evolution: Phase 35.1 - Sovereign Legitimacy Engine
 - **Goal:** Execute the "Systemic Emergence" objective by implementing a missing mechanic from the Vision ("Kings rule via Legitimacy Scores; if a deadly secret is gossiped about the King, the standing army revolts.").
 - **DOD Implementation:**

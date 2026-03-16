@@ -19,7 +19,8 @@ type adminJurisdictionData struct {
 	Y        float32
 	Radius   float32
 	Laws     uint32
-	Treasury *components.TreasuryComponent // Pre-cached for Phase 18.3 Fines
+	Treasury *components.TreasuryComponent
+	Scapegoat *components.ScapegoatComponent // Pre-cached for Phase 18.3 Fines
 }
 
 type JusticeSystem struct {
@@ -61,6 +62,7 @@ func (s *JusticeSystem) Update(world *ecs.World) {
 	posID := ecs.ComponentID[components.Position](world)
 	affID := ecs.ComponentID[components.Affiliation](world)
 	treasuryID := ecs.ComponentID[components.TreasuryComponent](world)
+	scapegoatID := ecs.ComponentID[components.ScapegoatComponent](world) // Phase 36.1
 
 	jurQuery := world.Query(ecs.All(jurID, posID, affID))
 	s.jurisdictions = s.jurisdictions[:0]
@@ -75,14 +77,21 @@ func (s *JusticeSystem) Update(world *ecs.World) {
 			treasury = (*components.TreasuryComponent)(jurQuery.Get(treasuryID))
 		}
 
+		// Phase 36.1: The Scapegoat Engine
+		var scapegoat *components.ScapegoatComponent
+		if world.Has(jurQuery.Entity(), scapegoatID) {
+			scapegoat = (*components.ScapegoatComponent)(world.Get(jurQuery.Entity(), scapegoatID))
+		}
+
 		s.jurisdictions = append(s.jurisdictions, adminJurisdictionData{
-			Entity:   jurQuery.Entity(),
-			CityID:   aff.CityID,
-			X:        pos.X,
-			Y:        pos.Y,
-			Radius:   jur.RadiusSquared,
-			Laws:     jur.IllegalActionIDs,
-			Treasury: treasury,
+			Entity:    jurQuery.Entity(),
+			CityID:    aff.CityID,
+			X:         pos.X,
+			Y:         pos.Y,
+			Radius:    jur.RadiusSquared,
+			Laws:      jur.IllegalActionIDs,
+			Treasury:  treasury,
+			Scapegoat: scapegoat,
 		})
 	}
 
@@ -96,6 +105,7 @@ func (s *JusticeSystem) Update(world *ecs.World) {
 	crimeID := ecs.ComponentID[components.CrimeMarker](world)
 	storageID := ecs.ComponentID[components.StorageComponent](world)
 		contraID := ecs.ComponentID[components.ContrabandComponent](world)
+	beliefID := ecs.ComponentID[components.BeliefComponent](world) // Phase 36.1
 
 	npcQuery := world.Query(ecs.All(memID, posID, affID))
 
@@ -118,6 +128,7 @@ func (s *JusticeSystem) Update(world *ecs.World) {
 			dx := pos.X - j.X
 			dy := pos.Y - j.Y
 			distSq := (dx * dx) + (dy * dy)
+			// BUGFIX: The struct stored j.Radius (which mapped to RadiusSquared previously). Check if naming is consistent.
 			if distSq <= j.Radius {
 				activeJur = j
 				break // We assume first hit jurisdiction bounds applies
@@ -136,6 +147,20 @@ func (s *JusticeSystem) Update(world *ecs.World) {
 					if (activeJur.Laws & bitmaskCheck) != 0 {
 						isCriminal = true
 						break
+					}
+				}
+			}
+
+			// Phase 36.1: The Scapegoat & Witch Hunt Engine
+			// The state actively criminalizes minorities during crises.
+			if !isCriminal && activeJur.Scapegoat != nil && activeJur.Scapegoat.Active {
+				if world.Has(entity, beliefID) {
+					bel := (*components.BeliefComponent)(world.Get(entity, beliefID))
+					for bIdx := 0; bIdx < len(bel.Beliefs); bIdx++ {
+						if bel.Beliefs[bIdx].BeliefID == activeJur.Scapegoat.TargetBeliefID {
+							isCriminal = true
+							break
+						}
 					}
 				}
 			}
