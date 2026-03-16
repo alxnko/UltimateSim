@@ -149,6 +149,17 @@ func (s *DiseaseVectorSystem) Update(world *ecs.World) {
 					continue // Ignore this disease, entity is immune
 				}
 
+				// Phase 19.1: Innate Genetic Immunity
+				// If the disease ID maps to a set bit in Dominant traits, the entity is innately immune
+				diseaseBit := uint32(1 << (disease.id % 32))
+				if (gen.Dominant & diseaseBit) != 0 {
+					isImmune = true
+				}
+
+				if isImmune {
+					continue // Ignore this disease, entity is immune
+				}
+
 				// Evaluate lethality mathematically
 				// Base health is 0-255. Lethality is 50-90.
 				// A health roll lower than lethality means death.
@@ -194,6 +205,13 @@ func (s *DiseaseVectorSystem) Update(world *ecs.World) {
 
 			if !hasImmunity {
 				immunity.ImmuneTo = append(immunity.ImmuneTo, data.diseaseID)
+			}
+
+			// Phase 19.1: Write acquired immunity to Recessive Genome for offspring inheritance
+			if world.Has(data.entity, genID) {
+				gen := (*components.GenomeComponent)(world.Get(data.entity, genID))
+				diseaseBit := uint32(1 << (data.diseaseID % 32))
+				gen.Recessive |= diseaseBit
 			}
 		}
 	}

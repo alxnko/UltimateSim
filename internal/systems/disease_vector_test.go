@@ -113,6 +113,16 @@ func TestDiseaseVectorSystem_Lethality(t *testing.T) {
 	imm := (*components.ImmunityTag)(world.Get(t3, immID))
 	imm.ImmuneTo = []uint32{100}
 
+	// Target 4: Genetic Immunity via Dominant trait
+	t4 := world.NewEntity()
+	world.Add(t4, posID, genID)
+	pos4 := (*components.Position)(world.Get(t4, posID))
+	pos4.X, pos4.Y = 5, 5
+	gen4 := (*components.GenomeComponent)(world.Get(t4, genID))
+	gen4.Health = 1 // Low health, would die if not genetically immune
+	diseaseBit := uint32(1 << (100 % 32))
+	gen4.Dominant |= diseaseBit
+
 	sys := NewDiseaseVectorSystem(&world, grid)
 	sys.Update(&world)
 
@@ -129,8 +139,21 @@ func TestDiseaseVectorSystem_Lethality(t *testing.T) {
 		t.Fatalf("Entity 2 should have gained ImmunityTag")
 	}
 
-	// t3 should be alive due to prior immunity
+	// Re-fetch gen2 because it might have been re-allocated during Update if slices changed (arche-go rules)
+	gen2Updated := (*components.GenomeComponent)(world.Get(t2, genID))
+
+	// Phase 19.1: Check if t2 gained Recessive genetic immunity
+	if (gen2Updated.Recessive & diseaseBit) == 0 {
+		t.Fatalf("Entity 2 should have gained Recessive genetic immunity to %d, got %d", 100, gen2Updated.Recessive)
+	}
+
+	// t3 should be alive due to prior immunity tag
 	if !world.Alive(t3) {
-		t.Fatalf("Entity 3 should have survived due to prior immunity")
+		t.Fatalf("Entity 3 should have survived due to prior immunity tag")
+	}
+
+	// t4 should be alive due to innate genetic dominant immunity
+	if !world.Alive(t4) {
+		t.Fatalf("Entity 4 should have survived due to genetic dominant immunity")
 	}
 }

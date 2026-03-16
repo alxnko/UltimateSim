@@ -53,12 +53,14 @@ type Identity struct {
 // Phase 03.1: Genesis Base Structs
 // Phase 19.1: Deep Genetics expansion
 type GenomeComponent struct {
-	Strength  uint8
-	Beauty    uint8
-	Health    uint8
-	Intellect uint8
-	Dominant  uint32
-	Recessive uint32
+	Strength    uint8
+	Beauty      uint8
+	Health      uint8
+	Intellect   uint8
+	Dominant    uint32
+	Recessive   uint32
+	Generation  uint16
+	Degradation uint16
 }
 
 // Legacy component
@@ -179,10 +181,10 @@ type StorageComponent struct {
 
 // CitizenData stores genetic and trait data for individuals born within a settlement.
 type CitizenData struct {
-	Genetics   GenomeComponent
-	BaseTraits uint32
-	Age        uint16
-	_          uint16 // Padding to exactly 20 bytes
+	Genetics   GenomeComponent // 16 bytes
+	BaseTraits uint32          // 4 bytes
+	Age        uint16          // 2 bytes
+	_          uint16          // 2 bytes padding for 24 byte total size
 }
 
 // PopulationComponent tracks headcount abstracting AI nodes inside city limits.
