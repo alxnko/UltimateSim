@@ -283,3 +283,16 @@ Integrated Biological Entropy natively with Crossover Genetics to simulate deep 
   - The `VassalRebellionSystem` inherently reacts to this 0 Loyalty state by forcing the village to unilaterally secede (`CountryID = 0`).
   - This natively triggers the `BloodFeudSystem` as the rebels seed negative hooks against the Capital's ruler, plunging the region into a frontier resource/holy war over purely ideological differences.
   - Verified 100% deterministic through `go test ./internal/systems -v -run TestCulturalFrictionSystem_Integration -count=2`.
+
+## Evolution: Phase 34.1 - The Information Broker Engine (Information Trade)
+- **Goal:** Execute the "Systemic Emergence" objective by implementing a missing mechanic from the Vision ("Information is a tangible, tradeable commodity in the ECS").
+- **DOD Implementation:**
+  - Implemented `InformationTradeSystem` (`internal/systems/information_trade.go`) operating on offset ticks (`% 15 == 0`) to distribute computational load away from `GossipDistributionSystem`.
+  - Cached `nodeTradeData` into a flat array mapping `Position`, `SecretComponent`, `Needs`, `Identity`, and `Memory` to guarantee L1/L2 cache sequential access during O(N^2) proximity checks.
+- **The Butterfly Effect:**
+  - Plugs deeply into Phase 07 (Information Leakage), Phase 13 (Economy), and Phase 21 (Desperation).
+  - A highly opportunistic NPC (`TraitGossip`) or a starving NPC (`Needs.Wealth < 100`) holding a secret will actively evaluate adjacent NPCs for wealth (`Needs.Wealth > 10.0`).
+  - If a trade occurs, the Secret is transferred in exchange for Wealth linearly scaling with the secret's `Virality` score.
+  - **Emergent Re-balancing:** A starving peasant who witnesses a crime or learns a powerful secret can now sell that information to a wealthy merchant, naturally acquiring the `Wealth` needed to buy `Food`, entirely bypassing the `DesperationSystem` theft triggers.
+  - The trade simultaneously writes reciprocal `+1` hooks into the `SparseHookGraph`, creating strong social networks among knowledge brokers.
+  - Verified 100% deterministic through `go test ./internal/systems -v -run TestInformationTradeSystem_Integration -count=2`.
