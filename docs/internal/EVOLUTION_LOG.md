@@ -269,3 +269,17 @@ Integrated Biological Entropy natively with Crossover Genetics to simulate deep 
 - `CitizenData` size was exactly aligned to 24 bytes.
 - SQLite save states in `save_load.go` were structurally migrated via `ALTER` rules simulating persistence.
 - Verified 100% determinism with the "Butterfly Effect" E2E integration test proving the entire loop: Plague 1 -> Survivors get Recessive Immunity -> Breeding -> Offspring gains Dominant Immunity -> Immune to Plague 2.
+
+## Evolution: Phase 33.1 - Cultural Friction & Ideological Secession Engine
+- **Goal:** Execute the "Systemic Emergence" objective by bridging the Memetic/Information pillar (Phase 07) directly into the Administrative/Geopolitical power structure (Phase 16). Simulating how massive empires naturally fracture along ethnic and religious lines unless aggressively managed by propaganda.
+- **DOD Implementation:**
+  - Designed `CulturalFrictionSystem` (`internal/systems/cultural_friction.go`) strictly adhering to Data-Oriented Design constraints.
+  - Queries all `CapitalComponent` entities, caching their `CultureComponent.LanguageID` and dominant `BeliefID` into a flat `[]adminCultureData` array.
+  - Sequentially parses all vassal `Village` entities, performing an O(1) comparison against their overlord's cached cultural profile. No nested `arche-go` queries are used.
+- **The Butterfly Effect:**
+  - Plugs seamlessly into Phase 07.3 (Linguistic Drift), Phase 07.5 (Ideological Infection), and Phase 28.1 (Vassal Rebellion).
+  - A distant vassal village experiences natural Linguistic Drift or is converted by a wandering charismatic preacher.
+  - The `CulturalFrictionSystem` calculates the divergence between the village's language/beliefs and its Capital's dominant culture, continually draining the village's `LoyaltyComponent.Value`.
+  - The `VassalRebellionSystem` inherently reacts to this 0 Loyalty state by forcing the village to unilaterally secede (`CountryID = 0`).
+  - This natively triggers the `BloodFeudSystem` as the rebels seed negative hooks against the Capital's ruler, plunging the region into a frontier resource/holy war over purely ideological differences.
+  - Verified 100% deterministic through `go test ./internal/systems -v -run TestCulturalFrictionSystem_Integration -count=2`.

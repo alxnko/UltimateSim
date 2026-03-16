@@ -96,6 +96,9 @@ func BuildSimulation(gridWidth, gridHeight int, seedVal byte, status *render.Loa
 	// Phase 28.1: The Vassal Rebellion Engine
 	tickManager.AddSystem(systems.NewVassalRebellionSystem(world, hookGraph), engine.PhaseResolution)
 
+	// Phase 33.1: Cultural Friction & Ideological Secession Engine
+	tickManager.AddSystem(systems.NewCulturalFrictionSystem(), engine.PhaseResolution)
+
 	// Phase 29.1: Geopolitical Resource Wars
 	tickManager.AddSystem(systems.NewResourceWarSystem(world, hookGraph), engine.PhaseResolution)
 
