@@ -299,3 +299,12 @@ func TestDesperationComponentSize(t *testing.T) {
 		t.Errorf("DisasterComponent size broke DOD alignment: expected 16, got %d", disasterSize)
 	}
 }
+
+func TestQuarantineComponentSize(t *testing.T) {
+	// Phase 37.1: The Quarantine Engine
+	expected := uintptr(8)
+	actual := unsafe.Sizeof(QuarantineComponent{})
+	if actual != expected {
+		t.Errorf("Expected QuarantineComponent to be %d bytes for DOD, got %d", expected, actual)
+	}
+}

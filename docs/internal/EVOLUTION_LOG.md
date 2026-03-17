@@ -323,3 +323,19 @@ Integrated Biological Entropy natively with Crossover Genetics to simulate deep 
   - **Emergent Re-balancing:** A starving peasant who witnesses a crime or learns a powerful secret can now sell that information to a wealthy merchant, naturally acquiring the `Wealth` needed to buy `Food`, entirely bypassing the `DesperationSystem` theft triggers.
   - The trade simultaneously writes reciprocal `+1` hooks into the `SparseHookGraph`, creating strong social networks among knowledge brokers.
   - Verified 100% deterministic through `go test ./internal/systems -v -run TestInformationTradeSystem_Integration -count=2`.
+
+## Phase 37.1: The Quarantine Engine
+**Date:** 2026-03-17
+**Focus:** Integration (Biology + Justice + Economy)
+
+**The Problem (Vision Gap):**
+The Vision demands that massive societal trauma (plague) creates a tangible geopolitical response. Previously, plagues simply killed NPCs silently without affecting the legal or logistical fabric of a city. The macro-state remained entirely passive to biological entropy.
+
+**The Solution (Autonomous DOD Execution):**
+I implemented `QuarantineComponent` (a strictly padded 8-byte DOD struct) and `QuarantineSystem`. The system mathematically evaluates the radius of all active `JurisdictionComponent` entities against active `DiseaseEntity` coordinates. If an overlap occurs, the Capital declares a lockdown by activating the Quarantine struct. I then integrated this into `JusticeSystem` by extending its O(N) evaluation loop: if a jurisdiction is under quarantine, any entity whose `Path` target vector crosses the jurisdiction boundary (entering or exiting) is flagged with a `CrimeMarker`.
+
+**The Butterfly Effect:**
+A Plague (`DiseaseVectorSystem`) triggers a Quarantine (`QuarantineSystem`). A logistics `Caravan` attempts to cross the border to deliver grain. The `JusticeSystem` flags the Caravan as a criminal. A `JobGuard` intercepts the Caravan, confiscating its wealth and banishing it. The `Village` now starves, spiking `MarketComponent.FoodPrice`. Starving NPCs hit critical `DesperationSystem` levels and attempt to steal. Guards violently suppress the thefts, generating massive negative `SparseHookGraph` edges, spiraling the city into a full `BloodFeudSystem` civil war all because a single plague spawned.
+
+**Architecture Validation:**
+Data-Oriented Design was maintained via flat memory array mapping. `unsafe.Sizeof` was explicitly verified to guarantee 8-byte alignment, preventing GC lag during the `JusticeSystem` loop.

@@ -504,3 +504,10 @@ type DisasterComponent struct {
 	Type          uint32 // e.g., Earthquake, Flood, etc.
 	_             uint32 // Padding to exactly 16 bytes
 }
+
+// Phase 37.1: The Quarantine Engine
+type QuarantineComponent struct {
+	Active bool
+	_      [3]byte // Pad to 4 bytes
+	_      uint32  // Pad to 8 bytes
+}
