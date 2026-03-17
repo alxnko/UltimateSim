@@ -1,3 +1,17 @@
+## Evolution: Phase 40.1 - The Maritime Migration Engine
+- **Goal:** Execute the "Systemic Emergence" objective by bridging the localized Famine/Poverty loops (Phase 13/21) directly into the trans-oceanic logistics map (Phase 17). Fulfilling the Vision missing link: "Trans-oceanic Migration: Just like caravans, ships hold Passenger slots. NPCs fleeing famine or seeking new lands can purchase passage across oceans."
+- **DOD Implementation:**
+  - Implemented `MaritimeMigrationSystem` (`internal/systems/maritime_migration.go`) maintaining strict `arche-go` array flat-loops.
+  - It extracts all valid `ShipComponent` items anchored at Ports with `PassengerComponent` capacities into a flat `[]shipNodeData` array, preventing any nested ECS queries during the `O(N)` parsing of NPC distance vectors.
+  - Added structural despawning and data-copy operations strictly executed *after* the `arche-go` iterator closes, bypassing runtime query panics while shifting `NPC` Entities from ground geometry arrays into deep-ocean array payloads.
+- **The Butterfly Effect:**
+  - Bridges Phase 21 (Desperation), Phase 13.1 (Prices), and Phase 17 (Naval Logistics).
+  - An isolated island experiences massive `SpoilageSystem` decay causing extreme local `MarketComponent.FoodPrice` spikes.
+  - The local `DesperationSystem` naturally intercepts this poverty. Wealthy but desperate NPCs (`Needs.Wealth >= 50`) map themselves to the closest `PortComponent` Ship.
+  - They algorithmically transfer `Wealth` out of their local economy into the `ShipOwner` Treasury and despawn from the island.
+  - This migration mathematically reduces `PopulationComponent`, organically re-balancing the island's demand calculus to prevent total localized genocide.
+  - Verified 100% deterministic through `go test ./internal/systems -v -run TestMaritimeMigrationSystem_Integration -count=2`.
+
 ## Evolution: Phase 39.1 - The Courier Interception Engine
 - **Goal:** Execute the "Systemic Emergence" objective by bridging the Administrative Entropy layer (Phase 10) directly into the Justice Engine (Phase 18) and the Blood Feud Engine (Phase 23).
 - **DOD Implementation:**
