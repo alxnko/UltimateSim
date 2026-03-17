@@ -355,3 +355,22 @@ A Plague (`DiseaseVectorSystem`) triggers a Quarantine (`QuarantineSystem`). A l
 
 **Architecture Validation:**
 Data-Oriented Design was maintained via flat memory array mapping. `unsafe.Sizeof` was explicitly verified to guarantee 8-byte alignment, preventing GC lag during the `JusticeSystem` loop.
+
+## Evolution: Phase 39.1 & 39.2 - The Epistemological Engine (Scholar & Ledger Discovery)
+**Date:** 2026-03-17
+**Focus:** Integration (Geography + Information + Justice)
+
+**The Problem (Vision Gap):**
+The Vision document outlines a goal for "Material Ledgers which can be stolen, burned, or rediscovered", highlighting an Epistemological Layer (Truth Problem). Previously, information was purely biological (oral memory), and while `PropagandaSystem` existed to burn physical Ledgers, no system actually allowed NPCs to structurally *create* or *discover* these ledgers, making the mechanic incomplete.
+
+**The Solution (Autonomous DOD Execution):**
+1. **ScholarSystem (Phase 39.1):** Created a system evaluating NPCs with high `GenomeComponent.Intellect` (>= 150) and `Needs.Wealth` (>= 50). These NPCs act as scribes, paying wealth to instantiate a new physical `Ledger` Entity at their exact map `Position`, writing their known `SecretID`s into the `LedgerComponent.Secrets` flat array.
+2. **LedgerDiscoverySystem (Phase 39.2):** Created a system that continually parses active NPCs against physical `Ledger` map coordinates. If an NPC stands on a Ledger (using O(1) squared distance checks), they "read" the secrets. Any unknown `SecretID` is instantly appended to the NPC's `SecretComponent` with max virality (255).
+
+**The Butterfly Effect:**
+A Scholar possesses a Banned Secret (e.g., an inconvenient truth about the King). The Scholar drops a Ledger before being executed by the `PropagandaSystem`. Generations later, a loyal `JobGuard` stumbles upon the Ruins containing the Ledger. The Guard learns the Banned Secret via `LedgerDiscoverySystem`. The newly learned truth natively triggers the `MilitaryRevoltSystem`, causing the loyal Guard to drop their job, become a `JobBandit`, and spawn a `-100` grudge against the King in the `SparseHookGraph`.
+
+Information now outlives the biological lifespan of the entities that generate it, fundamentally anchoring the memetic simulation to the map.
+
+**Architecture Validation:**
+Data-Oriented Design was maintained via flat memory `arche-go` arrays (`[]ledgerNodeData`). All distance checks avoid `math.Sqrt`, using `distSq` optimization. 100% Determinism was verified via `scholar_ledger_test.go` confirming the complete loop from Ledger Creation -> Erasure -> Rediscovery -> Mutiny.

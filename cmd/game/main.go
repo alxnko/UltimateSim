@@ -110,6 +110,10 @@ func BuildSimulation(gridWidth, gridHeight int, seedVal byte, status *render.Loa
 
 	tickManager.AddSystem(systems.NewGossipDistributionSystem(world, hookGraph), engine.PhaseResolution)
 
+	// Phase 39.1 & 39.2: The Epistemological Engine
+	tickManager.AddSystem(systems.NewScholarSystem(world), engine.PhaseResolution)
+	tickManager.AddSystem(systems.NewLedgerDiscoverySystem(world), engine.PhaseResolution)
+
 	// Register Language Drift
 	tickManager.AddSystem(systems.NewLanguageDriftSystem(world), engine.PhaseResolution)
 
