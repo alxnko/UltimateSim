@@ -29,6 +29,20 @@
 
 # Evolution Log
 
+## Evolution: Phase 41 - The Ostracization Engine
+- **Goal:** Execute the "Systemic Emergence" objective by bridging the Information/Memory layer (`MemoryComponent`) directly with the Social (`SparseHookGraph`) and Economic (`InformationTradeSystem`) layers. This satisfies the Vision's mandate for "Negative feedback loops [that] strictly punish unchecked growth or endless wealth."
+- **DOD Implementation:**
+  - Designed `OstracizationSystem` (`internal/systems/ostracization.go`) adhering strictly to Data-Oriented Design constraints.
+  - Queries `Memory` buffers using a flat `[]ostracizationNodeData` array on offset ticks (`% 20 == 0`) to avoid ECS locking panics. It maps `InteractionTheft` and `InteractionAssault` events into `-20` relationship hooks injected directly into the `SparseHookGraph`.
+  - Modified `InformationTradeSystem` (`internal/systems/information_trade.go`) to execute an O(1) read against the `SparseHookGraph` before secret exchanges. Trades are structurally aborted if either party holds a `<= -40` hook against the other.
+- **The Butterfly Effect:**
+  - Plugs seamlessly into Phase 21 (Desperation), Phase 18 (Justice), Phase 06 (Sparse Hooks), and Phase 34 (Information Trade).
+  - A desperate NPC (`Needs.Wealth < 50`) steals from another NPC (`InteractionTheft`). If the state's `JusticeSystem` (Guards) fails to catch the thief, the thief keeps their stolen wealth.
+  - The victim, however, retains the memory of being robbed. The `OstracizationSystem` reads this memory and spawns a negative hook against the thief in the `SparseHookGraph`.
+  - The newly enriched thief attempts to buy powerful `Secrets` (e.g., blackmail material or state ledgers) from the victim using their stolen wealth.
+  - The `InformationTradeSystem` checks the social graph and aborts the trade. Despite acquiring endless material wealth through crime, the thief is naturally isolated and ostracized from the Epistemological/Memetic layer of the simulation, punishing the unbridled exploitation of neighbors without any hardcoded logic traps.
+  - Verified 100% deterministic through `go test ./internal/systems -v -run TestOstracizationSystem_Integration -count=2`.
+
 ## Evolution: Phase 36.1 - The Scapegoat & Witch Hunt Engine
 - **Goal:** Execute the "Systemic Emergence" objective by implementing a missing mechanic from the Vision where Jurisdictions actively react to extreme systemic stress (Trauma) by persecuting ideological minorities.
 - **DOD Implementation:**
