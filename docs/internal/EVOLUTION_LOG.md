@@ -324,6 +324,22 @@ Integrated Biological Entropy natively with Crossover Genetics to simulate deep 
   - The trade simultaneously writes reciprocal `+1` hooks into the `SparseHookGraph`, creating strong social networks among knowledge brokers.
   - Verified 100% deterministic through `go test ./internal/systems -v -run TestInformationTradeSystem_Integration -count=2`.
 
+## Evolution: Phase 38.1 - Ecological Pressure (The Exposure Engine)
+**Date:** 2026-03-17
+**Focus:** Integration (Geography + Biology + Economy)
+
+**The Problem (Vision Gap):**
+The simulation previously treated map temperature strictly as an abstract climate generator and a constraint on crop yields. It completely lacked a direct Biological and Economic connection. Exposure to extreme elements (Heatstroke, Hypothermia) did not exist, severing the core connection between Geography and personal survival.
+
+**The Solution (Autonomous DOD Execution):**
+I implemented `ExposureSystem`. It pre-calculates the local `engine.MapGrid` tile's `Temperature` for every NPC physically occupying that tile. If the temperature exceeds extreme bounds (> 200 or < 50), the system actively mutates the NPC's `VitalsComponent.Pain` value, pushing them towards collapse. However, I integrated it with Phase 13 Economic logic by checking `Needs.Safety`. If an NPC has acquired sufficient shelter/clothing (`Needs.Safety >= 50.0`), they are protected from the environmental damage.
+
+**The Butterfly Effect:**
+A Caster (`JobCaster`) uses magic to spike local map temperature to 255. The `ExposureSystem` immediately registers extreme heat. Impoverished NPCs (`Needs.Wealth < 100`) lacking `Needs.Safety` immediately suffer escalating `Pain`, eventually collapsing (`VitalsComponent.Consciousness == 0`) and dying. Their sudden deaths trigger the `DeathSystem`, executing the Succession logic and potentially fracturing the city's power structure. The simulation now physically binds weather, poverty, and survival.
+
+**Architecture Validation:**
+Data-Oriented Design was maintained via 1D array offset mapping. No new ECS components were created to prevent struct bloating; instead, it synthesizes existing `Position`, `VitalsComponent`, and `Needs` data blocks for O(1) grid lookups, maintaining the strict 60 TPS cycle target.
+
 ## Phase 37.1: The Quarantine Engine
 **Date:** 2026-03-17
 **Focus:** Integration (Biology + Justice + Economy)

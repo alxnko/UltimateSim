@@ -65,6 +65,7 @@ func BuildSimulation(gridWidth, gridHeight int, seedVal byte, status *render.Loa
 	// Phase 37.1: The Quarantine Engine
 	tickManager.AddSystem(systems.NewQuarantineSystem(world), engine.PhaseResolution)
 	tickManager.AddSystem(systems.NewNaturalDisasterSystem(world, grid), engine.PhaseResolution)
+	tickManager.AddSystem(systems.NewExposureSystem(world, grid), engine.PhaseResolution)
 	tickManager.AddSystem(systems.NewRustSystem(), engine.PhaseResolution)
 	// --- PHASE: AI ---
 	tickManager.AddSystem(systems.NewDesperationSystem(world), engine.PhaseAI)
