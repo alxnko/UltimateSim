@@ -17,10 +17,11 @@ type adminJurisdictionData struct {
 	CityID   uint32
 	X        float32
 	Y        float32
-	Radius   float32
+	RadiusSq float32
 	Laws     uint32
 	Treasury *components.TreasuryComponent
 	Scapegoat *components.ScapegoatComponent // Pre-cached for Phase 18.3 Fines
+	Quarantine *components.QuarantineComponent // Phase 37.1
 }
 
 type JusticeSystem struct {
@@ -63,6 +64,7 @@ func (s *JusticeSystem) Update(world *ecs.World) {
 	affID := ecs.ComponentID[components.Affiliation](world)
 	treasuryID := ecs.ComponentID[components.TreasuryComponent](world)
 	scapegoatID := ecs.ComponentID[components.ScapegoatComponent](world) // Phase 36.1
+	quarID := ecs.ComponentID[components.QuarantineComponent](world) // Phase 37.1
 
 	jurQuery := world.Query(ecs.All(jurID, posID, affID))
 	s.jurisdictions = s.jurisdictions[:0]
@@ -83,15 +85,22 @@ func (s *JusticeSystem) Update(world *ecs.World) {
 			scapegoat = (*components.ScapegoatComponent)(world.Get(jurQuery.Entity(), scapegoatID))
 		}
 
+		// Phase 37.1: The Quarantine Engine
+		var quarantine *components.QuarantineComponent
+		if world.Has(jurQuery.Entity(), quarID) {
+			quarantine = (*components.QuarantineComponent)(world.Get(jurQuery.Entity(), quarID))
+		}
+
 		s.jurisdictions = append(s.jurisdictions, adminJurisdictionData{
 			Entity:    jurQuery.Entity(),
 			CityID:    aff.CityID,
 			X:         pos.X,
 			Y:         pos.Y,
-			Radius:    jur.RadiusSquared,
+			RadiusSq:  jur.RadiusSquared,
 			Laws:      jur.IllegalActionIDs,
 			Treasury:  treasury,
 			Scapegoat: scapegoat,
+			Quarantine: quarantine,
 		})
 	}
 
@@ -102,6 +111,7 @@ func (s *JusticeSystem) Update(world *ecs.World) {
 	// Step 2: Detection - iterate over all entities with a Memory buffer that could be committing crimes
 	memID := ecs.ComponentID[components.Memory](world)
 	idID := ecs.ComponentID[components.Identity](world)
+	pathID := ecs.ComponentID[components.Path](world)
 	crimeID := ecs.ComponentID[components.CrimeMarker](world)
 	storageID := ecs.ComponentID[components.StorageComponent](world)
 		contraID := ecs.ComponentID[components.ContrabandComponent](world)
@@ -128,8 +138,8 @@ func (s *JusticeSystem) Update(world *ecs.World) {
 			dx := pos.X - j.X
 			dy := pos.Y - j.Y
 			distSq := (dx * dx) + (dy * dy)
-			// BUGFIX: The struct stored j.Radius (which mapped to RadiusSquared previously). Check if naming is consistent.
-			if distSq <= j.Radius {
+			// BUGFIX: The struct stored j.RadiusSq (which mapped to RadiusSquared previously). Check if naming is consistent.
+			if distSq <= j.RadiusSq {
 				activeJur = j
 				break // We assume first hit jurisdiction bounds applies
 			}
@@ -175,6 +185,31 @@ func (s *JusticeSystem) Update(world *ecs.World) {
 					if store.Wood > 0 && (contra.Contraband&(1<<components.ItemWood) != 0) { isCriminal = true }
 					if store.Stone > 0 && (contra.Contraband&(1<<components.ItemStone) != 0) { isCriminal = true }
 					if store.Iron > 0 && (contra.Contraband&(1<<components.ItemIron) != 0) { isCriminal = true }
+				}
+			}
+
+			// Phase 37.1: The Quarantine Engine
+			// If Quarantine is active, any attempt to move across the border is a crime.
+			if !isCriminal && activeJur.Quarantine != nil && activeJur.Quarantine.Active {
+				// Need to check if the entity has a Path and is moving across the border
+				if world.Has(entity, pathID) {
+					path := (*components.Path)(world.Get(entity, pathID))
+					// Check if path crosses the boundary
+					dxTarget := path.TargetX - activeJur.X
+					dyTarget := path.TargetY - activeJur.Y
+					distSqTarget := (dxTarget * dxTarget) + (dyTarget * dyTarget)
+
+					// Check if current position is inside and target is outside, or vice versa
+					// activeJur.RadiusSq is the squared radius
+					dxNow := pos.X - activeJur.X
+					dyNow := pos.Y - activeJur.Y
+					distSqNow := (dxNow * dxNow) + (dyNow * dyNow)
+					isInsideNow := distSqNow <= activeJur.RadiusSq
+					isTargetInside := distSqTarget <= activeJur.RadiusSq
+
+					if isInsideNow != isTargetInside {
+						isCriminal = true
+					}
 				}
 			}
 
@@ -227,7 +262,7 @@ func (s *JusticeSystem) Update(world *ecs.World) {
 		// ecs-arche: we cannot request componentIDs while a query is active if those IDs are new.
 		// Actually, query locks the world. We must fetch IDs before Query or rely on earlier IDs.
 		jobID := ecs.ComponentID[components.JobComponent](world)
-		pathID := ecs.ComponentID[components.Path](world)
+	pathID := ecs.ComponentID[components.Path](world)
 		velID := ecs.ComponentID[components.Velocity](world)
 		needsID := ecs.ComponentID[components.Needs](world)
 		jurID := ecs.ComponentID[components.JurisdictionComponent](world)
