@@ -106,6 +106,17 @@ func (s *InformationTradeSystem) Update(world *ecs.World) {
 
 			// Overlap defined as close proximity (e.g., in a tavern or street corner)
 			if distSq < 4.0 {
+				// Phase 41: The Ostracization Engine
+				// Check for deep grudges before executing a trade. If they hate each other, no trade occurs.
+				if s.HookGraph != nil {
+					buyerHatesSeller := s.HookGraph.GetHook(buyer.ident.ID, seller.ident.ID)
+					sellerHatesBuyer := s.HookGraph.GetHook(seller.ident.ID, buyer.ident.ID)
+
+					if buyerHatesSeller <= -40 || sellerHatesBuyer <= -40 {
+						continue // Block trade due to ostracization
+					}
+				}
+
 				// Find a secret the buyer doesn't know
 				traded := false
 

@@ -124,6 +124,9 @@ func BuildSimulation(gridWidth, gridHeight int, seedVal byte, status *render.Loa
 	// Phase 18: Justice Engine
 	tickManager.AddSystem(systems.NewJusticeSystem(world, hookGraph), engine.PhaseResolution)
 
+	// Phase 41: The Ostracization Engine
+	tickManager.AddSystem(systems.NewOstracizationSystem(world, hookGraph), engine.PhaseResolution)
+
 	// Phase 27.1: The Military Revolt Engine
 	tickManager.AddSystem(systems.NewMilitaryRevoltSystem(world, hookGraph), engine.PhaseResolution)
 
