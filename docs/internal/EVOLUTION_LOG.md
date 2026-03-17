@@ -403,3 +403,10 @@ Information now outlives the biological lifespan of the entities that generate i
 
 **Architecture Validation:**
 Data-Oriented Design was maintained via flat memory `arche-go` arrays (`[]ledgerNodeData`). All distance checks avoid `math.Sqrt`, using `distSq` optimization. 100% Determinism was verified via `scholar_ledger_test.go` confirming the complete loop from Ledger Creation -> Erasure -> Rediscovery -> Mutiny.
+
+## Phase 40: The Ruins Resettlement Engine (Integration)
+**Focus:** Integration (Geography + Social Justice + Entropy)
+- **Concept:** In the "Total Simulation", Phase 05.2 successfully decayed starved or besieged `Village` entities into `RuinComponent` markers. However, the loop was dead-ended. The map filled with ruins that were ignored. I implemented the `RuinResettlementSystem` to close this loop.
+- **Execution:** When `NPC` entities are made homeless (e.g. via `JusticeSystem` Banishment or a `NaturalDisasterSystem` wiping out their home), their `Affiliation.CityID` resets to `0`. If these wandering actors naturally settle upon the same `Position` coordinates as a `RuinComponent` and remain idle, the `RuinResettlementSystem` activates. It natively clears the `RuinComponent`, restoring the `Village`, `Needs`, `MarketComponent`, and `StorageComponent` structures, but injects a foundational resource bonus (simulating salvaging stone/wood from ruins). The NPC adopts the newly generated `CityID`, turning them from a banished criminal into a sovereign pioneer.
+- **Validation:**
+  - Verified 100% deterministic through `go test ./internal/systems -v -run TestRuinResettlementSystem_Integration -count=2`.
