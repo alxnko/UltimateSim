@@ -70,6 +70,7 @@ func BuildSimulation(gridWidth, gridHeight int, seedVal byte, status *render.Loa
 	// --- PHASE: AI ---
 	tickManager.AddSystem(systems.NewDesperationSystem(world), engine.PhaseAI)
 	tickManager.AddSystem(systems.NewBanditrySystem(world), engine.PhaseAI)
+	tickManager.AddSystem(systems.NewCourierInterceptionSystem(world), engine.PhaseAI)
 	tickManager.AddSystem(systems.NewWanderSystem(world, grid, pathQueue), engine.PhaseAI)
 	tickManager.AddSystem(systems.NewNavalRoutingSystem(world, grid, pathQueue, calendar), engine.PhaseAI)
 
