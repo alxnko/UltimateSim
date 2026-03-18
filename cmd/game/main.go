@@ -92,6 +92,10 @@ func BuildSimulation(gridWidth, gridHeight int, seedVal byte, status *render.Loa
 	tickManager.AddSystem(systems.NewPriceDiscoverySystem(), engine.PhaseResolution)
 	tickManager.AddSystem(systems.NewRuinTransformationSystem(world), engine.PhaseResolution)
 	tickManager.AddSystem(systems.NewAdministrativeDecaySystem(), engine.PhaseResolution)
+
+	// Phase 16.1 & 42: Taxation and The Tax Evasion Engine
+	tickManager.AddSystem(systems.NewTaxationSystem(world, hookGraph), engine.PhaseResolution)
+
 	// Phase 16.4: Administrative Reach & Friction
 	tickManager.AddSystem(systems.NewAdministrativeFractureSystem(world), engine.PhaseResolution)
 	tickManager.AddSystem(systems.NewLendingSystem(world), engine.PhaseResolution)
