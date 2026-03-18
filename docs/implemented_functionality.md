@@ -6,6 +6,9 @@ This document serves as the comprehensive and definitive index of all actually i
 
 ---
 
+## Phase 42: The Tax Evasion Engine
+- **Phase 42.1 - The Tax Evasion Engine**: Bridges Economy (Taxation), Jurisdiction (Corruption), and Justice (Hooks). Implemented within `TaxationSystem` (`internal/systems/taxation.go`). When a Village pays its 100-tick cyclic taxes to the Country Capital, it evaluates the local `LoyaltyComponent.Value` against the Capital's `JurisdictionComponent.Corruption`. If `Loyalty.Value < Corruption`, the Village actively evades the tax, halting the transfer of physical `Wealth`. Simultaneously, the system mathematically iterates over all `NPC`s residing in that village and logs a `-50` negative hook against the Capital's Ruler ID using `engine.SparseHookGraph`. This naturally spawns deep resentment loops, converting high-corruption regimes into state-sponsored Blood Feud targets.
+
 ## Phase 28: The Vassal Rebellion Engine
 - **Phase 28.1 - The Vassal Rebellion Engine**: Implemented `VassalRebellionSystem` linking Economy (Inflation/Debasement), Sovereignty (Loyalty/Secession), and Justice (Blood Feuds). High debasement or extreme local food prices continuously drain a Village's `LoyaltyComponent`. When `LoyaltyComponent.Value` drops to 0, the village secedes from the Country (`Affiliation.CountryID = 0`). The system then iterates through the Village's citizens who are highly desperate (`DesperationComponent.Level >= 50`) and adds a massive negative hook (-100) via `engine.SparseHookGraph` against the Country Capital's ruler ID. This organically hooks into the `BloodFeudSystem` (Phase 23) causing a secessionist war.
 ## Phase 30: The Ideological Economy

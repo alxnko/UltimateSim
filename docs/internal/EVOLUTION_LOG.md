@@ -431,6 +431,24 @@ Information now outlives the biological lifespan of the entities that generate i
 **Architecture Validation:**
 Data-Oriented Design was maintained via flat memory `arche-go` arrays (`[]ledgerNodeData`). All distance checks avoid `math.Sqrt`, using `distSq` optimization. 100% Determinism was verified via `scholar_ledger_test.go` confirming the complete loop from Ledger Creation -> Erasure -> Rediscovery -> Mutiny.
 
+## Evolution: Phase 42 - The Tax Evasion Engine
+**Date:** 2026-03-17
+**Focus:** Integration (Economy + Governance + Justice)
+
+**The Problem (Vision Gap):**
+The simulation previously processed `TaxationSystem` as a flawless, unilateral mathematical transfer of `Wealth` from a sub-city `Village` to its `Capital`. It completely ignored the political reality outlined in the Vision ("Economic disparity increases crime rates" and "Relationships are transactional"). If a state was highly corrupt, villages still happily starved to pay their taxes. There was no mechanic for a grassroots tax revolt.
+
+**The Solution (Autonomous DOD Execution):**
+I implemented the Tax Evasion Engine directly into `TaxationSystem`. When the 100-tick taxation cycle fires, the system pre-caches the `JurisdictionComponent.Corruption` of the governing Capital and evaluates it against the local Village's `LoyaltyComponent.Value`. If Loyalty is lower than Corruption, the Village categorically refuses to transfer its `Wealth`.
+
+Crucially, I linked this to the `engine.SparseHookGraph`. When a Village evades taxes, the Capital doesn't just lose money. The system mathematically queries all `NPC`s residing in that Village (`Affiliation.CityID == Village.CityID`) and logs a massive `-50` negative hook against them originating from the Capital's Ruler ID.
+
+**The Butterfly Effect:**
+A Capital becomes highly corrupt via `JusticeSystem` bribery (`Corruption = 50`). A distant, poor Village with low Loyalty (`Loyalty = 30`) refuses to pay its cyclic taxes. The Capital Ruler immediately generates a `-50` grudge against every peasant in that Village. The `BloodFeudSystem` parses these massive negative hooks and registers the peasants as enemies of the state. `JobGuard` entities are deployed to violently enforce the tax code via `InteractionMurder` or `InteractionAssault`, causing the surviving peasants to strike (`LaborUnionSystem`) or unilaterally secede (`VassalRebellionSystem`), tearing the empire apart.
+
+**Architecture Validation:**
+Data-Oriented Design was maintained by strictly pre-caching Capital `Corruption` and `RulerID` parameters into a flat `capitalTaxData` map, and pre-caching all relevant `NPC` data into a flat `[]npcTaxData` slice prior to the Village iteration loop. This explicitly prevents illegal nested `arche-go` ECS queries and maintains the strict O(1) loop requirements for 60 TPS determinism. Verified 100% deterministic via `TestTaxationSystem_Evasion`.
+
 ## Phase 40: The Ruins Resettlement Engine (Integration)
 **Focus:** Integration (Geography + Social Justice + Entropy)
 - **Concept:** In the "Total Simulation", Phase 05.2 successfully decayed starved or besieged `Village` entities into `RuinComponent` markers. However, the loop was dead-ended. The map filled with ruins that were ignored. I implemented the `RuinResettlementSystem` to close this loop.
