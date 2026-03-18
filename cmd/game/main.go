@@ -99,7 +99,7 @@ func BuildSimulation(gridWidth, gridHeight int, seedVal byte, status *render.Loa
 	// Phase 16.4: Administrative Reach & Friction
 	tickManager.AddSystem(systems.NewAdministrativeFractureSystem(world), engine.PhaseResolution)
 	tickManager.AddSystem(systems.NewLendingSystem(world), engine.PhaseResolution)
-	tickManager.AddSystem(systems.NewDebtDefaultSystem(), engine.PhaseResolution)
+	tickManager.AddSystem(systems.NewDebtDefaultSystem(hookGraph), engine.PhaseResolution)
 
 	// Phase 28.1: The Vassal Rebellion Engine
 	tickManager.AddSystem(systems.NewVassalRebellionSystem(world, hookGraph), engine.PhaseResolution)

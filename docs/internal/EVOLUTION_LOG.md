@@ -455,3 +455,20 @@ Data-Oriented Design was maintained by strictly pre-caching Capital `Corruption`
 - **Execution:** When `NPC` entities are made homeless (e.g. via `JusticeSystem` Banishment or a `NaturalDisasterSystem` wiping out their home), their `Affiliation.CityID` resets to `0`. If these wandering actors naturally settle upon the same `Position` coordinates as a `RuinComponent` and remain idle, the `RuinResettlementSystem` activates. It natively clears the `RuinComponent`, restoring the `Village`, `Needs`, `MarketComponent`, and `StorageComponent` structures, but injects a foundational resource bonus (simulating salvaging stone/wood from ruins). The NPC adopts the newly generated `CityID`, turning them from a banished criminal into a sovereign pioneer.
 - **Validation:**
   - Verified 100% deterministic through `go test ./internal/systems -v -run TestRuinResettlementSystem_Integration -count=2`.
+
+## Evolution: Phase 10.1 - Contractual Law & Blacklisting (The Hook Trap)
+**Date:** 2026-03-18
+**Focus:** Integration (Economy + Justice + Social)
+
+**The Problem (Vision Gap):**
+The Vision document outlines a core component of Justice: "Contractual Law & Blackmail: Breaking a Guild contract grants every member a Hook on the offender (blacklisting)." Previously, the `DebtDefaultSystem` only enforced economic penalties—seizing assets by forcing the debtor's `Affiliation.GuildID` to match the creditor's guild. However, there was no social, memetic, or physical punishment for the default, severing the link between the economic debt trap and the ensuing social collapse.
+
+**The Solution (Autonomous DOD Execution):**
+I modified `DebtDefaultSystem` to integrate directly with `engine.SparseHookGraph`.
+When the 100-tick repayment cycle detects a failed `StorageComponent` threshold, it still executes the asset seizure (`GuildID` transfer). However, it now additionally pre-caches the defaulted debtor into a flat `[]defaultedDebtor` array. After the main evaluation loop unlocks the ECS world, it performs a targeted `world.Query` scanning all `NPC` entities. Any NPC belonging to the offended `GuildID` immediately generates a massive `-50` grudge (Hook) against the defaulting NPC.
+
+**The Butterfly Effect:**
+A desperate, starving NPC takes a loan from a predatory, wealthy Guild leader (`LendingSystem`). The NPC fails to acquire enough wood and food by the `DueTick`. The `DebtDefaultSystem` executes. The NPC is forced into indentured servitude (their `GuildID` is reassigned to the Creditor). Simultaneously, every single member of that Guild receives a `-50` Hook against the debtor. Because `-50` is the critical threshold for the `BloodFeudSystem`, any passing Guild member who physically overlaps the debtor's map coordinate will immediately execute an `InteractionMurder`, starving the debtor to death natively. A failed loan now mathematically ends in state-sponsored murder, fulfilling the "Debt as a weapon" vision.
+
+**Architecture Validation:**
+Strict Data-Oriented Design (DOD) was maintained by decoupling the structural read (finding debtors) from the relational writes (`AddHook`). I avoided nesting `arche-go` queries inside the per-tick loop, opting instead for a flat struct slice (`[]defaultedDebtor`) cache, ensuring the `TickManager` maintains the strict 60 TPS cycle limit. Validated 100% deterministically via `TestDebtDefaultSystem_Blacklisting`.

@@ -101,7 +101,7 @@ func TestLendingSystem_ButterflyEffect(t *testing.T) {
 
 	// --- 5. Verify Debt Default Butterfly Effect ---
 	// Debtor lacks Storage to repay the loan. Let's run DebtDefaultSystem until DueTick.
-	defaultSys := NewDebtDefaultSystem()
+	defaultSys := NewDebtDefaultSystem(nil)
 	defaultSys.Tick = loan.DueTick - 1 // Fast-forward to right before due
 
 	// Ensure Debtor has a Storage component (LendingSystem should have added it)
