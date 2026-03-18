@@ -83,7 +83,7 @@ func TestTaxationSystem_Deterministic(t *testing.T) {
 
 	// 4. Run system exactly 99 times. No taxation should occur yet.
 	for i := 0; i < 99; i++ {
-		sys.Update()
+		sys.Update(&world)
 	}
 
 	if capTreasury.Wealth != 0.0 {
@@ -95,7 +95,7 @@ func TestTaxationSystem_Deterministic(t *testing.T) {
 	}
 
 	// 5. Run tick 100. Taxation should occur.
-	sys.Update()
+	sys.Update(&world)
 
 	// Tax amount = (2.0 + 3.0 + 1.0 + 4.0) * 1.0 = 10.0
 	// Village Wealth = 100.0 - 10.0 = 90.0
@@ -184,7 +184,7 @@ func TestTaxationSystem_Evasion(t *testing.T) {
 
 	// 4. Run system exactly 100 times. Taxation should trigger, but evasion occurs.
 	for i := 0; i < 100; i++ {
-		sys.Update()
+		sys.Update(&world)
 	}
 
 	// 5. Verify Evasion Effects

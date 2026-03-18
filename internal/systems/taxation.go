@@ -59,7 +59,7 @@ func NewTaxationSystem(world *ecs.World, hooks *engine.SparseHookGraph) *Taxatio
 }
 
 // Update processes taxation strictly every 100 ticks to avoid simulation loops lag.
-func (s *TaxationSystem) Update() {
+func (s *TaxationSystem) Update(world *ecs.World) {
 	s.tickStamp++
 
 	if s.tickStamp%100 != 0 {
