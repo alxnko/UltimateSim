@@ -7,6 +7,85 @@ import (
 	"github.com/ALXNKO/UltimateSim/internal/engine"
 )
 
+// Phase 07.4: Misunderstandings Test
+func TestGossipMisunderstanding(t *testing.T) {
+	// Initialize deterministic RNG
+	engine.InitializeRNG([32]byte{4, 4, 4})
+
+	world := ecs.NewWorld()
+
+	// Register components
+	posID := ecs.ComponentID[components.Position](&world)
+	secretID := ecs.ComponentID[components.SecretComponent](&world)
+	memoryID := ecs.ComponentID[components.Memory](&world)
+	identID := ecs.ComponentID[components.Identity](&world)
+	cultureID := ecs.ComponentID[components.CultureComponent](&world)
+
+	hookGraph := engine.NewSparseHookGraph()
+
+	// Sender setup
+	sender := world.NewEntity(posID, secretID, memoryID, identID, cultureID)
+	sPos := (*components.Position)(world.Get(sender, posID))
+	sPos.X = 0
+	sPos.Y = 0
+
+	sIdent := (*components.Identity)(world.Get(sender, identID))
+	sIdent.ID = 101
+	sIdent.BaseTraits = 0
+
+	sCulture := (*components.CultureComponent)(world.Get(sender, cultureID))
+	sCulture.LanguageID = 1
+
+	sSecret := (*components.SecretComponent)(world.Get(sender, secretID))
+	sSecret.Secrets = append(sSecret.Secrets, components.Secret{
+		OriginID: 101,
+		SecretID: engine.GetSecretRegistry().RegisterSecret("King's weakness"),
+		Virality: 250, // Almost guaranteed to pass if no translation penalty
+	})
+
+	// Receiver setup
+	receiver := world.NewEntity(posID, secretID, memoryID, identID, cultureID)
+	rPos := (*components.Position)(world.Get(receiver, posID))
+	rPos.X = 1
+	rPos.Y = 1
+
+	rIdent := (*components.Identity)(world.Get(receiver, identID))
+	rIdent.ID = 102
+
+	rCulture := (*components.CultureComponent)(world.Get(receiver, cultureID))
+	rCulture.LanguageID = 2 // Mismatched language
+
+	rSecret := (*components.SecretComponent)(world.Get(receiver, secretID))
+	rSecret.Secrets = make([]components.Secret, 0)
+
+	system := NewGossipDistributionSystem(&world, hookGraph)
+
+	// Update 10 times to hit the modulo
+	for i := 0; i < 10; i++ {
+		system.Update(&world)
+	}
+
+	rSecret = (*components.SecretComponent)(world.Get(receiver, secretID))
+
+	hasMisunderstanding := false
+	for _, sec := range rSecret.Secrets {
+		str, _ := engine.GetSecretRegistry().GetSecret(sec.SecretID)
+		if str == "misunderstood_King's weakness" {
+			hasMisunderstanding = true
+		}
+	}
+
+	if !hasMisunderstanding {
+		t.Errorf("Expected receiver to gain the misunderstood secret due to Translation Penalty")
+	}
+
+	// Verify the negative hook
+	hooks := hookGraph.GetAllIncomingHooks(101) // Check sender's incoming hooks
+	if val, ok := hooks[102]; !ok || val != -10 {
+		t.Errorf("Expected receiver (102) to place a -10 hook on sender (101) due to misunderstanding, got %v", hooks)
+	}
+}
+
 // Phase 32.1: Aura of Legitimacy Test
 func TestGossipAuraOfLegitimacy(t *testing.T) {
 	// Initialize deterministic RNG

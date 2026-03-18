@@ -29,6 +29,19 @@
 
 # Evolution Log
 
+## Evolution: Phase 07.4 - The Linguistic Engine: Misunderstandings
+- **Goal:** Execute the "Systemic Emergence" objective by implementing a missing link from the Vision document: "Information shared via gossip has a _Translation Penalty_ between languages, causing Misunderstandings leading to accidental wars."
+- **DOD Implementation:**
+  - Modified `GossipDistributionSystem` (`internal/systems/gossip_distribution.go`). When an interaction roll passes naturally but fails the subsequent Language Translation penalty modifier (`chance *= 0.10`), the gossip results in a Misunderstanding.
+  - Generates mutated secrets at runtime by prepending `"misunderstood_"` to the original registered secret string via `engine.SecretRegistry`.
+  - Injects a severe negative edge (`-10`) into the `engine.SparseHookGraph` between the receiver and sender to represent the cultural faux pas.
+- **The Butterfly Effect:**
+  - Plugs deeply into Phase 07 (Information Leakage), Phase 23 (Blood Feuds), and Phase 28 (Vassal Rebellions).
+  - A traveler speaking Language A gossips with a villager speaking Language B. The interaction roll succeeds but the translation fails.
+  - The villager receives a mutated "misunderstood" secret and generates a `-10` grudge against the traveler.
+  - Over repeated visits, these misunderstood hooks accumulate. If they drop below `-50`, the `BloodFeudSystem` physically starves the traveler or triggers massive clan-wide frontier wars.
+  - Verified 100% deterministic through `go test ./internal/systems -run TestGossipMisunderstanding -count=2`.
+
 ## Evolution: Phase 41 - The Ostracization Engine
 - **Goal:** Execute the "Systemic Emergence" objective by bridging the Information/Memory layer (`MemoryComponent`) directly with the Social (`SparseHookGraph`) and Economic (`InformationTradeSystem`) layers. This satisfies the Vision's mandate for "Negative feedback loops [that] strictly punish unchecked growth or endless wealth."
 - **DOD Implementation:**
