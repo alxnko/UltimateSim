@@ -80,6 +80,8 @@ func BuildSimulation(gridWidth, gridHeight int, seedVal byte, status *render.Loa
 
 	// --- PHASE: RESOLUTION ---
 	tickManager.AddSystem(systems.NewMetabolismSystem(world, calendar, tickManager), engine.PhaseResolution)
+	// Phase 31.5: The Winter Heating Engine
+	tickManager.AddSystem(systems.NewWinterHeatingSystem(world, calendar), engine.PhaseResolution)
 	// Phase 17.3: Maritime Attrition & Piracy
 	tickManager.AddSystem(systems.NewStormSystem(grid), engine.PhaseResolution)
 	tickManager.AddSystem(systems.NewNavalPiracySystem(), engine.PhaseResolution)

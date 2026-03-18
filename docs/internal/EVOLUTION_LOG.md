@@ -472,3 +472,25 @@ A desperate, starving NPC takes a loan from a predatory, wealthy Guild leader (`
 
 **Architecture Validation:**
 Strict Data-Oriented Design (DOD) was maintained by decoupling the structural read (finding debtors) from the relational writes (`AddHook`). I avoided nesting `arche-go` queries inside the per-tick loop, opting instead for a flat struct slice (`[]defaultedDebtor`) cache, ensuring the `TickManager` maintains the strict 60 TPS cycle limit. Validated 100% deterministically via `TestDebtDefaultSystem_Blacklisting`.
+
+## Evolution: Phase 31.5 - The Winter Heating Engine (Resource Depletion Crisis)
+**Date:** 2026-03-18
+**Focus:** Integration (Geography + Economy + Biology + Governance)
+
+**The Problem (Vision Gap):**
+The Vision states a core feedback loop: "Over-harvesting to hastily build a city inevitably causes a crisis (e.g., heating shortage in winter), forcing the city to adapt, trade, or start a resource war." Previously, `StorageComponent.Wood` had no biological or systemic consequence. The winter calendar was decoupled from survival fuel requirements.
+
+**The Solution (Autonomous DOD Execution):**
+I created the `WinterHeatingSystem`. During `calendar.IsWinter`, the system loops over all `Village` entities, calculating a required wood burn rate based on their `PopulationComponent.Count`.
+If a village runs out of Wood, it enters a "Freezing Crisis." The system imposes two immediate penalties:
+1. `LoyaltyComponent` decays linearly by 5 per tick (simulating civil unrest and demands for leadership change).
+2. It mathematically checks a 1% probability to instantiate a low-lethality `DiseaseEntity` (Hypothermia/Sickness) directly onto the village's coordinate.
+
+**The Butterfly Effect:**
+A city rapidly expands, chopping all local trees. Winter hits. The `WinterHeatingSystem` drains the `StorageComponent.Wood` to 0. The population freezes.
+The `LoyaltyComponent` drops to 0. The `TaxationSystem` (Tax Evasion Engine) triggers, causing the village to refuse taxes, generating negative hooks between the King and the peasants.
+Simultaneously, a `DiseaseEntity` spawns due to the freezing conditions. The `QuarantineSystem` detects the disease and locks down the city, preventing trade caravans from bringing emergency wood. The city spirals into starvation and revolt solely because it over-harvested trees in the summer.
+
+**Architecture Validation:**
+Strict Data-Oriented Design (DOD) principles were upheld. The per-tick processing uses a flat filter (`Village`, `Position`, `Population`, `Storage`, `Loyalty`). To prevent Arche-Go iterator invalidation or locking panics, structural ECS modifications (spawning `DiseaseEntity`) are deferred to a secondary loop iterating over a locally cached slice of map coordinates.
+100% Determinism was validated via `TestWinterHeatingSystem_ButterflyEffect`.
