@@ -135,7 +135,8 @@ func (s *GossipDistributionSystem) Update(world *ecs.World) {
 					}
 
 					// Calculate chance
-					chance := float32(secret.Virality) / 255.0
+					originalChance := float32(secret.Virality) / 255.0
+					chance := originalChance
 
 					// Apply Phase 07.4 Translation Penalty (90% reduction) if languages do not match
 					if languageMismatch {
@@ -154,8 +155,10 @@ func (s *GossipDistributionSystem) Update(world *ecs.World) {
 						modifier *= 3.0
 					}
 
+					roll := engine.GetRandomFloat32()
+
 					// RNG Pass
-					if engine.GetRandomFloat32() < chance*modifier {
+					if roll < chance*modifier {
 						// Pass the secret
 
 						// Inject SecretID into neighbor's MemoryComponent buffer
@@ -199,12 +202,38 @@ func (s *GossipDistributionSystem) Update(world *ecs.World) {
 							}
 						}
 					} else if languageMismatch {
-						// Phase 07.4: Silent Hooks
-						// Even if language fails (or gossip fails to pass), physical trades can occur.
-						// 25% chance of a "Silent Hook" occurring when there's an overlap but mismatched languages.
-						if engine.GetRandomFloat32() < 0.25 {
+						// Phase 07.4: Misunderstandings & Translation Penalties
+						// If the roll would have passed normally, but failed purely due to the translation penalty,
+						// a Misunderstanding occurs. A mutated secret is passed and a negative hook is generated.
+						if roll < originalChance*modifier {
+							// Generate mutated secret
+							secretStr, exists := engine.GetSecretRegistry().GetSecret(secret.SecretID)
+							if !exists {
+								secretStr = "unknown"
+							}
+							misunderstoodStr := "misunderstood_" + secretStr
+							misunderstoodID := engine.GetSecretRegistry().RegisterSecret(misunderstoodStr)
+
+							receiver.secret.Secrets = append(receiver.secret.Secrets, components.Secret{
+								OriginID: receiver.ident.ID, // The receiver originated this mutated rumor
+								SecretID: misunderstoodID,
+								Virality: secret.Virality,
+								BeliefID: secret.BeliefID,
+							})
+
+							// Systemic Emergence: Misunderstandings cause diplomatic friction
+							// Receiver gains a negative hook against the sender (-10) due to offensive misunderstanding
 							if s.HookGraph != nil {
-								s.HookGraph.AddHook(sender.ident.ID, receiver.ident.ID, 1)
+								s.HookGraph.AddHook(receiver.ident.ID, sender.ident.ID, -10)
+							}
+						} else {
+							// Phase 07.4: Silent Hooks
+							// Even if language fails completely, physical trades can occur.
+							// 25% chance of a "Silent Hook" occurring when there's an overlap but mismatched languages.
+							if engine.GetRandomFloat32() < 0.25 {
+								if s.HookGraph != nil {
+									s.HookGraph.AddHook(sender.ident.ID, receiver.ident.ID, 1)
+								}
 							}
 						}
 					}
