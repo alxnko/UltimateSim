@@ -1,7 +1,7 @@
 package systems
 
 import (
-	"fmt"
+	"log"
 	"strconv"
 
 	"github.com/ALXNKO/UltimateSim/internal/components"
@@ -52,7 +52,7 @@ func (s *NPCSpawnerSystem) Update(world *ecs.World) {
 	}
 
 	if len(habitableTiles) == 0 {
-		fmt.Println("No habitable tiles found. Genesis spawning aborted.")
+		log.Println("No habitable tiles found. Genesis spawning aborted.")
 		return
 	}
 
