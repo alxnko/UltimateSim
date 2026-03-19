@@ -8,8 +8,16 @@ import (
 // Phase 21.1: DesperationSystem
 // Links Economy (Market/Needs) to Justice Engine (Crime).
 
+type vData struct {
+	Entity  ecs.Entity
+	X       float32
+	Y       float32
+	Storage *components.StorageComponent
+}
+
 type DesperationSystem struct {
 	npcFilter ecs.Filter
+	villages  []vData
 }
 
 func NewDesperationSystem(world *ecs.World) *DesperationSystem {
@@ -24,6 +32,7 @@ func NewDesperationSystem(world *ecs.World) *DesperationSystem {
 
 	return &DesperationSystem{
 		npcFilter: &mask,
+		villages:  make([]vData, 0, 100),
 	}
 }
 
@@ -48,25 +57,18 @@ func (s *DesperationSystem) Update(world *ecs.World) {
 
 	villageStorageQuery := world.Query(ecs.All(villageID, posID, storageID))
 
-	type vData struct {
-		Entity ecs.Entity
-		X      float32
-		Y      float32
-		Storage *components.StorageComponent
-	}
-	villages := make([]vData, 0, 100)
+	s.villages = s.villages[:0]
 
 	for villageStorageQuery.Next() {
 		pos := (*components.Position)(villageStorageQuery.Get(posID))
 		storage := (*components.StorageComponent)(villageStorageQuery.Get(storageID))
-		villages = append(villages, vData{
-			Entity: villageStorageQuery.Entity(),
-			X:      pos.X,
-			Y:      pos.Y,
+		s.villages = append(s.villages, vData{
+			Entity:  villageStorageQuery.Entity(),
+			X:       pos.X,
+			Y:       pos.Y,
 			Storage: storage,
 		})
 	}
-
 
 	// Step 3: Iterate all NPCs
 	needsID := ecs.ComponentID[components.Needs](world)
@@ -97,15 +99,15 @@ func (s *DesperationSystem) Update(world *ecs.World) {
 		}
 
 		// The Crime Action: Steal
-		if desp.Level >= 50 && len(villages) > 0 {
+		if desp.Level >= 50 && len(s.villages) > 0 {
 			pos := (*components.Position)(npcQuery.Get(posID))
 
 			// Find nearest village with food
 			var bestV *vData
 			var bestDist float32 = 9999999.0
 
-			for i := 0; i < len(villages); i++ {
-				v := &villages[i]
+			for i := 0; i < len(s.villages); i++ {
+				v := &s.villages[i]
 				if v.Storage.Food <= 0 { continue }
 
 				dx := pos.X - v.X
