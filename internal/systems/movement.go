@@ -53,6 +53,9 @@ func (s *MovementSystem) Update(world *ecs.World) {
 	possessedID := ecs.ComponentID[components.Possessed](world)
 	vitalsID := ecs.ComponentID[components.VitalsComponent](world)
 
+	// Phase 17.1: Maritime Labor Market (Stranded Ships check)
+	shipID := ecs.ComponentID[components.ShipComponent](world)
+
 	// Iterate over all entities matching the filter
 	query := world.Query(s.filter)
 	for query.Next() {
@@ -62,6 +65,20 @@ func (s *MovementSystem) Update(world *ecs.World) {
 
 		// Skip pathing logic if possessed by user
 		isPossessed := query.Has(possessedID)
+
+		// Check if it's a ship and it's stranded
+		if query.Has(shipID) {
+			ship := (*components.ShipComponent)(query.Get(shipID))
+			if ship.CrewCurrent < ship.CrewRequirements {
+				vel.X = 0
+				vel.Y = 0
+				if query.Has(pathID) {
+					path := (*components.Path)(query.Get(pathID))
+					path.HasPath = false
+				}
+				continue // Stranded ships cannot move
+			}
+		}
 
 		// Phase 09.3: Infrastructure Wear System (Desire Paths)
 		// Calculate movement cost dynamically based on the current tile's biome and foot traffic.

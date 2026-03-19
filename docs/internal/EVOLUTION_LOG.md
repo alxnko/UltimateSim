@@ -1,3 +1,17 @@
+## Evolution: Phase 17.1 - Maritime Labor Engine
+- **Goal:** Execute the "Systemic Emergence" objective by bridging Naval Logistics (Phase 17) directly to Local Economics (Phase 15.2). Fulfilling the Vision missing link: "Maritime Labor Market: Ships require a massive crew of individual NPC entities holding the JobComponent(Sailor) and a JobComponent(Captain). Ship owners must pay high wages, drawing laborers away from farming/mining in coastal cities."
+- **DOD Implementation:**
+  - Expanded `JobComponent` with `JobSailor` and `JobCaptain` types.
+  - Expanded `ShipComponent` with `CrewRequirements` and `CrewCurrent` while strictly maintaining Data-Oriented Design 16-byte bounds.
+  - Created `MaritimeLaborSystem` (`internal/systems/maritime_labor.go`) to map ships and hire local desperate/unemployed NPCs, shifting their JobID and paying them out of the Ship's `TreasuryComponent`.
+- **The Butterfly Effect:**
+  - Plugs seamlessly into Phase 17 (Naval Routing), Phase 15.2 (Employment & Wages), and Phase 21 (Desperation).
+  - A Ship spawns, holding a Treasury but 0 crew, preventing it from routing via `NavalRoutingSystem`.
+  - The `MaritimeLaborSystem` hires desperate, starving NPCs near the port to become `JobSailor` entities.
+  - They physically act as the engine for the global supply chain. The ship pays them every wage tick.
+  - If the ship owner runs out of `Wealth` due to economic failure, the wages stop. The crew instantly quits (reverting to `JobNone`), stranding the ship mid-journey and crashing the geopolitical supply network.
+  - Verified 100% deterministic through `go test ./internal/systems -v -run TestMaritimeLabor_Integration -count=2`.
+
 ## Evolution: Phase 40.1 - The Maritime Migration Engine
 - **Goal:** Execute the "Systemic Emergence" objective by bridging the localized Famine/Poverty loops (Phase 13/21) directly into the trans-oceanic logistics map (Phase 17). Fulfilling the Vision missing link: "Trans-oceanic Migration: Just like caravans, ships hold Passenger slots. NPCs fleeing famine or seeking new lands can purchase passage across oceans."
 - **DOD Implementation:**
