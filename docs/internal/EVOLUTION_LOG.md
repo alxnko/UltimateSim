@@ -513,3 +513,21 @@ Simultaneously, a distant, poor Village evades their taxes due to high corruptio
 
 **Validation:**
 - Verified completely deterministic via `TestLeadershipEmergenceSystem_Integration`.
+
+## Evolution: Phase 44 - The Vassal Safety Valve Engine
+**Focus:** Integration (Economy + Genetics/Traits + Justice + Memetics)
+
+**The Problem (Vision Gap):**
+The Vision document outlines: "The Vassal Safety Valve: When a Clan becomes too powerful, the Jealousy trait in rivals forces them to aggressively share negative secrets to destroy the monopolist's reputation." However, `JealousyVulnerabilitySystem` only reacted to single entities with extreme prestige (Kings/Heroes) and ignored entirely the socio-economic dimension of powerful clans monopolizing city wealth.
+
+**The Solution (Autonomous DOD Execution):**
+I created the `VassalSafetyValveSystem` to bridge the Economy and Information engines.
+1. Introduced `TraitJealous` to the `Identity` component.
+2. The system periodically aggregates the wealth of all citizens per `ClanID` in a city, detecting Monopolist Clans (>50% city wealth, minimum 1000 total).
+3. It identifies the wealthiest `RulerID` of the Monopolist Clan.
+4. It iterates all jealous NPCs in the city belonging to rival clans.
+5. These jealous NPCs generate a massive `-50` grudge hook against the Monopolist Ruler via `engine.SparseHookGraph`, natively triggering the `BloodFeudSystem` (Phase 23) which prompts organic assassinations.
+6. The jealous NPCs concurrently generate a mutated negative `Secret` via `SecretRegistry` and append it to their `SecretComponent` to be memetically leaked to the population via `GossipDistributionSystem` (Phase 07), destroying the monopolist's legacy.
+
+**Architecture Validation:**
+Strict Data-Oriented Design (DOD) was maintained via flat sequential slices and maps `map[uint32]map[uint32]*clanWealthData` to cache aggregated data in O(N) rather than forcing nested `arche-go` ECS queries. The system throttles execution to once every 500 ticks. Determinism was verified by running `go test ./internal/systems -run TestVassalSafetyValve_Integration -count=2`.
