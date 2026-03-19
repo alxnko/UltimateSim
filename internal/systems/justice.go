@@ -15,10 +15,10 @@ import (
 type adminJurisdictionData struct {
 	Entity   ecs.Entity
 	CityID   uint32
-	X        float32
-	Y        float32
-	RadiusSq float32
-	Laws     uint32
+	X             float32
+	Y             float32
+	RadiusSquared float32
+	Laws          uint32
 	Treasury *components.TreasuryComponent
 	Scapegoat *components.ScapegoatComponent // Pre-cached for Phase 18.3 Fines
 	Quarantine *components.QuarantineComponent // Phase 37.1
@@ -92,13 +92,13 @@ func (s *JusticeSystem) Update(world *ecs.World) {
 		}
 
 		s.jurisdictions = append(s.jurisdictions, adminJurisdictionData{
-			Entity:    jurQuery.Entity(),
-			CityID:    aff.CityID,
-			X:         pos.X,
-			Y:         pos.Y,
-			RadiusSq:  jur.RadiusSquared,
-			Laws:      jur.IllegalActionIDs,
-			Treasury:  treasury,
+			Entity:        jurQuery.Entity(),
+			CityID:        aff.CityID,
+			X:             pos.X,
+			Y:             pos.Y,
+			RadiusSquared: jur.RadiusSquared,
+			Laws:          jur.IllegalActionIDs,
+			Treasury:      treasury,
 			Scapegoat: scapegoat,
 			Quarantine: quarantine,
 		})
@@ -138,8 +138,7 @@ func (s *JusticeSystem) Update(world *ecs.World) {
 			dx := pos.X - j.X
 			dy := pos.Y - j.Y
 			distSq := (dx * dx) + (dy * dy)
-			// BUGFIX: The struct stored j.RadiusSq (which mapped to RadiusSquared previously). Check if naming is consistent.
-			if distSq <= j.RadiusSq {
+			if distSq <= j.RadiusSquared {
 				activeJur = j
 				break // We assume first hit jurisdiction bounds applies
 			}
@@ -200,12 +199,12 @@ func (s *JusticeSystem) Update(world *ecs.World) {
 					distSqTarget := (dxTarget * dxTarget) + (dyTarget * dyTarget)
 
 					// Check if current position is inside and target is outside, or vice versa
-					// activeJur.RadiusSq is the squared radius
+					// activeJur.RadiusSquared is the squared radius
 					dxNow := pos.X - activeJur.X
 					dyNow := pos.Y - activeJur.Y
 					distSqNow := (dxNow * dxNow) + (dyNow * dyNow)
-					isInsideNow := distSqNow <= activeJur.RadiusSq
-					isTargetInside := distSqTarget <= activeJur.RadiusSq
+					isInsideNow := distSqNow <= activeJur.RadiusSquared
+					isTargetInside := distSqTarget <= activeJur.RadiusSquared
 
 					if isInsideNow != isTargetInside {
 						isCriminal = true
