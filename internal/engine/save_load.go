@@ -150,47 +150,75 @@ func SaveWorld(tm *TickManager, mapGrid *MapGrid, seedVal byte, db *sql.DB) erro
 	if err != nil {
 		return err
 	}
+	defer tx.Rollback()
 
 	// Save game_state
-	stmtState, _ := tx.Prepare("INSERT OR REPLACE INTO game_state (id, ticks, grid_width, grid_height, seed_val) VALUES (1, ?, ?, ?, ?)")
-	stmtState.Exec(tm.Ticks, mapGrid.Width, mapGrid.Height, int(seedVal))
-	stmtState.Close()
+	stmtState, err := tx.Prepare("INSERT OR REPLACE INTO game_state (id, ticks, grid_width, grid_height, seed_val) VALUES (1, ?, ?, ?, ?)")
+	if err != nil {
+		return err
+	}
+	defer stmtState.Close()
+	if _, err := stmtState.Exec(tm.Ticks, mapGrid.Width, mapGrid.Height, int(seedVal)); err != nil {
+		return err
+	}
 
 	// Clear out old entity rows to prevent resurrecting dead entities
-	tx.Exec("DELETE FROM entities")
-	tx.Exec("DELETE FROM identity")
-	tx.Exec("DELETE FROM position")
-	tx.Exec("DELETE FROM needs")
-	tx.Exec("DELETE FROM affiliation")
-	tx.Exec("DELETE FROM tags")
-	tx.Exec("DELETE FROM storage")
-	tx.Exec("DELETE FROM velocity")
-	tx.Exec("DELETE FROM job")
-	tx.Exec("DELETE FROM memory")
-	tx.Exec("DELETE FROM beliefs")
-	tx.Exec("DELETE FROM genome")
-	tx.Exec("DELETE FROM vitals")
-	tx.Exec("DELETE FROM population")
-	tx.Exec("DELETE FROM desperation")
-	tx.Exec("DELETE FROM secrets")
+	tables := []string{"entities", "identity", "position", "needs", "affiliation", "tags", "storage", "velocity", "job", "memory", "beliefs", "genome", "vitals", "population", "desperation", "secrets"}
+	for _, table := range tables {
+		if _, err := tx.Exec("DELETE FROM " + table); err != nil {
+			return err
+		}
+	}
 
 	// Prepare statements
-	stmtEnt, _ := tx.Prepare("INSERT OR REPLACE INTO entities (uid) VALUES (?)")
-	stmtId, _ := tx.Prepare("INSERT OR REPLACE INTO identity (uid, name, basetraits, age) VALUES (?, ?, ?, ?)")
-	stmtPos, _ := tx.Prepare("INSERT OR REPLACE INTO position (uid, x, y) VALUES (?, ?, ?)")
-	stmtNeeds, _ := tx.Prepare("INSERT OR REPLACE INTO needs (uid, food, rest, safety, wealth) VALUES (?, ?, ?, ?, ?)")
-	stmtAff, _ := tx.Prepare("INSERT OR REPLACE INTO affiliation (uid, family_id, clan_id, city_id, country_id) VALUES (?, ?, ?, ?, ?)")
-	stmtTags, _ := tx.Prepare("INSERT OR REPLACE INTO tags (uid, is_village, is_npc, is_possessed) VALUES (?, ?, ?, ?)")
-	stmtStorage, _ := tx.Prepare("INSERT OR REPLACE INTO storage (uid, wood, stone, iron, food) VALUES (?, ?, ?, ?, ?)")
-	stmtVel, _ := tx.Prepare("INSERT OR REPLACE INTO velocity (uid, x, y) VALUES (?, ?, ?)")
-	stmtJob, _ := tx.Prepare("INSERT OR REPLACE INTO job (uid, job_id, employer_id) VALUES (?, ?, ?)")
-	stmtMem, _ := tx.Prepare("INSERT OR REPLACE INTO memory (uid, events_json, head) VALUES (?, ?, ?)")
-	stmtBeliefs, _ := tx.Prepare("INSERT OR REPLACE INTO beliefs (uid, beliefs_json) VALUES (?, ?)")
-	stmtGen, _ := tx.Prepare("INSERT OR REPLACE INTO genome (uid, str, bea, hlt, itl, dom, rec) VALUES (?, ?, ?, ?, ?, ?, ?)")
-	stmtVitals, _ := tx.Prepare("INSERT OR REPLACE INTO vitals (uid, stamina, blood, pain, consciousness) VALUES (?, ?, ?, ?, ?)")
-	stmtPop, _ := tx.Prepare("INSERT OR REPLACE INTO population (uid, count, citizens_json) VALUES (?, ?, ?)")
-	stmtDesp, _ := tx.Prepare("INSERT OR REPLACE INTO desperation (uid, level) VALUES (?, ?)")
-	stmtSec, _ := tx.Prepare("INSERT OR REPLACE INTO secrets (uid, secrets_json) VALUES (?, ?)")
+	stmtEnt, err := tx.Prepare("INSERT OR REPLACE INTO entities (uid) VALUES (?)")
+	if err != nil { return err }
+	defer stmtEnt.Close()
+	stmtId, err := tx.Prepare("INSERT OR REPLACE INTO identity (uid, name, basetraits, age) VALUES (?, ?, ?, ?)")
+	if err != nil { return err }
+	defer stmtId.Close()
+	stmtPos, err := tx.Prepare("INSERT OR REPLACE INTO position (uid, x, y) VALUES (?, ?, ?)")
+	if err != nil { return err }
+	defer stmtPos.Close()
+	stmtNeeds, err := tx.Prepare("INSERT OR REPLACE INTO needs (uid, food, rest, safety, wealth) VALUES (?, ?, ?, ?, ?)")
+	if err != nil { return err }
+	defer stmtNeeds.Close()
+	stmtAff, err := tx.Prepare("INSERT OR REPLACE INTO affiliation (uid, family_id, clan_id, city_id, country_id) VALUES (?, ?, ?, ?, ?)")
+	if err != nil { return err }
+	defer stmtAff.Close()
+	stmtTags, err := tx.Prepare("INSERT OR REPLACE INTO tags (uid, is_village, is_npc, is_possessed) VALUES (?, ?, ?, ?)")
+	if err != nil { return err }
+	defer stmtTags.Close()
+	stmtStorage, err := tx.Prepare("INSERT OR REPLACE INTO storage (uid, wood, stone, iron, food) VALUES (?, ?, ?, ?, ?)")
+	if err != nil { return err }
+	defer stmtStorage.Close()
+	stmtVel, err := tx.Prepare("INSERT OR REPLACE INTO velocity (uid, x, y) VALUES (?, ?, ?)")
+	if err != nil { return err }
+	defer stmtVel.Close()
+	stmtJob, err := tx.Prepare("INSERT OR REPLACE INTO job (uid, job_id, employer_id) VALUES (?, ?, ?)")
+	if err != nil { return err }
+	defer stmtJob.Close()
+	stmtMem, err := tx.Prepare("INSERT OR REPLACE INTO memory (uid, events_json, head) VALUES (?, ?, ?)")
+	if err != nil { return err }
+	defer stmtMem.Close()
+	stmtBeliefs, err := tx.Prepare("INSERT OR REPLACE INTO beliefs (uid, beliefs_json) VALUES (?, ?)")
+	if err != nil { return err }
+	defer stmtBeliefs.Close()
+	stmtGen, err := tx.Prepare("INSERT OR REPLACE INTO genome (uid, str, bea, hlt, itl, dom, rec) VALUES (?, ?, ?, ?, ?, ?, ?)")
+	if err != nil { return err }
+	defer stmtGen.Close()
+	stmtVitals, err := tx.Prepare("INSERT OR REPLACE INTO vitals (uid, stamina, blood, pain, consciousness) VALUES (?, ?, ?, ?, ?)")
+	if err != nil { return err }
+	defer stmtVitals.Close()
+	stmtPop, err := tx.Prepare("INSERT OR REPLACE INTO population (uid, count, citizens_json) VALUES (?, ?, ?)")
+	if err != nil { return err }
+	defer stmtPop.Close()
+	stmtDesp, err := tx.Prepare("INSERT OR REPLACE INTO desperation (uid, level) VALUES (?, ?)")
+	if err != nil { return err }
+	defer stmtDesp.Close()
+	stmtSec, err := tx.Prepare("INSERT OR REPLACE INTO secrets (uid, secrets_json) VALUES (?, ?)")
+	if err != nil { return err }
+	defer stmtSec.Close()
 
 	// Extract components
 	idID := ecs.ComponentID[components.Identity](world)
@@ -218,22 +246,22 @@ func SaveWorld(tm *TickManager, mapGrid *MapGrid, seedVal byte, db *sql.DB) erro
 		ident := (*components.Identity)(query.Get(idID))
 		uid := ident.ID
 
-		stmtEnt.Exec(uid)
-		stmtId.Exec(uid, ident.Name, ident.BaseTraits, ident.Age)
+		if _, err := stmtEnt.Exec(uid); err != nil { query.Close(); return err }
+		if _, err := stmtId.Exec(uid, ident.Name, ident.BaseTraits, ident.Age); err != nil { query.Close(); return err }
 
 		if world.Has(ent, posID) {
 			pos := (*components.Position)(world.Get(ent, posID))
-			stmtPos.Exec(uid, pos.X, pos.Y)
+			if _, err := stmtPos.Exec(uid, pos.X, pos.Y); err != nil { query.Close(); return err }
 		}
 
 		if world.Has(ent, needsID) {
 			needs := (*components.Needs)(world.Get(ent, needsID))
-			stmtNeeds.Exec(uid, needs.Food, needs.Rest, needs.Safety, needs.Wealth)
+			if _, err := stmtNeeds.Exec(uid, needs.Food, needs.Rest, needs.Safety, needs.Wealth); err != nil { query.Close(); return err }
 		}
 
 		if world.Has(ent, affID) {
 			aff := (*components.Affiliation)(world.Get(ent, affID))
-			stmtAff.Exec(uid, aff.FamilyID, aff.ClanID, aff.CityID, aff.CountryID)
+			if _, err := stmtAff.Exec(uid, aff.FamilyID, aff.ClanID, aff.CityID, aff.CountryID); err != nil { query.Close(); return err }
 		}
 
 		// Tags
@@ -241,92 +269,79 @@ func SaveWorld(tm *TickManager, mapGrid *MapGrid, seedVal byte, db *sql.DB) erro
 		isNPC := world.Has(ent, npcID)
 		isPossessed := world.Has(ent, possessedID)
 		if isVillage || isNPC || isPossessed {
-			stmtTags.Exec(uid, isVillage, isNPC, isPossessed)
+			if _, err := stmtTags.Exec(uid, isVillage, isNPC, isPossessed); err != nil { query.Close(); return err }
 		}
 
 		// Storage
 		if world.Has(ent, storageID) {
 			store := (*components.StorageComponent)(world.Get(ent, storageID))
-			stmtStorage.Exec(uid, store.Wood, store.Stone, store.Iron, store.Food)
+			if _, err := stmtStorage.Exec(uid, store.Wood, store.Stone, store.Iron, store.Food); err != nil { query.Close(); return err }
 		}
 
 		// Velocity
 		if world.Has(ent, velID) {
 			vel := (*components.Velocity)(world.Get(ent, velID))
-			stmtVel.Exec(uid, vel.X, vel.Y)
+			if _, err := stmtVel.Exec(uid, vel.X, vel.Y); err != nil { query.Close(); return err }
 		}
 
 		// Job
 		if world.Has(ent, jobID) {
 			job := (*components.JobComponent)(world.Get(ent, jobID))
-			stmtJob.Exec(uid, job.JobID, job.EmployerID)
+			if _, err := stmtJob.Exec(uid, job.JobID, job.EmployerID); err != nil { query.Close(); return err }
 		}
 
 		// Memory
 		if world.Has(ent, memID) {
 			mem := (*components.Memory)(world.Get(ent, memID))
-			eventsJson, _ := json.Marshal(mem.Events)
-			stmtMem.Exec(uid, string(eventsJson), mem.Head)
+			eventsJson, err := json.Marshal(mem.Events)
+			if err != nil { query.Close(); return err }
+			if _, err := stmtMem.Exec(uid, string(eventsJson), mem.Head); err != nil { query.Close(); return err }
 		}
 
 		// Beliefs
 		if world.Has(ent, beliefID) {
 			b := (*components.BeliefComponent)(world.Get(ent, beliefID))
-			bJson, _ := json.Marshal(b.Beliefs)
-			stmtBeliefs.Exec(uid, string(bJson))
+			bJson, err := json.Marshal(b.Beliefs)
+			if err != nil { query.Close(); return err }
+			if _, err := stmtBeliefs.Exec(uid, string(bJson)); err != nil { query.Close(); return err }
 		}
 
 		// Genome
 		if world.Has(ent, genID) {
 			g := (*components.GenomeComponent)(world.Get(ent, genID))
-			stmtGen.Exec(uid, g.Strength, g.Beauty, g.Health, g.Intellect, g.Dominant, g.Recessive)
+			if _, err := stmtGen.Exec(uid, g.Strength, g.Beauty, g.Health, g.Intellect, g.Dominant, g.Recessive); err != nil { query.Close(); return err }
 		}
 
 		// Vitals
 		if world.Has(ent, vitID) {
 			v := (*components.VitalsComponent)(world.Get(ent, vitID))
-			stmtVitals.Exec(uid, v.Stamina, v.Blood, v.Pain, v.Consciousness)
+			if _, err := stmtVitals.Exec(uid, v.Stamina, v.Blood, v.Pain, v.Consciousness); err != nil { query.Close(); return err }
 		}
 
 		// Population
 		if world.Has(ent, popID) {
 			p := (*components.PopulationComponent)(world.Get(ent, popID))
-			citJson, _ := json.Marshal(p.Citizens)
-			stmtPop.Exec(uid, p.Count, string(citJson))
+			citJson, err := json.Marshal(p.Citizens)
+			if err != nil { query.Close(); return err }
+			if _, err := stmtPop.Exec(uid, p.Count, string(citJson)); err != nil { query.Close(); return err }
 		}
 
 		// Desperation
 		if world.Has(ent, despID) {
 			d := (*components.DesperationComponent)(world.Get(ent, despID))
-			stmtDesp.Exec(uid, d.Level)
+			if _, err := stmtDesp.Exec(uid, d.Level); err != nil { query.Close(); return err }
 		}
 
 		// Secrets
 		if world.Has(ent, secID) {
 			s := (*components.SecretComponent)(world.Get(ent, secID))
-			sJson, _ := json.Marshal(s.Secrets)
-			stmtSec.Exec(uid, string(sJson))
+			sJson, err := json.Marshal(s.Secrets)
+			if err != nil { query.Close(); return err }
+			if _, err := stmtSec.Exec(uid, string(sJson)); err != nil { query.Close(); return err }
 		}
 	}
 
-	// Close statements and commit
-	stmtEnt.Close()
-	stmtId.Close()
-	stmtPos.Close()
-	stmtNeeds.Close()
-	stmtAff.Close()
-	stmtTags.Close()
-	stmtStorage.Close()
-	stmtVel.Close()
-	stmtJob.Close()
-	stmtMem.Close()
-	stmtBeliefs.Close()
-	stmtGen.Close()
-	stmtVitals.Close()
-	stmtPop.Close()
-	stmtDesp.Close()
-	stmtSec.Close()
-
+	// Commit
 	return tx.Commit()
 }
 
@@ -349,7 +364,10 @@ func LoadWorld(tm *TickManager, db *sql.DB) error {
 	world := tm.World
 
 	// Load Ticks
-	ticks, _, _, _, _ := LoadGameState(db)
+	ticks, _, _, _, err := LoadGameState(db)
+	if err != nil {
+		return err
+	}
 	tm.Ticks = ticks
 
 	// Before loading, remove all existing entities to prevent duplication
@@ -369,205 +387,252 @@ func LoadWorld(tm *TickManager, db *sql.DB) error {
 	if err != nil {
 		return err
 	}
+	defer rowsEnt.Close()
 	for rowsEnt.Next() {
 		var u uint64
-		if err := rowsEnt.Scan(&u); err == nil {
-			uids = append(uids, u)
+		if err := rowsEnt.Scan(&u); err != nil {
+			return err
 		}
+		uids = append(uids, u)
 	}
-	rowsEnt.Close()
+	if err := rowsEnt.Err(); err != nil { return err }
 
 	// 2. Fetch Identity
 	type idData struct { name string; traits uint32; age uint16 }
 	identities := make(map[uint64]idData)
-	rowsId, _ := db.Query("SELECT uid, name, basetraits, age FROM identity")
+	rowsId, err := db.Query("SELECT uid, name, basetraits, age FROM identity")
+	if err != nil { return err }
+	defer rowsId.Close()
 	for rowsId.Next() {
 		var u uint64
 		var d idData
-		if err := rowsId.Scan(&u, &d.name, &d.traits, &d.age); err == nil {
-			identities[u] = d
+		if err := rowsId.Scan(&u, &d.name, &d.traits, &d.age); err != nil {
+			return err
 		}
+		identities[u] = d
 	}
-	rowsId.Close()
+	if err := rowsId.Err(); err != nil { return err }
 
 	// 3. Fetch Position
 	type posData struct { x, y float32 }
 	positions := make(map[uint64]posData)
-	rowsPos, _ := db.Query("SELECT uid, x, y FROM position")
+	rowsPos, err := db.Query("SELECT uid, x, y FROM position")
+	if err != nil { return err }
+	defer rowsPos.Close()
 	for rowsPos.Next() {
 		var u uint64
 		var p posData
-		if err := rowsPos.Scan(&u, &p.x, &p.y); err == nil {
-			positions[u] = p
+		if err := rowsPos.Scan(&u, &p.x, &p.y); err != nil {
+			return err
 		}
+		positions[u] = p
 	}
-	rowsPos.Close()
+	if err := rowsPos.Err(); err != nil { return err }
 
 	// 4. Fetch Needs
 	type needsData struct { f, r, s, w float32 }
 	needsMap := make(map[uint64]needsData)
-	rowsNeeds, _ := db.Query("SELECT uid, food, rest, safety, wealth FROM needs")
+	rowsNeeds, err := db.Query("SELECT uid, food, rest, safety, wealth FROM needs")
+	if err != nil { return err }
+	defer rowsNeeds.Close()
 	for rowsNeeds.Next() {
 		var u uint64
 		var n needsData
-		if err := rowsNeeds.Scan(&u, &n.f, &n.r, &n.s, &n.w); err == nil {
-			needsMap[u] = n
+		if err := rowsNeeds.Scan(&u, &n.f, &n.r, &n.s, &n.w); err != nil {
+			return err
 		}
+		needsMap[u] = n
 	}
-	rowsNeeds.Close()
+	if err := rowsNeeds.Err(); err != nil { return err }
 
 	// 5. Fetch Affiliation
 	type affData struct { fid, cid, cityid, ctryid uint32 }
 	affMap := make(map[uint64]affData)
-	rowsAff, _ := db.Query("SELECT uid, family_id, clan_id, city_id, country_id FROM affiliation")
+	rowsAff, err := db.Query("SELECT uid, family_id, clan_id, city_id, country_id FROM affiliation")
+	if err != nil { return err }
+	defer rowsAff.Close()
 	for rowsAff.Next() {
 		var u uint64
 		var a affData
-		if err := rowsAff.Scan(&u, &a.fid, &a.cid, &a.cityid, &a.ctryid); err == nil {
-			affMap[u] = a
+		if err := rowsAff.Scan(&u, &a.fid, &a.cid, &a.cityid, &a.ctryid); err != nil {
+			return err
 		}
+		affMap[u] = a
 	}
-	rowsAff.Close()
+	if err := rowsAff.Err(); err != nil { return err }
 
 	// 6. Fetch Tags
 	type tagsData struct { v, n, p bool }
 	tagsMap := make(map[uint64]tagsData)
-	rowsTags, _ := db.Query("SELECT uid, is_village, is_npc, is_possessed FROM tags")
+	rowsTags, err := db.Query("SELECT uid, is_village, is_npc, is_possessed FROM tags")
+	if err != nil { return err }
+	defer rowsTags.Close()
 	for rowsTags.Next() {
 		var u uint64
 		var t tagsData
-		if err := rowsTags.Scan(&u, &t.v, &t.n, &t.p); err == nil {
-			tagsMap[u] = t
+		if err := rowsTags.Scan(&u, &t.v, &t.n, &t.p); err != nil {
+			return err
 		}
+		tagsMap[u] = t
 	}
-	rowsTags.Close()
+	if err := rowsTags.Err(); err != nil { return err }
 
 	// 7. Fetch Storage
 	type storeData struct { w, s, i, f uint32 }
 	storeMap := make(map[uint64]storeData)
-	rowsStore, _ := db.Query("SELECT uid, wood, stone, iron, food FROM storage")
+	rowsStore, err := db.Query("SELECT uid, wood, stone, iron, food FROM storage")
+	if err != nil { return err }
+	defer rowsStore.Close()
 	for rowsStore.Next() {
 		var u uint64
 		var s storeData
-		if err := rowsStore.Scan(&u, &s.w, &s.s, &s.i, &s.f); err == nil {
-			storeMap[u] = s
+		if err := rowsStore.Scan(&u, &s.w, &s.s, &s.i, &s.f); err != nil {
+			return err
 		}
+		storeMap[u] = s
 	}
-	rowsStore.Close()
+	if err := rowsStore.Err(); err != nil { return err }
 
 	// 8. Fetch Velocity
 	type velData struct { vx, vy float32 }
 	velMap := make(map[uint64]velData)
-	rowsVel, _ := db.Query("SELECT uid, x, y FROM velocity")
+	rowsVel, err := db.Query("SELECT uid, x, y FROM velocity")
+	if err != nil { return err }
+	defer rowsVel.Close()
 	for rowsVel.Next() {
 		var u uint64
 		var v velData
-		if err := rowsVel.Scan(&u, &v.vx, &v.vy); err == nil {
-			velMap[u] = v
+		if err := rowsVel.Scan(&u, &v.vx, &v.vy); err != nil {
+			return err
 		}
+		velMap[u] = v
 	}
-	rowsVel.Close()
+	if err := rowsVel.Err(); err != nil { return err }
 
 	// 9. Fetch Job
 	type jobData struct { jid uint8; eid uint64 }
 	jobMap := make(map[uint64]jobData)
-	rowsJob, _ := db.Query("SELECT uid, job_id, employer_id FROM job")
+	rowsJob, err := db.Query("SELECT uid, job_id, employer_id FROM job")
+	if err != nil { return err }
+	defer rowsJob.Close()
 	for rowsJob.Next() {
 		var u uint64
 		var j jobData
-		if err := rowsJob.Scan(&u, &j.jid, &j.eid); err == nil {
-			jobMap[u] = j
+		if err := rowsJob.Scan(&u, &j.jid, &j.eid); err != nil {
+			return err
 		}
+		jobMap[u] = j
 	}
-	rowsJob.Close()
+	if err := rowsJob.Err(); err != nil { return err }
 
 	// 10. Fetch Memory
 	type memData struct { json string; head uint8 }
 	memMap := make(map[uint64]memData)
-	rowsMem, _ := db.Query("SELECT uid, events_json, head FROM memory")
+	rowsMem, err := db.Query("SELECT uid, events_json, head FROM memory")
+	if err != nil { return err }
+	defer rowsMem.Close()
 	for rowsMem.Next() {
 		var u uint64
 		var m memData
-		if err := rowsMem.Scan(&u, &m.json, &m.head); err == nil {
-			memMap[u] = m
+		if err := rowsMem.Scan(&u, &m.json, &m.head); err != nil {
+			return err
 		}
+		memMap[u] = m
 	}
-	rowsMem.Close()
+	if err := rowsMem.Err(); err != nil { return err }
 
 	// 11. Fetch Beliefs
 	beliefsMap := make(map[uint64]string)
-	rowsB, _ := db.Query("SELECT uid, beliefs_json FROM beliefs")
+	rowsB, err := db.Query("SELECT uid, beliefs_json FROM beliefs")
+	if err != nil { return err }
+	defer rowsB.Close()
 	for rowsB.Next() {
 		var u uint64
 		var j string
-		if err := rowsB.Scan(&u, &j); err == nil {
-			beliefsMap[u] = j
+		if err := rowsB.Scan(&u, &j); err != nil {
+			return err
 		}
+		beliefsMap[u] = j
 	}
-	rowsB.Close()
+	if err := rowsB.Err(); err != nil { return err }
 
 	// 12. Fetch Genome
 	type genData struct { str, bea, hlt, itl uint8; dom, rec uint32 }
 	genMap := make(map[uint64]genData)
-	rowsG, _ := db.Query("SELECT uid, str, bea, hlt, itl, dom, rec FROM genome")
+	rowsG, err := db.Query("SELECT uid, str, bea, hlt, itl, dom, rec FROM genome")
+	if err != nil { return err }
+	defer rowsG.Close()
 	for rowsG.Next() {
 		var u uint64
 		var g genData
-		if err := rowsG.Scan(&u, &g.str, &g.bea, &g.hlt, &g.itl, &g.dom, &g.rec); err == nil {
-			genMap[u] = g
+		if err := rowsG.Scan(&u, &g.str, &g.bea, &g.hlt, &g.itl, &g.dom, &g.rec); err != nil {
+			return err
 		}
+		genMap[u] = g
 	}
-	rowsG.Close()
+	if err := rowsG.Err(); err != nil { return err }
 
 	// 13. Fetch Vitals
 	type vitData struct { s, b, p, c float32 }
 	vitMap := make(map[uint64]vitData)
-	rowsV, _ := db.Query("SELECT uid, stamina, blood, pain, consciousness FROM vitals")
+	rowsV, err := db.Query("SELECT uid, stamina, blood, pain, consciousness FROM vitals")
+	if err != nil { return err }
+	defer rowsV.Close()
 	for rowsV.Next() {
 		var u uint64
 		var v vitData
-		if err := rowsV.Scan(&u, &v.s, &v.b, &v.p, &v.c); err == nil {
-			vitMap[u] = v
+		if err := rowsV.Scan(&u, &v.s, &v.b, &v.p, &v.c); err != nil {
+			return err
 		}
+		vitMap[u] = v
 	}
-	rowsV.Close()
+	if err := rowsV.Err(); err != nil { return err }
 
 	// 14. Fetch Population
 	type popData struct { count uint32; json string }
 	popMap := make(map[uint64]popData)
-	rowsP, _ := db.Query("SELECT uid, count, citizens_json FROM population")
+	rowsP, err := db.Query("SELECT uid, count, citizens_json FROM population")
+	if err != nil { return err }
+	defer rowsP.Close()
 	for rowsP.Next() {
 		var u uint64
 		var p popData
-		if err := rowsP.Scan(&u, &p.count, &p.json); err == nil {
-			popMap[u] = p
+		if err := rowsP.Scan(&u, &p.count, &p.json); err != nil {
+			return err
 		}
+		popMap[u] = p
 	}
-	rowsP.Close()
+	if err := rowsP.Err(); err != nil { return err }
 
 	// 15. Fetch Desperation
 	despMap := make(map[uint64]uint8)
-	rowsD, _ := db.Query("SELECT uid, level FROM desperation")
+	rowsD, err := db.Query("SELECT uid, level FROM desperation")
+	if err != nil { return err }
+	defer rowsD.Close()
 	for rowsD.Next() {
 		var u uint64
 		var l uint8
-		if err := rowsD.Scan(&u, &l); err == nil {
-			despMap[u] = l
+		if err := rowsD.Scan(&u, &l); err != nil {
+			return err
 		}
+		despMap[u] = l
 	}
-	rowsD.Close()
+	if err := rowsD.Err(); err != nil { return err }
 
 	// 16. Fetch Secrets
 	secMap := make(map[uint64]string)
-	rowsS, _ := db.Query("SELECT uid, secrets_json FROM secrets")
+	rowsS, err := db.Query("SELECT uid, secrets_json FROM secrets")
+	if err != nil { return err }
+	defer rowsS.Close()
 	for rowsS.Next() {
 		var u uint64
 		var j string
-		if err := rowsS.Scan(&u, &j); err == nil {
-			secMap[u] = j
+		if err := rowsS.Scan(&u, &j); err != nil {
+			return err
 		}
+		secMap[u] = j
 	}
-	rowsS.Close()
+	if err := rowsS.Err(); err != nil { return err }
 
 	// Component IDs
 	idID := ecs.ComponentID[components.Identity](world)
@@ -659,7 +724,9 @@ func LoadWorld(tm *TickManager, db *sql.DB) error {
 			mem := (*components.Memory)(world.Get(ent, memID))
 			mem.Head = m.head
 			var events [50]components.MemoryEvent
-			json.Unmarshal([]byte(m.json), &events)
+			if err := json.Unmarshal([]byte(m.json), &events); err != nil {
+				return err
+			}
 			mem.Events = events
 		}
 
@@ -667,7 +734,9 @@ func LoadWorld(tm *TickManager, db *sql.DB) error {
 			world.Add(ent, beliefID)
 			b := (*components.BeliefComponent)(world.Get(ent, beliefID))
 			var beliefs []components.Belief
-			json.Unmarshal([]byte(bstr), &beliefs)
+			if err := json.Unmarshal([]byte(bstr), &beliefs); err != nil {
+				return err
+			}
 			b.Beliefs = beliefs
 		}
 
@@ -696,7 +765,9 @@ func LoadWorld(tm *TickManager, db *sql.DB) error {
 			pop := (*components.PopulationComponent)(world.Get(ent, popID))
 			pop.Count = p.count
 			var cits []components.CitizenData
-			json.Unmarshal([]byte(p.json), &cits)
+			if err := json.Unmarshal([]byte(p.json), &cits); err != nil {
+				return err
+			}
 			pop.Citizens = cits
 		}
 
@@ -710,7 +781,9 @@ func LoadWorld(tm *TickManager, db *sql.DB) error {
 			world.Add(ent, secID)
 			sec := (*components.SecretComponent)(world.Get(ent, secID))
 			var secrets []components.Secret
-			json.Unmarshal([]byte(s), &secrets)
+			if err := json.Unmarshal([]byte(s), &secrets); err != nil {
+				return err
+			}
 			sec.Secrets = secrets
 		}
 	}
