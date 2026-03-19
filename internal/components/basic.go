@@ -9,6 +9,7 @@ const (
 	TraitRiskTaker uint32 = 1 << 0
 	TraitCautious  uint32 = 1 << 1
 	TraitGossip    uint32 = 1 << 2
+	TraitJealous   uint32 = 1 << 3 // Phase 44: The Vassal Safety Valve Engine
 )
 
 // Phase 13.2: Labor Rebalancing
