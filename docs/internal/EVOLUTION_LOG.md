@@ -494,3 +494,22 @@ Simultaneously, a `DiseaseEntity` spawns due to the freezing conditions. The `Qu
 **Architecture Validation:**
 Strict Data-Oriented Design (DOD) principles were upheld. The per-tick processing uses a flat filter (`Village`, `Position`, `Population`, `Storage`, `Loyalty`). To prevent Arche-Go iterator invalidation or locking panics, structural ECS modifications (spawning `DiseaseEntity`) are deferred to a secondary loop iterating over a locally cached slice of map coordinates.
 100% Determinism was validated via `TestWinterHeatingSystem_ButterflyEffect`.
+
+## Evolution: Phase 43 - Organic Administration Engine
+**Focus:** Integration (Social Hierarchy + Governance + Information)
+
+**The Problem (Vision Gap):**
+The Vision document outlines: "The NPCs holding the most influence (highest volume of powerful Hooks) naturally emerge as the 'Administration' of a growing town." Previously, the `CapitalComponent` or `Village` entities were abstract rulers. While they had an `Identity` with a `RulerID`, the ruler was static and completely disconnected from the Social Graph.
+
+**The Solution (Autonomous DOD Execution):**
+1. **AdministrationMarker:** I introduced an `AdministrationMarker` tag component to visually and structurally identify the emergent leader of a city.
+2. **LeadershipEmergenceSystem:** I implemented a system that periodically (every 500 ticks) caches all valid `NPC` entities within active cities. It evaluates each NPC's incoming positive influence using the `SparseHookGraph` (`GetAllIncomingHooks`). The NPC with the highest score is crowned the leader, receiving the `AdministrationMarker`. If an existing leader is dethroned, the marker is safely removed. All structural ECS changes occur outside the main query loop to prevent lock panics.
+3. **Integration with TaxationSystem:** I modified the `TaxationSystem` to actively query for the emergent leader of a `CapitalComponent`. When a `Village` evades taxes, the resulting massive `-50` Blood Feud grudges are explicitly targeted at the specific `NPC` holding the `AdministrationMarker`.
+
+**The Butterfly Effect:**
+An NPC (`JobArtisan`) accumulates immense wealth and begins buying Information via `InformationTradeSystem`. Every successful trade generates positive Hooks. Slowly, the Artisan accumulates more positive incoming hooks than the current Ruler.
+The `LeadershipEmergenceSystem` dethrones the old Ruler and crowns the Artisan, granting them the `AdministrationMarker`.
+Simultaneously, a distant, poor Village evades their taxes due to high corruption. The `TaxationSystem` evaluates the evasion and generates `-50` grudges against the *new* Artisan-Ruler. The `BloodFeudSystem` is instantly triggered. The Artisan, who peacefully rose to power through information trading, is now the target of a violent frontier rebellion, structurally bridging the Information, Social, Governance, and Justice layers without any scripted narrative events.
+
+**Validation:**
+- Verified completely deterministic via `TestLeadershipEmergenceSystem_Integration`.
