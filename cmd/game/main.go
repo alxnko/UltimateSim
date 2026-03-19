@@ -95,6 +95,9 @@ func BuildSimulation(gridWidth, gridHeight int, seedVal byte, status *render.Loa
 	tickManager.AddSystem(systems.NewRuinTransformationSystem(world), engine.PhaseResolution)
 	tickManager.AddSystem(systems.NewAdministrativeDecaySystem(), engine.PhaseResolution)
 
+	// Phase 43: Organic Administration Engine
+	tickManager.AddSystem(systems.NewLeadershipEmergenceSystem(hookGraph), engine.PhaseResolution)
+
 	// Phase 16.1 & 42: Taxation and The Tax Evasion Engine
 	tickManager.AddSystem(systems.NewTaxationSystem(world, hookGraph), engine.PhaseResolution)
 

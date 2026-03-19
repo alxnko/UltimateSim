@@ -511,3 +511,8 @@ type QuarantineComponent struct {
 	_      [3]byte // Pad to 4 bytes
 	_      uint32  // Pad to 8 bytes
 }
+
+// Phase 43: Organic Administration Engine
+// AdministrationMarker is a tag component identifying an NPC that has organically risen
+// to rule a specific CityID based on the highest volume of positive incoming hooks.
+type AdministrationMarker struct{}

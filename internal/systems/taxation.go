@@ -69,19 +69,51 @@ func (s *TaxationSystem) Update(world *ecs.World) {
 	// 1. Build a flat map of active Country Treasuries for O(1) matching.
 	capitalDataMap := make(map[uint32]capitalTaxData)
 
-	// A Country Capital must have CountryComponent, CapitalComponent, Affiliation, TreasuryComponent, JurisdictionComponent, and Identity.
-	capitalQuery := s.world.Query(filter.All(s.countryID, s.capitalID, s.affilID, s.treasuryID, s.jurID, s.identID))
+	adminMarkerID := ecs.ComponentID[components.AdministrationMarker](s.world)
+
+	// A Country Capital must have CountryComponent, CapitalComponent, Affiliation, TreasuryComponent, JurisdictionComponent.
+	// It may or may not be an Identity.
+	capitalQuery := s.world.Query(filter.All(s.countryID, s.capitalID, s.affilID, s.treasuryID, s.jurID))
+
+	// Create a flat cache of current administrators to avoid nested query lock panics
+	type adminData struct {
+		CityID uint32
+		ID     uint64
+	}
+	var admins []adminData
+	adminQuery := s.world.Query(filter.All(s.npcID, s.identID, s.affilID, adminMarkerID))
+	for adminQuery.Next() {
+		adminAffil := (*components.Affiliation)(adminQuery.Get(s.affilID))
+		adminIdent := (*components.Identity)(adminQuery.Get(s.identID))
+		admins = append(admins, adminData{
+			CityID: adminAffil.CityID,
+			ID:     adminIdent.ID,
+		})
+	}
+
 	for capitalQuery.Next() {
 		affil := (*components.Affiliation)(capitalQuery.Get(s.affilID))
 		treasury := (*components.TreasuryComponent)(capitalQuery.Get(s.treasuryID))
 		jur := (*components.JurisdictionComponent)(capitalQuery.Get(s.jurID))
-		ident := (*components.Identity)(capitalQuery.Get(s.identID))
+
+		// Find the true RulerID by scanning for an NPC in this City with the AdministrationMarker
+		var rulerID uint64 = 0
+		if s.world.Has(capitalQuery.Entity(), s.identID) {
+			rulerID = (*components.Identity)(s.world.Get(capitalQuery.Entity(), s.identID)).ID // Fallback
+		}
+
+		for i := 0; i < len(admins); i++ {
+			if admins[i].CityID == affil.CityID {
+				rulerID = admins[i].ID
+				break // Found the emergent leader for this capital
+			}
+		}
 
 		// Map the capital data using the CountryID
 		capitalDataMap[affil.CountryID] = capitalTaxData{
 			Treasury:   treasury,
 			Corruption: jur.Corruption,
-			RulerID:    ident.ID,
+			RulerID:    rulerID,
 		}
 	}
 
