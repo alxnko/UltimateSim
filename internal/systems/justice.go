@@ -37,6 +37,7 @@ func NewJusticeSystem(world *ecs.World, hooks *engine.SparseHookGraph) *JusticeS
 	posID := ecs.ComponentID[components.Position](world)
 	pathID := ecs.ComponentID[components.Path](world)
 	velID := ecs.ComponentID[components.Velocity](world)
+	_ = ecs.ComponentID[components.PenalLaborComponent](world) // Register explicitly for phase 45
 
 	gMask := ecs.All(jobID, posID, pathID, velID)
 
@@ -272,6 +273,13 @@ func (s *JusticeSystem) Update(world *ecs.World) {
 
 		var punishedEntities []ecs.Entity
 
+		type penalTarget struct {
+			Entity ecs.Entity
+			CityID uint32
+			Sentence uint16
+		}
+		var newPenalTargets []penalTarget
+
 		for guardQuery.Next() {
 			job := (*components.JobComponent)(guardQuery.Get(jobID))
 			if job.JobID != components.JobGuard {
@@ -365,6 +373,8 @@ func (s *JusticeSystem) Update(world *ecs.World) {
 					if !bribed {
 						// Apply standard Punishment (Banishment & Fines)
 						var collectedFine float32 = 0.0
+						var unpaidFine float32 = 0.0
+
 						if world.Has(c.Entity, needsID) {
 							cNeeds := (*components.Needs)(world.Get(c.Entity, needsID))
 							crimeMarker := (*components.CrimeMarker)(world.Get(c.Entity, crimeID))
@@ -375,6 +385,7 @@ func (s *JusticeSystem) Update(world *ecs.World) {
 								collectedFine = fine
 							} else {
 								collectedFine = cNeeds.Wealth
+								unpaidFine = fine - cNeeds.Wealth
 								cNeeds.Wealth = 0
 							}
 						}
@@ -392,22 +403,33 @@ func (s *JusticeSystem) Update(world *ecs.World) {
 							}
 						}
 
-						// Banishment
-						if world.Has(c.Entity, affID) && gAff != nil {
-							cAff := (*components.Affiliation)(world.Get(c.Entity, affID))
-							// Remove CityID if it belongs to the enforcing Guard's city
-							if cAff.CityID == gAff.CityID {
-								cAff.CityID = 0
+						// Phase 45: The Penal Labor Engine
+						// If the criminal could not fully pay the fine, they are sentenced to State Servitude.
+						if unpaidFine > 0.0 && gAff != nil {
+							// Defers the structural update until after iteration
+							newPenalTargets = append(newPenalTargets, penalTarget{
+								Entity: c.Entity,
+								CityID: gAff.CityID,
+								Sentence: uint16(unpaidFine * 5),
+							})
+						} else {
+							// Banishment
+							if world.Has(c.Entity, affID) && gAff != nil {
+								cAff := (*components.Affiliation)(world.Get(c.Entity, affID))
+								// Remove CityID if it belongs to the enforcing Guard's city
+								if cAff.CityID == gAff.CityID {
+									cAff.CityID = 0
+								}
 							}
-						}
 
-						// Force fleeing behavior
-						if world.Has(c.Entity, velID) {
-							cVel := (*components.Velocity)(world.Get(c.Entity, velID))
-							// Send flying outward
-							if dx == 0 && dy == 0 { dx = 1 } // prevent div by zero
-							cVel.X = -dx * 2.0
-							cVel.Y = -dy * 2.0
+							// Force fleeing behavior
+							if world.Has(c.Entity, velID) {
+								cVel := (*components.Velocity)(world.Get(c.Entity, velID))
+								// Send flying outward
+								if dx == 0 && dy == 0 { dx = 1 } // prevent div by zero
+								cVel.X = -dx * 2.0
+								cVel.Y = -dy * 2.0
+							}
 						}
 
 						// Phase 30: Carceral Resentment
@@ -443,6 +465,31 @@ func (s *JusticeSystem) Update(world *ecs.World) {
 		for _, e := range punishedEntities {
 			if world.Alive(e) && world.Has(e, crimeID) {
 				world.Remove(e, crimeID)
+			}
+		}
+
+		// Apply Penal Labor (Phase 45) structurally outside query
+		penalLaborID := ecs.ComponentID[components.PenalLaborComponent](world)
+		for _, pt := range newPenalTargets {
+			if world.Alive(pt.Entity) {
+				if !world.Has(pt.Entity, penalLaborID) {
+					world.Add(pt.Entity, penalLaborID)
+				}
+				penal := (*components.PenalLaborComponent)(world.Get(pt.Entity, penalLaborID))
+				penal.StateCityID = pt.CityID
+				penal.RemainingSentence = pt.Sentence
+
+				// Forcibly change job
+				if world.Has(pt.Entity, jobID) {
+					cJob := (*components.JobComponent)(world.Get(pt.Entity, jobID))
+					cJob.JobID = components.JobPenalLabor
+				}
+
+				// Bind their guild to the state
+				if world.Has(pt.Entity, affID) {
+					cAff := (*components.Affiliation)(world.Get(pt.Entity, affID))
+					cAff.GuildID = pt.CityID // State-owned guild
+				}
 			}
 		}
 	}

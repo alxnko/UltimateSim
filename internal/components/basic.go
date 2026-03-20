@@ -6,10 +6,11 @@ package components
 
 // Traits Bitmask Constants
 const (
-	TraitRiskTaker uint32 = 1 << 0
-	TraitCautious  uint32 = 1 << 1
-	TraitGossip    uint32 = 1 << 2
-	TraitJealous   uint32 = 1 << 3 // Phase 44: The Vassal Safety Valve Engine
+	TraitRiskTaker    uint32 = 1 << 0
+	TraitCautious     uint32 = 1 << 1
+	TraitGossip       uint32 = 1 << 2
+	TraitJealous      uint32 = 1 << 3 // Phase 44: The Vassal Safety Valve Engine
+	TraitAbolitionist uint32 = 1 << 4 // Phase 45: The Penal Labor Engine
 )
 
 // Phase 13.2: Labor Rebalancing
@@ -22,8 +23,9 @@ const (
 	JobPreacher   uint8 = 5 // Phase 20.1: Ideological Warfare
 	JobCaster     uint8 = 6 // Phase 20.2: Abstract Physics
 	JobBandit     uint8 = 7 // Phase 26.1: Caravan Banditry & Supply Chain Collapse
-	JobSailor     uint8 = 8 // Phase 17.1: Maritime Labor Market
-	JobCaptain    uint8 = 9 // Phase 17.1: Maritime Labor Market
+	JobSailor     uint8 = 8  // Phase 17.1: Maritime Labor Market
+	JobCaptain    uint8 = 9  // Phase 17.1: Maritime Labor Market
+	JobPenalLabor uint8 = 10 // Phase 45: The Penal Labor Engine
 )
 
 // Phase 09.5: Item Inheritance Threshold
@@ -521,3 +523,11 @@ type QuarantineComponent struct {
 // AdministrationMarker is a tag component identifying an NPC that has organically risen
 // to rule a specific CityID based on the highest volume of positive incoming hooks.
 type AdministrationMarker struct{}
+
+// Phase 45: The Penal Labor Engine
+// PenalLaborComponent binds an entity to state servitude to pay off unpaid criminal bounties.
+type PenalLaborComponent struct {
+	StateCityID       uint32 // The city receiving the extracted resources
+	RemainingSentence uint16 // Ticks left in the sentence
+	_                 uint16 // Padding to exactly 8 bytes
+}
