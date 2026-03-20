@@ -2,6 +2,7 @@ package systems
 
 import (
 	"github.com/ALXNKO/UltimateSim/internal/components"
+	"github.com/ALXNKO/UltimateSim/internal/engine"
 	"github.com/mlange-42/arche/ecs"
 )
 
@@ -79,10 +80,25 @@ func (s *NavalSpawningSystem) Update(world *ecs.World) {
 	shipID := ecs.ComponentID[components.ShipComponent](world)
 	passengerID := ecs.ComponentID[components.PassengerComponent](world)
 	pathID := ecs.ComponentID[components.Path](world)
+	idID := ecs.ComponentID[components.Identity](world)
+	treasuryID := ecs.ComponentID[components.TreasuryComponent](world)
+	businessID := ecs.ComponentID[components.BusinessComponent](world)
 
 	for _, c := range s.toConvert {
 		// Spawn new ship entity
-		shipEntity := world.NewEntity(shipID, posID, velID, payloadID, passengerID, pathID)
+		shipEntity := world.NewEntity(shipID, posID, velID, payloadID, passengerID, pathID, idID, treasuryID, businessID)
+
+		// Create identity to serve as business owner
+		newIdent := (*components.Identity)(world.Get(shipEntity, idID))
+		newIdent.ID = uint64(engine.GetRandomInt())
+		newIdent.Name = "ShipCompany"
+
+		// Setup business and treasury
+		newBus := (*components.BusinessComponent)(world.Get(shipEntity, businessID))
+		newBus.OwnerID = newIdent.ID
+
+		newTreasury := (*components.TreasuryComponent)(world.Get(shipEntity, treasuryID))
+		newTreasury.Wealth = 500.0 // Starting budget
 
 		// Set Position
 		newPos := (*components.Position)(world.Get(shipEntity, posID))
@@ -100,6 +116,11 @@ func (s *NavalSpawningSystem) Update(world *ecs.World) {
 		// Set Passengers
 		newPassenger := (*components.PassengerComponent)(world.Get(shipEntity, passengerID))
 		newPassenger.Passengers = make([]components.Passenger, 0)
+
+		// Set Crew Requirements
+		newShip := (*components.ShipComponent)(world.Get(shipEntity, shipID))
+		newShip.CrewRequirements = 5
+		newShip.CrewCurrent = 0
 
 		// Initialize Routing Path
 		newPath := (*components.Path)(world.Get(shipEntity, pathID))

@@ -22,6 +22,8 @@ const (
 	JobPreacher   uint8 = 5 // Phase 20.1: Ideological Warfare
 	JobCaster     uint8 = 6 // Phase 20.2: Abstract Physics
 	JobBandit     uint8 = 7 // Phase 26.1: Caravan Banditry & Supply Chain Collapse
+	JobSailor     uint8 = 8 // Phase 17.1: Maritime Labor Market
+	JobCaptain    uint8 = 9 // Phase 17.1: Maritime Labor Market
 )
 
 // Phase 09.5: Item Inheritance Threshold
@@ -430,7 +432,9 @@ type PortComponent struct{}
 
 // ShipComponent is a component attached to a vessel entity.
 type ShipComponent struct {
-	Hull uint32
+	Hull             uint32
+	CrewRequirements uint16
+	CrewCurrent      uint16
 }
 
 // Passenger tracks passenger slots for trans-oceanic migration.

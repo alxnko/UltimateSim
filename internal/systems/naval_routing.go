@@ -107,6 +107,14 @@ func (s *NavalRoutingSystem) Update(world *ecs.World) {
 		// For Phase 17.2, we assume TargetX and TargetY are set on the Path component.
 		if !path.HasPath && (path.TargetX != 0 || path.TargetY != 0) {
 
+			shipID := ecs.ComponentID[components.ShipComponent](world)
+			if query.Has(shipID) {
+				ship := (*components.ShipComponent)(query.Get(shipID))
+				if ship.CrewCurrent < ship.CrewRequirements {
+					continue // Stranded! Not enough crew.
+				}
+			}
+
 			// Avoid routing if frozen (Ice Caps logic)
 			// (Assuming winter prevents naval routing in certain zones, simplistically blocked here)
 			if isWinter {
