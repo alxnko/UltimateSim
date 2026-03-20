@@ -545,3 +545,23 @@ I created the `VassalSafetyValveSystem` to bridge the Economy and Information en
 
 **Architecture Validation:**
 Strict Data-Oriented Design (DOD) was maintained via flat sequential slices and maps `map[uint32]map[uint32]*clanWealthData` to cache aggregated data in O(N) rather than forcing nested `arche-go` ECS queries. The system throttles execution to once every 500 ticks. Determinism was verified by running `go test ./internal/systems -run TestVassalSafetyValve_Integration -count=2`.
+
+## Evolution: Phase 45 - The Penal Labor Engine
+**Date:** 2026-03-20
+**Focus:** Integration (Economy + Justice + Social)
+
+**The Problem (Vision Gap):**
+The Vision document outlines: "The Debt & Interest Loop: Extreme Debt Traps allow Guilds to execute unpaid Hooks obtained as collateral, seizing political control without armies." The `JusticeSystem` allowed for Banishment and Fines, but if a criminal could not afford their fine, their wealth dropped to zero and they were forgiven or banished. There was no direct mechanism for the State to profit from crime, breaking the systemic link between crime, poverty, and state capital.
+
+**The Solution (Autonomous DOD Execution):**
+I introduced the `PenalLaborSystem`.
+1.  **Components:** Added `PenalLaborComponent` which tracks `RemainingSentence` and `StateCityID`.
+2.  **Justice Override:** When an NPC cannot pay a criminal `Bounty` in `JusticeSystem`, they are forcibly assigned the `JobPenalLabor` job, attached to the `PenalLaborComponent` where 1 unpaid wealth unit equals 5 ticks of forced labor, and their `Affiliation.GuildID` is seized by the State Ruler.
+3.  **Forced Labor:** The `PenalLaborSystem` processes these convicts. It suppresses free market `Food` demand by giving them 0.5 metabolism units directly, while forcing them to harvest `Stone` which bypasses the `MarketComponent` and flows directly into the `Capital`'s `StorageComponent`.
+4.  **Abolitionist Backlash:** Introduced `TraitAbolitionist` (bitmask `1 << 4`). If an NPC with this trait comes within physical visual range (`distSq < 100`) of a convict performing penal labor, they immediately generate a massive `-50` hook against the State's Ruler, triggering potential `BloodFeud` assassinations.
+
+**The Butterfly Effect:**
+A starving NPC turns to `Banditry`. A Guard catches them. Having no wealth, the Justice System strips them of their guild and sentences them to State Servitude. The State City receives free raw materials, driving the `MarketComponent.WageRate` for honest `JobLumberjack` workers to the floor. The honest workers strike (`LaborUnionSystem`) or starve, inevitably pushing them into crime, feeding the penal machine. Concurrently, `Abolitionist` citizens witness the labor camps and generate `-50` Blood Feuds against the King, sparking an organic civil war fueled purely by socio-economic inequality.
+
+**Architecture Validation:**
+Strict Data-Oriented Design (DOD) was maintained via `Arche-Go`. State `StorageComponent` pointers are pre-cached in a flat hash map `map[uint32]cityData` to avoid O(N^2) nested ECS queries during the per-tick loop. Structural changes (removing `PenalLaborComponent`) are deferred to a post-iteration slice `[]ecs.Entity` to prevent `Query` lock panics. Determinism validated by `TestPenalLaborSystem_Integration` and `TestPenalLaborSystem_AbolitionistBacklash`.

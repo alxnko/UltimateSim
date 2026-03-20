@@ -56,8 +56,8 @@ func TestXenophobiaSystem_Update(t *testing.T) {
 	}
 
 	// 1. Happy Path: Xenophobe vs Foreigner (Close)
-	xenophobe := createNPC(0, 0, 1, true, 1)
-	foreigner := createNPC(1, 1, 2, false, 2) // distSq = 2 < 10
+	_ = createNPC(0, 0, 1, true, 1)
+	_ = createNPC(1, 1, 2, false, 2) // distSq = 2 < 10
 
 	sys.tickCounter = 9 // Next update will be tick 10
 	sys.Update(&world)
@@ -69,7 +69,7 @@ func TestXenophobiaSystem_Update(t *testing.T) {
 
 	// 2. Same Language: No hook
 	hooks.RemoveAllHooks(1)
-	compatriot := createNPC(1, 1, 1, false, 3) // Same language as 1
+	_ = createNPC(1, 1, 1, false, 3) // Same language as 1
 	sys.tickCounter = 19
 	sys.Update(&world)
 
@@ -79,7 +79,7 @@ func TestXenophobiaSystem_Update(t *testing.T) {
 	}
 
 	// 3. Non-Xenophobe: No hook
-	foreigner2 := createNPC(0, 0, 3, false, 4)
+	_ = createNPC(0, 0, 3, false, 4)
 	sys.tickCounter = 29
 	sys.Update(&world)
 	hook = hooks.GetHook(3, 4) // NPC 3 is not a xenophobe
@@ -88,7 +88,7 @@ func TestXenophobiaSystem_Update(t *testing.T) {
 	}
 
 	// 4. Distance Check: Far foreigner, no hook
-	farForeigner := createNPC(10, 10, 4, false, 5) // distSq = 200 > 10
+	_ = createNPC(10, 10, 4, false, 5) // distSq = 200 > 10
 	sys.tickCounter = 39
 	sys.Update(&world)
 	hook = hooks.GetHook(1, 5)
