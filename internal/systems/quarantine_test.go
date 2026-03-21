@@ -129,9 +129,23 @@ func TestQuarantineButterflyEffect(t *testing.T) {
 		t.Errorf("Expected NPC wealth to be 0 after fine, got %f", npcNeedsNew.Wealth)
 	}
 
+	// Wait, we need to fetch the pointer again because arche structural changes might invalidate it
+	// Phase 45 introduced Penal Labor which prevents banishment if fine is unpaid.
+	// In this test, Wealth=50, Bounty=100 -> UnpaidFine=50.
+	// Therefore, the NPC is sent to Penal Labor instead of Banishment.
+	penalID := ecs.ComponentID[components.PenalLaborComponent](&world)
+	if !world.Has(npc, penalID) {
+		t.Errorf("Expected NPC to be sentenced to Penal Labor due to unpaid fine")
+	} else {
+		penal := (*components.PenalLaborComponent)(world.Get(npc, penalID))
+		if penal.RemainingSentence != 250 { // 50 * 5 = 250 ticks
+			t.Errorf("Expected 250 ticks of penal labor, got %d", penal.RemainingSentence)
+		}
+	}
+
 	npcAffNew := (*components.Affiliation)(world.Get(npc, affID))
-	if npcAffNew.CityID != 0 {
-		t.Errorf("Expected NPC to be banished (CityID = 0), got %d", npcAffNew.CityID)
+	if npcAffNew.GuildID != 1 {
+		t.Errorf("Expected NPC's GuildID to be seized by the state (1), got %d", npcAffNew.GuildID)
 	}
 
 	hookScore := hookGraph.GetHook(100, 200)

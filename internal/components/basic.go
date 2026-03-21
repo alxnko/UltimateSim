@@ -11,6 +11,7 @@ const (
 	TraitGossip       uint32 = 1 << 2
 	TraitJealous      uint32 = 1 << 3 // Phase 44: The Vassal Safety Valve Engine
 	TraitAbolitionist uint32 = 1 << 4 // Phase 45: The Penal Labor Engine
+	TraitAmbitious    uint32 = 1 << 5 // Phase 47: The Plague-Labor Economics Bridge
 )
 
 // Phase 13.2: Labor Rebalancing
@@ -530,4 +531,11 @@ type PenalLaborComponent struct {
 	StateCityID       uint32 // The city receiving the extracted resources
 	RemainingSentence uint16 // Ticks left in the sentence
 	_                 uint16 // Padding to exactly 8 bytes
+}
+
+// Evolution: Phase 47 - The Plague-Labor Economics Bridge
+type DemographicsComponent struct {
+	PeakPopulation    uint32
+	LaborCrisisActive bool
+	_                 [3]byte // Padding to exactly 8 bytes
 }
