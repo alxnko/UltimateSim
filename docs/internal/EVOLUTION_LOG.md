@@ -585,3 +585,24 @@ The Son, also impoverished, reaches the `DueTick`. He defaults. The `DebtDefault
 
 **Architecture Validation:**
 Strict Data-Oriented Design (DOD) was maintained. The transfer uses direct `arche-go` memory pointers (`*loan = *h.LoanContract`) and avoids nested ECS queries. Verified 100% deterministic through E2E `TestGenerationalDebtSystem_Integration`.
+
+## Evolution: Phase 47 - The Plague-Labor Economics Bridge
+**Date:** 2026-03-25
+**Focus:** Integration (Biology + Economy + Labor + Justice)
+
+**The Problem (Vision Gap):**
+The Vision document states: "Plagues spread along trade routes causing massive labor shortages. Surviving peasants demand higher wages, spontaneously forming revolutionary Trade Unions. Plagues leave behind Immune Memory, radically shifting global power balances the next time the algorithm triggers." We had Plagues (`DiseaseVectorSystem`) and Trade Unions (`LaborUnionSystem`), but no systemic connection linking a sudden population drop (Biological Entropy) to exorbitant extortionate wage demands and systemic strikes.
+
+**The Solution (Autonomous DOD Execution):**
+I created the **Plague-Labor Economics Bridge** via the `LaborCrisisSystem`.
+1.  **Demographics Component:** Added an 8-byte DOD-compliant `DemographicsComponent` mapping historical population checkpoints to active `Village` hubs.
+2.  **Trait Ambitious:** Added `TraitAmbitious` (bitmask `1 << 5`) to the `Identity` component.
+3.  **The Labor Crisis Loop:** The `LaborCrisisSystem` evaluates `PopulationComponent` drops against historical checkpoints. If an 80% collapse occurs (e.g. from Plague), a massive `LaborCrisisActive` flag is tripped.
+4.  **Extortionate Wages:** The local `MarketComponent.WageRate` spikes by 300%. Surviving `TraitAmbitious` NPCs instantly leverage the crisis to demand this new wage from their employers (or the State/City Ruler).
+5.  **State Default:** If the employer/state `TreasuryComponent` cannot afford the massive wage spike, the NPC immediately quits (`JobNone`), triggering a `StrikeMarker` and embedding a deep generational `-50` hook against the employer via the `SparseHookGraph`.
+
+**The Butterfly Effect:**
+A `DiseaseEntity` randomly spawns via `DiseaseVectorSystem`, wiping out 30% of a city. The `LaborCrisisSystem` activates. The surviving peasant (Farmer), seeing the dead bodies, ambitiously demands triple pay from the City Ruler. The depleted State Treasury fails to pay. The Farmer immediately quits, joins a Trade Union (StrikeMarker), and actively attempts to assassinate the City Ruler via the generated `-50` hook mapping into the `BloodFeudSystem`. Natively bridging Biological Plagues into Revolutionary Wars.
+
+**Architecture Validation:**
+Strict Data-Oriented Design (DOD) was maintained. Active labor crises are stored in an O(1) `map[uint32]*components.MarketComponent`, and Employer Treasuries are pre-cached in `map[uint64]float32` prior to querying NPCs, entirely removing nested `arche-go` iteration overhead. Structural changes (adding `StrikeMarker`) are deferred to prevent ECS panics. E2E verified via `TestLaborCrisisSystem_ButterflyEffect`.
