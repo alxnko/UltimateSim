@@ -28,6 +28,7 @@ type heirData struct {
 	OutgoingHooks map[uint64]int
 	IncomingHooks map[uint64]int
 	Artifact      *components.LegendComponent // Phase 32.1: Artifact Inheritance
+	LoanContract  *components.LoanContractComponent // Phase 46: Generational Debt Engine
 }
 
 type DeathSystem struct {
@@ -74,6 +75,7 @@ func (s *DeathSystem) Update(world *ecs.World) {
 
 	// We must register Component IDs BEFORE query
 	equipID := ecs.ComponentID[components.EquipmentComponent](world)
+	loanID := ecs.ComponentID[components.LoanContractComponent](world)
 
 	// Collect entities to remove to avoid modifying the world while iterating
 	// Reset the slice length to 0, retaining capacity to avoid GC pressure
@@ -143,11 +145,18 @@ func (s *DeathSystem) Update(world *ecs.World) {
 					}
 				}
 
+				var loanContract *components.LoanContractComponent
+				if query.Has(loanID) {
+					loan := (*components.LoanContractComponent)(query.Get(loanID))
+					loanCopy := *loan // Struct copy
+					loanContract = &loanCopy
+				}
+
 				outgoing := s.hookGraph.GetAllHooks(ident.ID)
 				incoming := s.hookGraph.GetAllIncomingHooks(ident.ID)
 
-				// Only trigger succession if there's a reason (hooks or debt or prestige or artifact)
-				if len(outgoing) > 0 || len(incoming) > 0 || pres > 0 || debt > 0 || artifact != nil {
+				// Only trigger succession if there's a reason (hooks or debt or prestige or artifact or active loan)
+				if len(outgoing) > 0 || len(incoming) > 0 || pres > 0 || debt > 0 || artifact != nil || loanContract != nil {
 					s.heirs = append(s.heirs, heirData{
 						DeadID:        ident.ID,
 						FamilyID:      affil.FamilyID,
@@ -156,6 +165,7 @@ func (s *DeathSystem) Update(world *ecs.World) {
 						OutgoingHooks: outgoing,
 						IncomingHooks: incoming,
 						Artifact:      artifact,
+						LoanContract:  loanContract,
 					})
 				}
 			}
@@ -269,6 +279,15 @@ func (s *DeathSystem) Update(world *ecs.World) {
 							break
 						}
 					}
+				}
+
+				// Phase 46: Generational Debt Engine - Transfer Loan Contract directly
+				if h.LoanContract != nil {
+					if !world.Has(heirEnt, loanID) {
+						world.Add(heirEnt, loanID)
+					}
+					loan := (*components.LoanContractComponent)(world.Get(heirEnt, loanID))
+					*loan = *h.LoanContract
 				}
 			}
 		}
