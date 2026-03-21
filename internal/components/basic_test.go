@@ -308,3 +308,12 @@ func TestQuarantineComponentSize(t *testing.T) {
 		t.Errorf("Expected QuarantineComponent to be %d bytes for DOD, got %d", expected, actual)
 	}
 }
+
+func TestMercenaryContractComponentSize(t *testing.T) {
+	// Phase 47: The Mercenary Engine
+	expected := uintptr(16)
+	actual := unsafe.Sizeof(MercenaryContractComponent{})
+	if actual != expected {
+		t.Errorf("Expected MercenaryContractComponent to be %d bytes for DOD, got %d", expected, actual)
+	}
+}

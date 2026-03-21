@@ -26,6 +26,7 @@ const (
 	JobSailor     uint8 = 8  // Phase 17.1: Maritime Labor Market
 	JobCaptain    uint8 = 9  // Phase 17.1: Maritime Labor Market
 	JobPenalLabor uint8 = 10 // Phase 45: The Penal Labor Engine
+	JobMercenary  uint8 = 11 // Phase 47: The Mercenary Engine
 )
 
 // Phase 09.5: Item Inheritance Threshold
@@ -530,4 +531,12 @@ type PenalLaborComponent struct {
 	StateCityID       uint32 // The city receiving the extracted resources
 	RemainingSentence uint16 // Ticks left in the sentence
 	_                 uint16 // Padding to exactly 8 bytes
+}
+
+// Phase 47: The Mercenary Engine
+// MercenaryContractComponent tracks the hitman contract assigned to an entity.
+type MercenaryContractComponent struct {
+	TargetID    uint64 // The ID of the NPC to assassinate
+	WealthBribe float32 // How much wealth was paid to execute this hit
+	_           uint32 // Padding to exactly 16 bytes
 }
