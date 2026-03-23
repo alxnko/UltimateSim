@@ -625,3 +625,22 @@ A `DiseaseEntity` randomly spawns via `DiseaseVectorSystem`, wiping out 30% of a
 
 **Architecture Validation:**
 Strict Data-Oriented Design (DOD) was maintained. Active labor crises are stored in an O(1) `map[uint32]*components.MarketComponent`, and Employer Treasuries are pre-cached in `map[uint64]float32` prior to querying NPCs, entirely removing nested `arche-go` iteration overhead. Structural changes (adding `StrikeMarker`) are deferred to prevent ECS panics. E2E verified via `TestLaborCrisisSystem_ButterflyEffect`.
+
+## Evolution: Phase 48 - The Ecological Rot & Plague Bridge
+**Date:** 2026-03-27
+**Focus:** Integration (Economy + Biology + Entropy)
+
+**The Problem (Vision Gap):**
+The Vision document outlines: "Negative feedback loops strictly punish unchecked growth or endless wealth." and "Plagues spread along trade routes causing massive labor shortages." However, Plagues (`DiseaseEntity`) were only spawned sporadically via `DiseaseVectorSystem`. `StorageComponent` rot in `SpoilageSystem` (Phase 13) merely deleted Food into the void. This meant an empire could hoard 50,000 units of grain with no systemic consequence other than numerical subtraction.
+
+**The Solution (Autonomous DOD Execution):**
+I created the **Ecological Rot & Plague Bridge**.
+1. Modified `SpoilageSystem` to calculate the exact `spoiledAmount` of Food decaying per tick.
+2. If the `spoiledAmount` exceeds massive thresholds (e.g., > 500 units), it structurally rolls a 1% probability to instantiate a `DiseaseEntity` on the exact `Position` of the hoarding `VillageEntity` or `CapitalComponent`.
+3. Lethality algorithmically scales with the volume of rot. (e.g., > 2000 rot = Lethality 50).
+
+**The Butterfly Effect:**
+A wealthy `Capital` artificially starves out a neighboring state via `ResourceWarSystem` by hoarding massive amounts of `Food` via Taxation. Over 2,000 units rot in their granaries in a single week. The sheer volume of ecological decay triggers Phase 48. A `DiseaseEntity` spawns in the Capital. The Plague kills off 30% of the city. The Phase 47 `LaborCrisisSystem` activates, multiplying wages, sparking Trade Union strikes, and causing an organic revolution spawned entirely by the King's initial greed.
+
+**Architecture Validation:**
+Strict Data-Oriented Design (DOD) was maintained. We evaluate the `spoiledAmount` natively inside the `arche-go` flat array iteration loop but defer the structural `world.NewEntity` instantiations to a post-loop slice `[]plagueSpawn` to prevent ECS lock panics. Tested and verified 100% deterministic through E2E `TestSpoilagePlagueBridge_Integration`.
