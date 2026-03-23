@@ -665,3 +665,40 @@ A `DiseaseEntity` randomly spawns via `DiseaseVectorSystem`, wiping out 30% of a
 
 **Architecture Validation:**
 Strict Data-Oriented Design (DOD) was maintained. Active labor crises are stored in an O(1) `map[uint32]*components.MarketComponent`, and Employer Treasuries are pre-cached in `map[uint64]float32` prior to querying NPCs, entirely removing nested `arche-go` iteration overhead. Structural changes (adding `StrikeMarker`) are deferred to prevent ECS panics. E2E verified via `TestLaborCrisisSystem_ButterflyEffect`.
+
+## Evolution: Phase 48 - The Ecological Rot & Plague Bridge
+**Date:** 2026-03-27
+**Focus:** Integration (Economy + Biology + Entropy)
+
+**The Problem (Vision Gap):**
+The Vision document outlines: "Negative feedback loops strictly punish unchecked growth or endless wealth." and "Plagues spread along trade routes causing massive labor shortages." However, Plagues (`DiseaseEntity`) were only spawned sporadically via `DiseaseVectorSystem`. `StorageComponent` rot in `SpoilageSystem` (Phase 13) merely deleted Food into the void. This meant an empire could hoard 50,000 units of grain with no systemic consequence other than numerical subtraction.
+
+**The Solution (Autonomous DOD Execution):**
+I created the **Ecological Rot & Plague Bridge**.
+1. Modified `SpoilageSystem` to calculate the exact `spoiledAmount` of Food decaying per tick.
+2. If the `spoiledAmount` exceeds massive thresholds (e.g., > 500 units), it structurally rolls a 1% probability to instantiate a `DiseaseEntity` on the exact `Position` of the hoarding `VillageEntity` or `CapitalComponent`.
+3. Lethality algorithmically scales with the volume of rot. (e.g., > 2000 rot = Lethality 50).
+
+**The Butterfly Effect:**
+A wealthy `Capital` artificially starves out a neighboring state via `ResourceWarSystem` by hoarding massive amounts of `Food` via Taxation. Over 2,000 units rot in their granaries in a single week. The sheer volume of ecological decay triggers Phase 48. A `DiseaseEntity` spawns in the Capital. The Plague kills off 30% of the city. The Phase 47 `LaborCrisisSystem` activates, multiplying wages, sparking Trade Union strikes, and causing an organic revolution spawned entirely by the King's initial greed.
+
+**Architecture Validation:**
+Strict Data-Oriented Design (DOD) was maintained. We evaluate the `spoiledAmount` natively inside the `arche-go` flat array iteration loop but defer the structural `world.NewEntity` instantiations to a post-loop slice `[]plagueSpawn` to prevent ECS lock panics. Tested and verified 100% deterministic through E2E `TestSpoilagePlagueBridge_Integration`.
+## Evolution: Phase 25.2 - The Ideological Succession Engine
+**Date:** 2026-03-25
+**Focus:** Integration (Biology + Memetics + Succession)
+
+**The Problem (Vision Gap):**
+The Vision document notes that "when the player character dies, they continue the legacy as a child, inheriting not just items, but Social Standing and Debts." While we were already transferring debts, artifacts, and social hooks across generations, we were missing the transfer of culture and ideology (the Memetic Pillar). The ideas and ideologies (`BeliefComponent`) a parent acquired through their lifetime simply vanished upon death.
+
+**The Solution (Autonomous DOD Execution):**
+I created the **Ideological Succession Engine** by modifying `DeathSystem`.
+1.  **Component Transfer:** Captured the dying NPC's `BeliefComponent` and deep copied it into `heirData`.
+2.  **Generational Decay:** Iterate over the beliefs and transfer them to the heir, but with a `Weight / 2` generational decay applied to simulate the dilution of ideologies passed down to offspring.
+3.  **DOD Principles:** Maintained pure DOD practices via strict contiguous loops and checking `Query.Has()` correctly to not break ECS traversal.
+
+**The Butterfly Effect:**
+If an NPC survives a massive plague or disaster, they might form a `TraumaticTradition` like `BeliefXenophobia`. With this new engine, when they die of old age, that deep-seated xenophobia is physically transferred to their child at half strength. If the child interacts with foreigners, it can immediately ignite Blood Feuds based solely on the traumatized memory inherited from their ancestors, connecting localized biological trauma directly to multi-generational cultural violence.
+
+**Architecture Validation:**
+Strict Data-Oriented Design (DOD) was maintained via `arche-go`. Slices are pre-allocated and `h.Beliefs` uses deep copy `copy(beliefs, belComp.Beliefs)` during death extraction to prevent ECS lock panics during the iterator, followed by a separate allocation loop. Validated through E2E `TestIdeologicalSuccession_Integration`.

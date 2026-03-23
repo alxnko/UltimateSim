@@ -118,3 +118,78 @@ func TestDeathSystem_BeliefInheritance(t *testing.T) {
 		t.Errorf("Expected inherited Belief Weight to be 25, got %d", hBelief.Beliefs[0].Weight)
 	}
 }
+
+// Evolution: Phase 25.2 - The Ideological Succession Engine
+func TestIdeologicalSuccession_Integration(t *testing.T) {
+	world := ecs.NewWorld()
+	hookGraph := engine.NewSparseHookGraph()
+	sys := systems.NewDeathSystem(&world, hookGraph)
+
+	// Register components
+	npcID := ecs.ComponentID[components.NPC](&world)
+	needsID := ecs.ComponentID[components.Needs](&world)
+	legacyID := ecs.ComponentID[components.Legacy](&world)
+	identID := ecs.ComponentID[components.Identity](&world)
+	affilID := ecs.ComponentID[components.Affiliation](&world)
+	beliefID := ecs.ComponentID[components.BeliefComponent](&world)
+
+	// Father (dying)
+	father := world.NewEntity(npcID, needsID, legacyID, identID, affilID, beliefID)
+	fatherIdent := (*components.Identity)(world.Get(father, identID))
+	fatherIdent.ID = 1
+
+	fatherNeeds := (*components.Needs)(world.Get(father, needsID))
+	fatherNeeds.Food = 0 // Starving
+
+	fatherAffil := (*components.Affiliation)(world.Get(father, affilID))
+	fatherAffil.FamilyID = 100
+
+	fatherBelief := (*components.BeliefComponent)(world.Get(father, beliefID))
+	fatherBelief.Beliefs = append(fatherBelief.Beliefs, components.Belief{
+		BeliefID: 42,
+		Weight:   100,
+	})
+
+	// Son (heir)
+	son := world.NewEntity(npcID, needsID, legacyID, identID, affilID, beliefID)
+	sonIdent := (*components.Identity)(world.Get(son, identID))
+	sonIdent.ID = 2
+
+	sonNeeds := (*components.Needs)(world.Get(son, needsID))
+	sonNeeds.Food = 50 // Alive
+
+	sonAffil := (*components.Affiliation)(world.Get(son, affilID))
+	sonAffil.FamilyID = 100
+
+	// Trigger DeathSystem
+	sys.Update(&world)
+
+	// Verify father despawned
+	if world.Alive(father) {
+		t.Errorf("Expected father to despawn, but he is still alive")
+	}
+
+	// Verify son received ideological succession with weight decay
+	if !world.Alive(son) {
+		t.Fatalf("Expected son to be alive, but he despawned")
+	}
+
+	sonBelief := (*components.BeliefComponent)(world.Get(son, beliefID))
+	if len(sonBelief.Beliefs) == 0 {
+		t.Fatalf("Expected son to inherit beliefs, but Beliefs array is empty")
+	}
+
+	found := false
+	for _, b := range sonBelief.Beliefs {
+		if b.BeliefID == 42 {
+			found = true
+			if b.Weight != 50 {
+				t.Errorf("Expected inherited belief weight to be 50, got %d", b.Weight)
+			}
+		}
+	}
+
+	if !found {
+		t.Errorf("Expected son to inherit BeliefID 42, but it was not found")
+	}
+}
