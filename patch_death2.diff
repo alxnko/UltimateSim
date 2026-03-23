@@ -1,0 +1,14 @@
+<<<<<<< SEARCH
+	// We must register Component IDs BEFORE query
+	equipID := ecs.ComponentID[components.EquipmentComponent](world)
+	loanID := ecs.ComponentID[components.LoanContractComponent](world)
+
+	// Collect entities to remove to avoid modifying the world while iterating
+=======
+	// We must register Component IDs BEFORE query
+	equipID := ecs.ComponentID[components.EquipmentComponent](world)
+	loanID := ecs.ComponentID[components.LoanContractComponent](world)
+	beliefID := ecs.ComponentID[components.BeliefComponent](world)
+
+	// Collect entities to remove to avoid modifying the world while iterating
+>>>>>>> REPLACE

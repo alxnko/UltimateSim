@@ -586,6 +586,46 @@ The Son, also impoverished, reaches the `DueTick`. He defaults. The `DebtDefault
 **Architecture Validation:**
 Strict Data-Oriented Design (DOD) was maintained. The transfer uses direct `arche-go` memory pointers (`*loan = *h.LoanContract`) and avoids nested ECS queries. Verified 100% deterministic through E2E `TestGenerationalDebtSystem_Integration`.
 
+## Evolution: Phase 25.2 - Ideological Succession Engine
+**Date:** 2026-03-26
+**Focus:** Integration (Culture/Memetics + Biology + Social Succession)
+
+**The Problem (Vision Gap):**
+The Vision document outlines: "Emergent Culture (Idea Virus): Religions/cultures are shared belief components spread by Charismatic NPCs. Geographical separation causes Cultural Drift. Massive societal trauma (plague) causes algorithmic Traumatic Traditions (e.g., permanent Xenophobia)."
+Previously, ideological beliefs (such as Religion or Xenophobia) were acquired via gossip or state action, but they died with the NPC. This meant that generational societal trauma or massive religious movements would fade instantly in a single generation, preventing deep-rooted historical biases from persisting.
+
+**The Solution (Autonomous DOD Execution):**
+I created the **Ideological Succession Engine** by bridging `DeathSystem` (Phase 25.1) directly with the Memetic Engine (Phase 07.5).
+1. Modified `DeathSystem` to explicitly query for any active `BeliefComponent` during the despawn phase.
+2. If the dying NPC holds strong beliefs (e.g., `Weight >= 10`), they are copied into the `heirData` cache to avoid ECS iterator locks.
+3. During succession execution, the exact beliefs are structurally attached to the selected heir, with their weights halved to mathematically simulate generational drift while preserving the core ideology.
+
+**The Butterfly Effect:**
+A city experiences massive starvation, spiking `Trauma` and generating `BeliefXenophobia` (Phase 20.3) across the populace. The traumatized parents inevitably starve or die of old age (`DeathSystem`). The `Ideological Succession Engine` passes their deep-rooted Xenophobia to their surviving children. The children, despite never experiencing the trauma themselves, continue to harbor deep biases. Decades later, when a foreign merchant caravan enters the city, the `XenophobiaSystem` evaluates the children's inherited beliefs and instantly triggers `-100` relationship hooks, sparking massive unprovoked Blood Feuds against the foreigners, executing the Vision of permanent historical grudges spanning generations.
+
+**Architecture Validation:**
+Strict Data-Oriented Design (DOD) was maintained. The transfer uses direct `arche-go` memory pointers and explicitly limits cache bloat by only propagating `Weight >= 10` beliefs. Verified 100% deterministic through E2E E2E `TestDeathSystem_BeliefInheritance`.
+
+## Evolution: Phase 25.2 - Ideological Succession Engine
+**Date:** 2026-03-26
+**Focus:** Integration (Culture/Memetics + Biology + Social Succession)
+
+**The Problem (Vision Gap):**
+The Vision document outlines: "Emergent Culture (Idea Virus): Religions/cultures are shared belief components spread by Charismatic NPCs. Geographical separation causes Cultural Drift. Massive societal trauma (plague) causes algorithmic Traumatic Traditions (e.g., permanent Xenophobia)."
+Previously, ideological beliefs (such as Religion or Xenophobia) were acquired via gossip or state action, but they died with the NPC. This meant that generational societal trauma or massive religious movements would fade instantly in a single generation, preventing deep-rooted historical biases from persisting.
+
+**The Solution (Autonomous DOD Execution):**
+I created the **Ideological Succession Engine** by bridging `DeathSystem` (Phase 25.1) directly with the Memetic Engine (Phase 07.5).
+1. Modified `DeathSystem` to explicitly query for any active `BeliefComponent` during the despawn phase.
+2. If the dying NPC holds strong beliefs (e.g., `Weight >= 10`), they are copied into the `heirData` cache to avoid ECS iterator locks.
+3. During succession execution, the exact beliefs are structurally attached to the selected heir, with their weights halved to mathematically simulate generational drift while preserving the core ideology.
+
+**The Butterfly Effect:**
+A city experiences massive starvation, spiking `Trauma` and generating `BeliefXenophobia` (Phase 20.3) across the populace. The traumatized parents inevitably starve or die of old age (`DeathSystem`). The `Ideological Succession Engine` passes their deep-rooted Xenophobia to their surviving children. The children, despite never experiencing the trauma themselves, continue to harbor deep biases. Decades later, when a foreign merchant caravan enters the city, the `XenophobiaSystem` evaluates the children's inherited beliefs and instantly triggers `-100` relationship hooks, sparking massive unprovoked Blood Feuds against the foreigners, executing the Vision of permanent historical grudges spanning generations.
+
+**Architecture Validation:**
+Strict Data-Oriented Design (DOD) was maintained. The transfer uses direct `arche-go` memory pointers and explicitly limits cache bloat by only propagating `Weight >= 10` beliefs. Verified 100% deterministic through E2E E2E `TestDeathSystem_BeliefInheritance`.
+
 ## Evolution: Phase 47 - The Plague-Labor Economics Bridge
 **Date:** 2026-03-25
 **Focus:** Integration (Biology + Economy + Labor + Justice)

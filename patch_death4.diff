@@ -1,0 +1,44 @@
+<<<<<<< SEARCH
+				// Phase 46: Generational Debt Engine - Transfer Loan Contract directly
+				if h.LoanContract != nil {
+					if !world.Has(heirEnt, loanID) {
+						world.Add(heirEnt, loanID)
+					}
+					loan := (*components.LoanContractComponent)(world.Get(heirEnt, loanID))
+					*loan = *h.LoanContract
+				}
+			}
+		}
+=======
+				// Phase 46: Generational Debt Engine - Transfer Loan Contract directly
+				if h.LoanContract != nil {
+					if !world.Has(heirEnt, loanID) {
+						world.Add(heirEnt, loanID)
+					}
+					loan := (*components.LoanContractComponent)(world.Get(heirEnt, loanID))
+					*loan = *h.LoanContract
+				}
+
+				// Phase 25.2: Ideological Succession Engine - Transfer beliefs
+				if len(h.Beliefs) > 0 {
+					if !world.Has(heirEnt, beliefID) {
+						world.Add(heirEnt, beliefID)
+					}
+					heirBeliefs := (*components.BeliefComponent)(world.Get(heirEnt, beliefID))
+					for _, inheritedBelief := range h.Beliefs {
+						found := false
+						for i := 0; i < len(heirBeliefs.Beliefs); i++ {
+							if heirBeliefs.Beliefs[i].BeliefID == inheritedBelief.BeliefID {
+								heirBeliefs.Beliefs[i].Weight += inheritedBelief.Weight
+								found = true
+								break
+							}
+						}
+						if !found {
+							heirBeliefs.Beliefs = append(heirBeliefs.Beliefs, inheritedBelief)
+						}
+					}
+				}
+			}
+		}
+>>>>>>> REPLACE

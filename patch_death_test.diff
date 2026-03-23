@@ -1,49 +1,9 @@
-package systems_test
-
-import (
-	"testing"
-
-	"github.com/ALXNKO/UltimateSim/internal/components"
-	"github.com/ALXNKO/UltimateSim/internal/systems"
-	"github.com/ALXNKO/UltimateSim/internal/engine"
-	"github.com/mlange-42/arche/ecs"
-)
-
-// Phase 03.3: DeathSystem Tests
-
-// TestDeathSystem_E2E validates "Test First" logic:
-// If NPC Food reaches 0, the entity must be despawned
-func TestDeathSystem_E2E(t *testing.T) {
-	world := ecs.NewWorld()
-	needsID := ecs.ComponentID[components.Needs](&world)
-
-	hooks := engine.NewSparseHookGraph()
-	deathSystem := systems.NewDeathSystem(&world, hooks)
-
-	// Entity 1: Has Food
-	e1 := world.NewEntity(needsID)
-	n1 := (*components.Needs)(world.Get(e1, needsID))
-	n1.Food = 10.0
-
-	// Entity 2: Starving
-	e2 := world.NewEntity(needsID)
-	n2 := (*components.Needs)(world.Get(e2, needsID))
-	n2.Food = 0.0
-
-	// Entity 3: Already dead mathematically (negative)
-	e3 := world.NewEntity(needsID)
-	n3 := (*components.Needs)(world.Get(e3, needsID))
-	n3.Food = -5.0
-
-	deathSystem.Update(&world)
-
-	// Verify
-	if !world.Alive(e1) {
-		t.Errorf("Expected Entity 1 (Food > 0) to be alive")
+<<<<<<< SEARCH
+	if world.Alive(e3) {
+		t.Errorf("Expected Entity 3 (Food < 0) to be dead")
 	}
-	if world.Alive(e2) {
-		t.Errorf("Expected Entity 2 (Food = 0) to be dead")
-	}
+}
+=======
 	if world.Alive(e3) {
 		t.Errorf("Expected Entity 3 (Food < 0) to be dead")
 	}
@@ -118,3 +78,4 @@ func TestDeathSystem_BeliefInheritance(t *testing.T) {
 		t.Errorf("Expected inherited Belief Weight to be 25, got %d", hBelief.Beliefs[0].Weight)
 	}
 }
+>>>>>>> REPLACE

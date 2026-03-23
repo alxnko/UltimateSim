@@ -1,0 +1,63 @@
+<<<<<<< SEARCH
+				var loanContract *components.LoanContractComponent
+				if query.Has(loanID) {
+					loan := (*components.LoanContractComponent)(query.Get(loanID))
+					loanCopy := *loan // Struct copy
+					loanContract = &loanCopy
+				}
+
+				outgoing := s.hookGraph.GetAllHooks(ident.ID)
+				incoming := s.hookGraph.GetAllIncomingHooks(ident.ID)
+
+				// Only trigger succession if there's a reason (hooks or debt or prestige or artifact or active loan)
+				if len(outgoing) > 0 || len(incoming) > 0 || pres > 0 || debt > 0 || artifact != nil || loanContract != nil {
+					s.heirs = append(s.heirs, heirData{
+						DeadID:        ident.ID,
+						FamilyID:      affil.FamilyID,
+						Prestige:      pres,
+						InheritedDebt: debt,
+						OutgoingHooks: outgoing,
+						IncomingHooks: incoming,
+						Artifact:      artifact,
+						LoanContract:  loanContract,
+					})
+				}
+=======
+				var loanContract *components.LoanContractComponent
+				if query.Has(loanID) {
+					loan := (*components.LoanContractComponent)(query.Get(loanID))
+					loanCopy := *loan // Struct copy
+					loanContract = &loanCopy
+				}
+
+				var inheritedBeliefs []components.Belief
+				if query.Has(beliefID) {
+					bel := (*components.BeliefComponent)(query.Get(beliefID))
+					for _, b := range bel.Beliefs {
+						if b.Weight >= 10 { // Only inherit strong beliefs
+							inheritedBeliefs = append(inheritedBeliefs, components.Belief{
+								BeliefID: b.BeliefID,
+								Weight:   b.Weight / 2, // Decay across generations
+							})
+						}
+					}
+				}
+
+				outgoing := s.hookGraph.GetAllHooks(ident.ID)
+				incoming := s.hookGraph.GetAllIncomingHooks(ident.ID)
+
+				// Only trigger succession if there's a reason (hooks or debt or prestige or artifact or active loan)
+				if len(outgoing) > 0 || len(incoming) > 0 || pres > 0 || debt > 0 || artifact != nil || loanContract != nil || len(inheritedBeliefs) > 0 {
+					s.heirs = append(s.heirs, heirData{
+						DeadID:        ident.ID,
+						FamilyID:      affil.FamilyID,
+						Prestige:      pres,
+						InheritedDebt: debt,
+						OutgoingHooks: outgoing,
+						IncomingHooks: incoming,
+						Artifact:      artifact,
+						LoanContract:  loanContract,
+						Beliefs:       inheritedBeliefs,
+					})
+				}
+>>>>>>> REPLACE

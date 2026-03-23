@@ -29,6 +29,7 @@ type heirData struct {
 	IncomingHooks map[uint64]int
 	Artifact      *components.LegendComponent // Phase 32.1: Artifact Inheritance
 	LoanContract  *components.LoanContractComponent // Phase 46: Generational Debt Engine
+	Beliefs       []components.Belief // Phase 25.2: Ideological Succession Engine
 }
 
 type DeathSystem struct {
@@ -76,6 +77,7 @@ func (s *DeathSystem) Update(world *ecs.World) {
 	// We must register Component IDs BEFORE query
 	equipID := ecs.ComponentID[components.EquipmentComponent](world)
 	loanID := ecs.ComponentID[components.LoanContractComponent](world)
+	beliefID := ecs.ComponentID[components.BeliefComponent](world)
 
 	// Collect entities to remove to avoid modifying the world while iterating
 	// Reset the slice length to 0, retaining capacity to avoid GC pressure
@@ -152,11 +154,24 @@ func (s *DeathSystem) Update(world *ecs.World) {
 					loanContract = &loanCopy
 				}
 
+				var inheritedBeliefs []components.Belief
+				if query.Has(beliefID) {
+					bel := (*components.BeliefComponent)(query.Get(beliefID))
+					for _, b := range bel.Beliefs {
+						if b.Weight >= 10 { // Only inherit strong beliefs
+							inheritedBeliefs = append(inheritedBeliefs, components.Belief{
+								BeliefID: b.BeliefID,
+								Weight:   b.Weight / 2, // Decay across generations
+							})
+						}
+					}
+				}
+
 				outgoing := s.hookGraph.GetAllHooks(ident.ID)
 				incoming := s.hookGraph.GetAllIncomingHooks(ident.ID)
 
 				// Only trigger succession if there's a reason (hooks or debt or prestige or artifact or active loan)
-				if len(outgoing) > 0 || len(incoming) > 0 || pres > 0 || debt > 0 || artifact != nil || loanContract != nil {
+				if len(outgoing) > 0 || len(incoming) > 0 || pres > 0 || debt > 0 || artifact != nil || loanContract != nil || len(inheritedBeliefs) > 0 {
 					s.heirs = append(s.heirs, heirData{
 						DeadID:        ident.ID,
 						FamilyID:      affil.FamilyID,
@@ -166,6 +181,7 @@ func (s *DeathSystem) Update(world *ecs.World) {
 						IncomingHooks: incoming,
 						Artifact:      artifact,
 						LoanContract:  loanContract,
+						Beliefs:       inheritedBeliefs,
 					})
 				}
 			}
@@ -288,6 +304,27 @@ func (s *DeathSystem) Update(world *ecs.World) {
 					}
 					loan := (*components.LoanContractComponent)(world.Get(heirEnt, loanID))
 					*loan = *h.LoanContract
+				}
+
+				// Phase 25.2: Ideological Succession Engine - Transfer beliefs
+				if len(h.Beliefs) > 0 {
+					if !world.Has(heirEnt, beliefID) {
+						world.Add(heirEnt, beliefID)
+					}
+					heirBeliefs := (*components.BeliefComponent)(world.Get(heirEnt, beliefID))
+					for _, inheritedBelief := range h.Beliefs {
+						found := false
+						for i := 0; i < len(heirBeliefs.Beliefs); i++ {
+							if heirBeliefs.Beliefs[i].BeliefID == inheritedBelief.BeliefID {
+								heirBeliefs.Beliefs[i].Weight += inheritedBelief.Weight
+								found = true
+								break
+							}
+						}
+						if !found {
+							heirBeliefs.Beliefs = append(heirBeliefs.Beliefs, inheritedBelief)
+						}
+					}
 				}
 			}
 		}
