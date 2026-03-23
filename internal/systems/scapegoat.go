@@ -72,23 +72,40 @@ func (s *ScapegoatSystem) Update(world *ecs.World) {
 	// 2. Extract NPCs to find minority beliefs
 	npcID := ecs.ComponentID[components.NPC](world)
 	belID := ecs.ComponentID[components.BeliefComponent](world)
+	identID := ecs.ComponentID[components.Identity](world)
+	esoID := ecs.ComponentID[components.EsotericMarker](world)
 
 	npcQuery := world.Query(ecs.All(npcID, posID, belID))
 
 	type beliefNode struct {
-		x       float32
-		y       float32
-		beliefs []components.Belief
+		x          float32
+		y          float32
+		beliefs    []components.Belief
+		isEsoteric bool
 	}
 
 	nodes := make([]beliefNode, 0, 500)
 	for npcQuery.Next() {
 		pos := (*components.Position)(npcQuery.Get(posID))
 		bel := (*components.BeliefComponent)(npcQuery.Get(belID))
+		entity := npcQuery.Entity()
+
+		isEso := false
+		if world.Has(entity, identID) {
+			ident := (*components.Identity)(world.Get(entity, identID))
+			if (ident.BaseTraits & components.TraitEsoteric) != 0 {
+				isEso = true
+			}
+		}
+		if world.Has(entity, esoID) {
+			isEso = true
+		}
+
 		nodes = append(nodes, beliefNode{
-			x:       pos.X,
-			y:       pos.Y,
-			beliefs: bel.Beliefs,
+			x:          pos.X,
+			y:          pos.Y,
+			beliefs:    bel.Beliefs,
+			isEsoteric: isEso,
 		})
 	}
 
@@ -98,6 +115,7 @@ func (s *ScapegoatSystem) Update(world *ecs.World) {
 
 		beliefCounts := make(map[uint32]int)
 		totalBelievers := 0
+		totalEsoteric := 0
 
 		// Count beliefs in radius
 		for k := 0; k < len(nodes); k++ {
@@ -105,6 +123,9 @@ func (s *ScapegoatSystem) Update(world *ecs.World) {
 			dx := n.x - j.X
 			dy := n.y - j.Y
 			if dx*dx+dy*dy <= j.RadiusSquared {
+				if n.isEsoteric {
+					totalEsoteric++
+				}
 				for _, b := range n.beliefs {
 					beliefCounts[b.BeliefID]++
 					totalBelievers++
@@ -112,8 +133,22 @@ func (s *ScapegoatSystem) Update(world *ecs.World) {
 			}
 		}
 
-		if totalBelievers == 0 {
+		if totalBelievers == 0 && totalEsoteric == 0 {
 			continue // Ghost town
+		}
+
+		// Phase 49: The Witch Hunt Engine - Esoteric Scapegoating
+		if totalEsoteric > 0 {
+			j.Comp.TargetEsoteric = true
+			j.Comp.Active = true
+
+			// Catharsis: The state feels temporary relief by blaming the esoteric minorities
+			if j.Jur.Trauma >= 10 {
+				j.Jur.Trauma -= 10
+			} else {
+				j.Jur.Trauma = 0
+			}
+			continue // Skip minority belief logic
 		}
 
 		// Find a minority belief (e.g. less than 30% of total believers, but > 0)

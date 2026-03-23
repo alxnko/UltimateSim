@@ -117,6 +117,8 @@ func (s *JusticeSystem) Update(world *ecs.World) {
 	storageID := ecs.ComponentID[components.StorageComponent](world)
 		contraID := ecs.ComponentID[components.ContrabandComponent](world)
 	beliefID := ecs.ComponentID[components.BeliefComponent](world) // Phase 36.1
+	jobID := ecs.ComponentID[components.JobComponent](world) // Phase 49
+	esoID := ecs.ComponentID[components.EsotericMarker](world) // Phase 49
 
 	npcQuery := world.Query(ecs.All(memID, posID, affID))
 
@@ -158,6 +160,35 @@ func (s *JusticeSystem) Update(world *ecs.World) {
 						isCriminal = true
 						break
 					}
+				}
+			}
+
+			// Phase 49: The Witch Hunt Engine
+			if !isCriminal && activeJur.Scapegoat != nil && activeJur.Scapegoat.TargetEsoteric {
+				isEsoteric := false
+				if world.Has(entity, idID) {
+					ident := (*components.Identity)(world.Get(entity, idID))
+					if (ident.BaseTraits & components.TraitEsoteric) != 0 {
+						isEsoteric = true
+					}
+				}
+				if world.Has(entity, jobID) {
+					job := (*components.JobComponent)(world.Get(entity, jobID))
+					if job.JobID == components.JobCaster {
+						isEsoteric = true
+					}
+				}
+				if world.Has(entity, esoID) {
+					isEsoteric = true
+				}
+				if isEsoteric {
+					isCriminal = true
+					// Natively log InteractionEsoteric to memory buffer
+					mem.Events[mem.Head] = components.MemoryEvent{
+						InteractionType: components.InteractionEsoteric,
+						TickStamp:       0, // TickStamp is abstractly evaluated as 0 in BanditrySystem for crimes
+					}
+					mem.Head = (mem.Head + 1) % uint8(len(mem.Events))
 				}
 			}
 

@@ -12,6 +12,7 @@ const (
 	TraitJealous      uint32 = 1 << 3 // Phase 44: The Vassal Safety Valve Engine
 	TraitAbolitionist uint32 = 1 << 4 // Phase 45: The Penal Labor Engine
 	TraitAmbitious    uint32 = 1 << 5 // Phase 47: The Plague-Labor Economics Bridge
+	TraitEsoteric     uint32 = 1 << 6 // Phase 49: The Witch Hunt Engine
 )
 
 // Phase 13.2: Labor Rebalancing
@@ -45,6 +46,7 @@ const (
 	InteractionAssault  uint8 = 3 // Phase 18.1: Law Definitions
 	InteractionTheft    uint8 = 4 // Phase 18.1: Law Definitions
 	InteractionMurder   uint8 = 5 // Phase 23.1: The Blood Feud Engine
+	InteractionEsoteric uint8 = 6 // Phase 49: The Witch Hunt Engine
 )
 
 // Identity component
@@ -498,7 +500,15 @@ type VitalsComponent struct {
 type ScapegoatComponent struct {
 	TargetBeliefID uint32
 	Active         bool
-	_              [3]byte // Pad to 8 bytes
+	TargetEsoteric bool    // Phase 49: The Witch Hunt Engine
+	_              [2]byte // Pad to 8 bytes
+}
+
+// Phase 49: The Witch Hunt Engine
+// EsotericMarker explicitly tags NPCs caught casting or carrying magical legacy items.
+type EsotericMarker struct {
+	Active bool
+	_      [3]byte // Pad to 4 bytes
 }
 
 // Phase 31: Systemic Entropy (Natural Disasters)

@@ -300,6 +300,24 @@ func TestDesperationComponentSize(t *testing.T) {
 	}
 }
 
+func TestScapegoatComponentSize(t *testing.T) {
+	// Phase 36.1: The Scapegoat & Witch Hunt Engine
+	expected := uintptr(8)
+	actual := unsafe.Sizeof(ScapegoatComponent{})
+	if actual != expected {
+		t.Errorf("ScapegoatComponent size expected %d bytes, got %d bytes", expected, actual)
+	}
+}
+
+func TestEsotericMarkerSize(t *testing.T) {
+	// Phase 49: The Witch Hunt Engine
+	expected := uintptr(4)
+	actual := unsafe.Sizeof(EsotericMarker{})
+	if actual != expected {
+		t.Errorf("EsotericMarker size expected %d bytes, got %d bytes", expected, actual)
+	}
+}
+
 func TestQuarantineComponentSize(t *testing.T) {
 	// Phase 37.1: The Quarantine Engine
 	expected := uintptr(8)

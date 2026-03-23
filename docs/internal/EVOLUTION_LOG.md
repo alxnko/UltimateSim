@@ -626,6 +626,26 @@ A city experiences massive starvation, spiking `Trauma` and generating `BeliefXe
 **Architecture Validation:**
 Strict Data-Oriented Design (DOD) was maintained. The transfer uses direct `arche-go` memory pointers and explicitly limits cache bloat by only propagating `Weight >= 10` beliefs. Verified 100% deterministic through E2E E2E `TestDeathSystem_BeliefInheritance`.
 
+## Evolution: Phase 49 - The Witch Hunt Engine
+**Date:** 2026-03-28
+**Focus:** Integration (Magic + Ideology + Justice)
+
+**The Problem (Vision Gap):**
+The Vision document under "Future Expansion Slots" mentions "Dynamic Religion & Magic: ... modeling esoteric magic systems as pure data properties". Previously, Phase 20.2 (`CastingSystem`) existed where `JobCaster` NPCs could drain `Mana` from the `MapGrid` to cause localized temperature spikes. However, this system existed in a complete silo. It had no systemic consequences. A Caster could burn down a village's ecosystem with magic, and the state's `JusticeSystem` or `ScapegoatSystem` would be completely blind to it.
+
+**The Solution (Autonomous DOD Execution):**
+I created the **Witch Hunt Engine**, deeply integrating Phase 20.2 with Phase 36 (Scapegoat) and Phase 18 (Justice).
+1. **Component Tagging:** Created `EsotericMarker`, `TraitEsoteric`, and `InteractionEsoteric`. When a `JobCaster` casts a spell, they are permanently tagged with `EsotericMarker`.
+2. **The Mob Trigger:** Modified `ScapegoatSystem`. During crises (when state `Trauma >= 15`), instead of just picking a random minority religion, the state first scans the radius for any entities carrying `EsotericMarker` or `TraitEsoteric`.
+3. **Systemic Blame:** If any magic users exist, the State sets `TargetEsoteric = true`, absolving itself of the Trauma through catharsis.
+4. **Execution:** The `JusticeSystem` parses this new `ScapegoatComponent` state. It sweeps the jurisdiction, natively tagging `isCriminal = true` on any Caster, assigning bounties, and feeding them directly into the Guard execution pipeline (Banishment, Fines, Blood Feuds).
+
+**The Butterfly Effect:**
+A Caster uses magic in a Village to save themselves from a wolf, draining Mana and spiking the temperature. The temperature spike causes heatstroke in the local `VitalsComponent`, driving up the Village's `Trauma` score. The `ScapegoatSystem` evaluates the Trauma, detects the Caster's new `EsotericMarker`, and blames them. The `JusticeSystem` flags the Caster. Guards arrest the Caster, confiscating their wealth and banishing them to the wilderness. The Caster survives and generates a deep `-50` Blood Feud against the Guard who arrested them, triggering generational Clan warfare born entirely from a single magical act.
+
+**Architecture Validation:**
+Strict Data-Oriented Design (DOD) was maintained. `EsotericMarker` is exactly 4 bytes. `ScapegoatComponent` remains 8 bytes. `CastingSystem` modifies structure (`world.Add`) cleanly outside the `arche-go` iterator loop using a pre-allocated flat slice `toMark` to prevent ECS lock panics. E2E verified via `TestWitchHunt_Integration`.
+
 ## Evolution: Phase 47 - The Mercenary Engine
 **Date:** 2026-03-21
 **Focus:** Integration (Economy + Justice + Blood Feuds)

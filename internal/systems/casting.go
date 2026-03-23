@@ -25,9 +25,12 @@ func (s *CastingSystem) Update(world *ecs.World) {
 	// Query for entities that have Position and JobComponent
 	posID := ecs.ComponentID[components.Position](world)
 	jobID := ecs.ComponentID[components.JobComponent](world)
+	esoID := ecs.ComponentID[components.EsotericMarker](world)
 
 	filter := ecs.All(posID, jobID)
 	query := world.Query(&filter)
+
+	toMark := make([]ecs.Entity, 0, 10)
 
 	for query.Next() {
 		job := (*components.JobComponent)(query.Get(jobID))
@@ -66,6 +69,17 @@ func (s *CastingSystem) Update(world *ecs.World) {
 
 			// Write back tile data
 			s.mapGrid.Tiles[idx] = tile
+
+			// Phase 49: The Witch Hunt Engine - Mark the caster as esoteric
+			if !world.Has(query.Entity(), esoID) {
+				toMark = append(toMark, query.Entity())
+			}
 		}
+	}
+
+	for _, e := range toMark {
+		world.Add(e, esoID)
+		marker := (*components.EsotericMarker)(world.Get(e, esoID))
+		marker.Active = true
 	}
 }
