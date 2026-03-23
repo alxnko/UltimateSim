@@ -154,20 +154,24 @@ func (s *DeathSystem) Update(world *ecs.World) {
 					loanContract = &loanCopy
 				}
 
-				var beliefs []components.Belief
+				var inheritedBeliefs []components.Belief
 				if query.Has(beliefID) {
-					belComp := (*components.BeliefComponent)(query.Get(beliefID))
-					if len(belComp.Beliefs) > 0 {
-						beliefs = make([]components.Belief, len(belComp.Beliefs))
-						copy(beliefs, belComp.Beliefs)
+					bel := (*components.BeliefComponent)(query.Get(beliefID))
+					for _, b := range bel.Beliefs {
+						if b.Weight >= 10 { // Only inherit strong beliefs
+							inheritedBeliefs = append(inheritedBeliefs, components.Belief{
+								BeliefID: b.BeliefID,
+								Weight:   b.Weight / 2, // Decay across generations
+							})
+						}
 					}
 				}
 
 				outgoing := s.hookGraph.GetAllHooks(ident.ID)
 				incoming := s.hookGraph.GetAllIncomingHooks(ident.ID)
 
-				// Only trigger succession if there's a reason (hooks or debt or prestige or artifact or active loan or beliefs)
-				if len(outgoing) > 0 || len(incoming) > 0 || pres > 0 || debt > 0 || artifact != nil || loanContract != nil || len(beliefs) > 0 {
+				// Only trigger succession if there's a reason (hooks or debt or prestige or artifact or active loan)
+				if len(outgoing) > 0 || len(incoming) > 0 || pres > 0 || debt > 0 || artifact != nil || loanContract != nil || len(inheritedBeliefs) > 0 {
 					s.heirs = append(s.heirs, heirData{
 						DeadID:        ident.ID,
 						FamilyID:      affil.FamilyID,
@@ -177,7 +181,7 @@ func (s *DeathSystem) Update(world *ecs.World) {
 						IncomingHooks: incoming,
 						Artifact:      artifact,
 						LoanContract:  loanContract,
-						Beliefs:       beliefs,
+						Beliefs:       inheritedBeliefs,
 					})
 				}
 			}
@@ -302,30 +306,23 @@ func (s *DeathSystem) Update(world *ecs.World) {
 					*loan = *h.LoanContract
 				}
 
-				// Evolution: Phase 25.2 - The Ideological Succession Engine
+				// Phase 25.2: Ideological Succession Engine - Transfer beliefs
 				if len(h.Beliefs) > 0 {
 					if !world.Has(heirEnt, beliefID) {
 						world.Add(heirEnt, beliefID)
 					}
-					belComp := (*components.BeliefComponent)(world.Get(heirEnt, beliefID))
-
-					for _, b := range h.Beliefs {
-						decayedWeight := b.Weight / 2
-						if decayedWeight > 0 {
-							found := false
-							for i := range belComp.Beliefs {
-								if belComp.Beliefs[i].BeliefID == b.BeliefID {
-									belComp.Beliefs[i].Weight += decayedWeight
-									found = true
-									break
-								}
+					heirBeliefs := (*components.BeliefComponent)(world.Get(heirEnt, beliefID))
+					for _, inheritedBelief := range h.Beliefs {
+						found := false
+						for i := 0; i < len(heirBeliefs.Beliefs); i++ {
+							if heirBeliefs.Beliefs[i].BeliefID == inheritedBelief.BeliefID {
+								heirBeliefs.Beliefs[i].Weight += inheritedBelief.Weight
+								found = true
+								break
 							}
-							if !found {
-								belComp.Beliefs = append(belComp.Beliefs, components.Belief{
-									BeliefID: b.BeliefID,
-									Weight:   decayedWeight,
-								})
-							}
+						}
+						if !found {
+							heirBeliefs.Beliefs = append(heirBeliefs.Beliefs, inheritedBelief)
 						}
 					}
 				}

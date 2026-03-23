@@ -1,0 +1,12 @@
+<<<<<<< SEARCH
+	IncomingHooks map[uint64]int
+	Artifact      *components.LegendComponent // Phase 32.1: Artifact Inheritance
+	LoanContract  *components.LoanContractComponent // Phase 46: Generational Debt Engine
+}
+=======
+	IncomingHooks map[uint64]int
+	Artifact      *components.LegendComponent // Phase 32.1: Artifact Inheritance
+	LoanContract  *components.LoanContractComponent // Phase 46: Generational Debt Engine
+	Beliefs       []components.Belief // Phase 25.2: Ideological Succession Engine
+}
+>>>>>>> REPLACE

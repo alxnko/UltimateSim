@@ -1,0 +1,81 @@
+<<<<<<< SEARCH
+	if world.Alive(e3) {
+		t.Errorf("Expected Entity 3 (Food < 0) to be dead")
+	}
+}
+=======
+	if world.Alive(e3) {
+		t.Errorf("Expected Entity 3 (Food < 0) to be dead")
+	}
+}
+
+// Phase 25.2: Ideological Succession Engine Integration Test
+func TestDeathSystem_BeliefInheritance(t *testing.T) {
+	// Initialize deterministic RNG
+	engine.InitializeRNG([32]byte{10, 11, 12})
+
+	world := ecs.NewWorld()
+	hookGraph := engine.NewSparseHookGraph()
+	sys := systems.NewDeathSystem(&world, hookGraph)
+
+	posID := ecs.ComponentID[components.Position](&world)
+	needsID := ecs.ComponentID[components.Needs](&world)
+	idID := ecs.ComponentID[components.Identity](&world)
+	affilID := ecs.ComponentID[components.Affiliation](&world)
+	legacyID := ecs.ComponentID[components.Legacy](&world)
+	npcID := ecs.ComponentID[components.NPC](&world)
+	beliefID := ecs.ComponentID[components.BeliefComponent](&world)
+
+	// Create dying parent
+	parent := world.NewEntity()
+	world.Add(parent, posID, needsID, idID, affilID, legacyID, npcID, beliefID)
+	pNeeds := (*components.Needs)(world.Get(parent, needsID))
+	pNeeds.Food = 0 // Will die
+	pIdent := (*components.Identity)(world.Get(parent, idID))
+	pIdent.ID = 100
+	pAff := (*components.Affiliation)(world.Get(parent, affilID))
+	pAff.FamilyID = 1
+	pBelief := (*components.BeliefComponent)(world.Get(parent, beliefID))
+	pBelief.Beliefs = append(pBelief.Beliefs, components.Belief{BeliefID: 123, Weight: 50}) // Strong belief
+	pBelief.Beliefs = append(pBelief.Beliefs, components.Belief{BeliefID: 456, Weight: 5})  // Weak belief, should not inherit
+
+	// Create heir
+	heir := world.NewEntity()
+	world.Add(heir, posID, needsID, idID, affilID, legacyID, npcID) // Heir does NOT have belief component initially
+	hNeeds := (*components.Needs)(world.Get(heir, needsID))
+	hNeeds.Food = 100 // Survives
+	hIdent := (*components.Identity)(world.Get(heir, idID))
+	hIdent.ID = 200
+	hAff := (*components.Affiliation)(world.Get(heir, affilID))
+	hAff.FamilyID = 1 // Same family
+
+	// Trigger succession
+	sys.Update(&world)
+
+	if world.Alive(parent) {
+		t.Errorf("Parent should be dead")
+	}
+
+	if !world.Alive(heir) {
+		t.Errorf("Heir should be alive")
+	}
+
+	// Verify belief inheritance
+	if !world.Has(heir, beliefID) {
+		t.Fatalf("Heir should have acquired the BeliefComponent")
+	}
+
+	hBelief := (*components.BeliefComponent)(world.Get(heir, beliefID))
+	if len(hBelief.Beliefs) != 1 {
+		t.Fatalf("Heir should have inherited exactly 1 belief, got %d", len(hBelief.Beliefs))
+	}
+
+	if hBelief.Beliefs[0].BeliefID != 123 {
+		t.Errorf("Expected inherited BeliefID to be 123, got %d", hBelief.Beliefs[0].BeliefID)
+	}
+
+	if hBelief.Beliefs[0].Weight != 25 { // 50 / 2
+		t.Errorf("Expected inherited Belief Weight to be 25, got %d", hBelief.Beliefs[0].Weight)
+	}
+}
+>>>>>>> REPLACE
