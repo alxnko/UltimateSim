@@ -6,6 +6,10 @@ This document serves as the comprehensive and definitive index of all actually i
 
 ---
 
+## Phase 47: The Mercenary Engine
+- **Phase 47.1 - Proxy Violence & Wealth Vectors**: Bridges Economy (Wealth), Poverty (Desperation), and Justice (Blood Feuds). Implemented within `MercenarySystem` (`internal/systems/mercenary.go`). The system maps wealthy NPCs (`Needs.Wealth > 500`) who harbor severe negative hooks (`<= -50`) against any target via the `SparseHookGraph`. It then iterates through nearby desperately poor NPCs (`JobNone`, `DesperationComponent.Level >= 30`). The system mathematically transfers a `WealthBribe` from the client to the mercenary, appending a 16-byte DOD `MercenaryContractComponent`. Crucially, the hired mercenary structurally absorbs the negative hook (-100) natively via the `SparseHookGraph`, seamlessly chaining into the existing `BloodFeudSystem` (Phase 23) which naturally commands the mercenary to pathfind and execute the target. This fulfills the vision of massive proxy conflicts funded entirely by untouchable economic capital.
+
+
 ## Phase 44: The Vassal Safety Valve Engine
 - **Phase 44.1 - The Vassal Safety Valve**: Bridges Economy (Monopoly Wealth), Genetics/Traits (Jealousy), Information (Rumors), and Justice (Blood Feuds). Implemented within `VassalSafetyValveSystem` (`internal/systems/vassal_safety_valve.go`). The system periodically evaluates the wealth of all citizens per `ClanID` in a city. If a Monopolist Clan holds >50% of the city wealth (minimum 1000 total), the system identifies the wealthiest `RulerID` of the Monopolist Clan. It then iterates all jealous NPCs (`TraitJealous`) in the city belonging to rival clans. These jealous NPCs automatically generate a massive `-50` grudge hook against the Monopolist Ruler via `engine.SparseHookGraph`, natively triggering the `BloodFeudSystem` (Phase 23) which prompts organic assassinations. Additionally, the jealous NPCs concurrently generate a mutated negative `Secret` via `SecretRegistry` and append it to their `SecretComponent` to be memetically leaked to the population via `GossipDistributionSystem` (Phase 07), destroying the monopolist's legacy.
 
@@ -50,6 +54,10 @@ The core deterministic systems powering the total simulation and managing the wo
 
 ---
 
+## Phase 47: The Mercenary Engine
+- **Phase 47.1 - Proxy Violence & Wealth Vectors**: Bridges Economy (Wealth), Poverty (Desperation), and Justice (Blood Feuds). Implemented within `MercenarySystem` (`internal/systems/mercenary.go`). The system maps wealthy NPCs (`Needs.Wealth > 500`) who harbor severe negative hooks (`<= -50`) against any target via the `SparseHookGraph`. It then iterates through nearby desperately poor NPCs (`JobNone`, `DesperationComponent.Level >= 30`). The system mathematically transfers a `WealthBribe` from the client to the mercenary, appending a 16-byte DOD `MercenaryContractComponent`. Crucially, the hired mercenary structurally absorbs the negative hook (-100) natively via the `SparseHookGraph`, seamlessly chaining into the existing `BloodFeudSystem` (Phase 23) which naturally commands the mercenary to pathfind and execute the target. This fulfills the vision of massive proxy conflicts funded entirely by untouchable economic capital.
+
+
 ## 2. ECS Components (`internal/components`)
 
 All entities in the engine are composed of strict, flat-memory data structs strictly adhering to Data-Oriented Design (DOD). Located in `basic.go` (and related test files).
@@ -69,6 +77,10 @@ All entities in the engine are composed of strict, flat-memory data structs stri
 *(Add all other newly identified/created components here)*
 
 ---
+
+## Phase 47: The Mercenary Engine
+- **Phase 47.1 - Proxy Violence & Wealth Vectors**: Bridges Economy (Wealth), Poverty (Desperation), and Justice (Blood Feuds). Implemented within `MercenarySystem` (`internal/systems/mercenary.go`). The system maps wealthy NPCs (`Needs.Wealth > 500`) who harbor severe negative hooks (`<= -50`) against any target via the `SparseHookGraph`. It then iterates through nearby desperately poor NPCs (`JobNone`, `DesperationComponent.Level >= 30`). The system mathematically transfers a `WealthBribe` from the client to the mercenary, appending a 16-byte DOD `MercenaryContractComponent`. Crucially, the hired mercenary structurally absorbs the negative hook (-100) natively via the `SparseHookGraph`, seamlessly chaining into the existing `BloodFeudSystem` (Phase 23) which naturally commands the mercenary to pathfind and execute the target. This fulfills the vision of massive proxy conflicts funded entirely by untouchable economic capital.
+
 
 ## 3. ECS Systems (`internal/systems`)
 
@@ -105,6 +117,10 @@ Systems perform decoupled, stateless logic by iterating over matched entities.
 
 ---
 
+## Phase 47: The Mercenary Engine
+- **Phase 47.1 - Proxy Violence & Wealth Vectors**: Bridges Economy (Wealth), Poverty (Desperation), and Justice (Blood Feuds). Implemented within `MercenarySystem` (`internal/systems/mercenary.go`). The system maps wealthy NPCs (`Needs.Wealth > 500`) who harbor severe negative hooks (`<= -50`) against any target via the `SparseHookGraph`. It then iterates through nearby desperately poor NPCs (`JobNone`, `DesperationComponent.Level >= 30`). The system mathematically transfers a `WealthBribe` from the client to the mercenary, appending a 16-byte DOD `MercenaryContractComponent`. Crucially, the hired mercenary structurally absorbs the negative hook (-100) natively via the `SparseHookGraph`, seamlessly chaining into the existing `BloodFeudSystem` (Phase 23) which naturally commands the mercenary to pathfind and execute the target. This fulfills the vision of massive proxy conflicts funded entirely by untouchable economic capital.
+
+
 ## 4. Mathematics & Pathfinding (`pkg/math`)
 
 Raw numerical utilities strictly built for deterministic execution.
@@ -116,6 +132,10 @@ Raw numerical utilities strictly built for deterministic execution.
   - A custom 2D Perlin noise implementation seeded deterministically via ChaCha8 for all terrain generation.
 
 ---
+
+## Phase 47: The Mercenary Engine
+- **Phase 47.1 - Proxy Violence & Wealth Vectors**: Bridges Economy (Wealth), Poverty (Desperation), and Justice (Blood Feuds). Implemented within `MercenarySystem` (`internal/systems/mercenary.go`). The system maps wealthy NPCs (`Needs.Wealth > 500`) who harbor severe negative hooks (`<= -50`) against any target via the `SparseHookGraph`. It then iterates through nearby desperately poor NPCs (`JobNone`, `DesperationComponent.Level >= 30`). The system mathematically transfers a `WealthBribe` from the client to the mercenary, appending a 16-byte DOD `MercenaryContractComponent`. Crucially, the hired mercenary structurally absorbs the negative hook (-100) natively via the `SparseHookGraph`, seamlessly chaining into the existing `BloodFeudSystem` (Phase 23) which naturally commands the mercenary to pathfind and execute the target. This fulfills the vision of massive proxy conflicts funded entirely by untouchable economic capital.
+
 
 
 

@@ -586,6 +586,25 @@ The Son, also impoverished, reaches the `DueTick`. He defaults. The `DebtDefault
 **Architecture Validation:**
 Strict Data-Oriented Design (DOD) was maintained. The transfer uses direct `arche-go` memory pointers (`*loan = *h.LoanContract`) and avoids nested ECS queries. Verified 100% deterministic through E2E `TestGenerationalDebtSystem_Integration`.
 
+## Evolution: Phase 47 - The Mercenary Engine
+**Date:** 2026-03-21
+**Focus:** Integration (Economy + Justice + Blood Feuds)
+
+**The Problem (Vision Gap):**
+The Vision document outlines: "Nations, wars, and trade routes are not scripted. They happen because local people need food, harbor grudges, or follow ambitious leaders." Previously, there was no direct mechanism for economic power (wealth) to translate into physical force (violence) without state apparatus. Wealthy individuals who harbored deep grudges had no way to execute them if they lacked physical strength or proximity.
+
+**The Solution (Autonomous DOD Execution):**
+I created the **Mercenary Engine**.
+1. **Components:** Added `JobMercenary` (11) to `JobComponent` and created `MercenaryContractComponent` strictly padded to 16 bytes for DOD compliance.
+2. **The Exchange:** Implemented `MercenarySystem` which periodically scans for wealthy NPCs (`Needs.Wealth > 500`) who harbor extreme negative hooks (`<= -50`). It then parses nearby unemployed and desperate NPCs (`JobNone`, `Desperation.Level >= 30`).
+3. **Execution:** The wealthy client mathematically transfers wealth (bribe) to the desperate NPC. The desperate NPC structurally receives the `MercenaryContractComponent` and converts to `JobMercenary`.
+4. **The Transfer of Hatred:** Crucially, the hired mercenary absorbs the deep negative hook natively via `SparseHookGraph.AddHook(mercID, targetID, -100)`, ensuring the hit is carried out perfectly by the existing Phase 23 `BloodFeudSystem`.
+
+**The Butterfly Effect:**
+A wealthy Merchant is cheated by a rival, gaining a deep grudge, but is too weak to fight. Nearby, a Farmer loses their job to `CareerChangeSystem` due to market gluts, starving and becoming desperate. The Merchant hires the Farmer. The Farmer becomes a Mercenary, gains the wealth to survive the famine, but naturally executes the Merchant's rival. The rival's Clan now hates the Farmer, initiating a generational frontier Blood Feud fueled entirely by the Merchant's untouchable capital.
+
+**Architecture Validation:**
+Strict Data-Oriented Design (DOD) was maintained. We extract arrays to flat slices before parsing distance vectors O(N) to prevent nested `arche-go` ECS lock panics. Tested and verified 100% deterministic through E2E `TestMercenarySystem_Integration` verifying hook transfer and job changes.
 ## Evolution: Phase 47 - The Plague-Labor Economics Bridge
 **Date:** 2026-03-25
 **Focus:** Integration (Biology + Economy + Labor + Justice)
