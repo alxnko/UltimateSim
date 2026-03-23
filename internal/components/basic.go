@@ -541,6 +541,7 @@ type MercenaryContractComponent struct {
 	WealthBribe float32 // How much wealth was paid to execute this hit
 	_           uint32 // Padding to exactly 16 bytes
 }
+
 // Evolution: Phase 47 - The Plague-Labor Economics Bridge
 type DemographicsComponent struct {
 	PeakPopulation    uint32
