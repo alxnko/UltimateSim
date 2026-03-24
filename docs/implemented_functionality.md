@@ -6,6 +6,9 @@ This document serves as the comprehensive and definitive index of all actually i
 
 ---
 
+## Phase 49: The Witch Hunt Engine
+- **Phase 49.1 - The Witch Hunt Engine**: Bridges Phase 20.2 (Abstract Physics/Magic) directly into the carceral state (Phase 36/18). Added `EsotericMarker` and `TraitEsoteric`. When a `JobCaster` successfully casts magic via `CastingSystem`, they are permanently marked via DOD component mapping. During systemic crises (high `Trauma`), the `ScapegoatSystem` evaluates the map geometry; if it detects active `EsotericMarker` entities, it unilaterally blames them, overriding natural religious minority targeting. This flags the `TargetEsoteric` boolean on the jurisdiction, triggering the `JusticeSystem` to organically criminalize (`InteractionEsoteric`) any magical practitioners or esoteric legacy holders, sending Guards to violently execute or banish them, perfectly simulating systemic witch hunts without hardcoded story events.
+
 ## Phase 47: The Mercenary Engine
 - **Phase 47.1 - Proxy Violence & Wealth Vectors**: Bridges Economy (Wealth), Poverty (Desperation), and Justice (Blood Feuds). Implemented within `MercenarySystem` (`internal/systems/mercenary.go`). The system maps wealthy NPCs (`Needs.Wealth > 500`) who harbor severe negative hooks (`<= -50`) against any target via the `SparseHookGraph`. It then iterates through nearby desperately poor NPCs (`JobNone`, `DesperationComponent.Level >= 30`). The system mathematically transfers a `WealthBribe` from the client to the mercenary, appending a 16-byte DOD `MercenaryContractComponent`. Crucially, the hired mercenary structurally absorbs the negative hook (-100) natively via the `SparseHookGraph`, seamlessly chaining into the existing `BloodFeudSystem` (Phase 23) which naturally commands the mercenary to pathfind and execute the target. This fulfills the vision of massive proxy conflicts funded entirely by untouchable economic capital.
 
