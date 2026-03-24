@@ -5,6 +5,7 @@ import (
 	"github.com/mlange-42/arche/ecs"
 )
 
+// Evolution: Phase 49 - The Witch Hunt Engine
 // Phase 36.1: The Scapegoat & Witch Hunt Engine
 // When a Jurisdiction faces high Trauma (e.g. from Disasters or Plagues), the state
 // algorithmically selects a minority BeliefID to blame for the crisis.
@@ -72,13 +73,15 @@ func (s *ScapegoatSystem) Update(world *ecs.World) {
 	// 2. Extract NPCs to find minority beliefs
 	npcID := ecs.ComponentID[components.NPC](world)
 	belID := ecs.ComponentID[components.BeliefComponent](world)
+	esotericID := ecs.ComponentID[components.EsotericMarker](world)
 
 	npcQuery := world.Query(ecs.All(npcID, posID, belID))
 
 	type beliefNode struct {
-		x       float32
-		y       float32
-		beliefs []components.Belief
+		x        float32
+		y        float32
+		beliefs  []components.Belief
+		esoteric bool
 	}
 
 	nodes := make([]beliefNode, 0, 500)
@@ -86,9 +89,10 @@ func (s *ScapegoatSystem) Update(world *ecs.World) {
 		pos := (*components.Position)(npcQuery.Get(posID))
 		bel := (*components.BeliefComponent)(npcQuery.Get(belID))
 		nodes = append(nodes, beliefNode{
-			x:       pos.X,
-			y:       pos.Y,
-			beliefs: bel.Beliefs,
+			x:        pos.X,
+			y:        pos.Y,
+			beliefs:  bel.Beliefs,
+			esoteric: world.Has(npcQuery.Entity(), esotericID),
 		})
 	}
 
@@ -98,6 +102,7 @@ func (s *ScapegoatSystem) Update(world *ecs.World) {
 
 		beliefCounts := make(map[uint32]int)
 		totalBelievers := 0
+		esotericCount := 0
 
 		// Count beliefs in radius
 		for k := 0; k < len(nodes); k++ {
@@ -105,6 +110,9 @@ func (s *ScapegoatSystem) Update(world *ecs.World) {
 			dx := n.x - j.X
 			dy := n.y - j.Y
 			if dx*dx+dy*dy <= j.RadiusSquared {
+				if n.esoteric {
+					esotericCount++
+				}
 				for _, b := range n.beliefs {
 					beliefCounts[b.BeliefID]++
 					totalBelievers++
@@ -114,6 +122,21 @@ func (s *ScapegoatSystem) Update(world *ecs.World) {
 
 		if totalBelievers == 0 {
 			continue // Ghost town
+		}
+
+		// Evolution: Phase 49 - The Witch Hunt Engine
+		// Priority to blame Esoteric casters unilaterally during crises
+		if esotericCount > 0 {
+			j.Comp.TargetEsoteric = true
+			j.Comp.Active = true
+
+			// Catharsis
+			if j.Jur.Trauma >= 10 {
+				j.Jur.Trauma -= 10
+			} else {
+				j.Jur.Trauma = 0
+			}
+			continue
 		}
 
 		// Find a minority belief (e.g. less than 30% of total believers, but > 0)

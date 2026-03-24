@@ -498,7 +498,8 @@ type VitalsComponent struct {
 type ScapegoatComponent struct {
 	TargetBeliefID uint32
 	Active         bool
-	_              [3]byte // Pad to 8 bytes
+	TargetEsoteric bool
+	_              [2]byte // Pad to 8 bytes
 }
 
 // Phase 31: Systemic Entropy (Natural Disasters)
@@ -548,3 +549,6 @@ type DemographicsComponent struct {
 	LaborCrisisActive bool
 	_                 [3]byte // Padding to exactly 8 bytes
 }
+
+// Phase 49: The Witch Hunt Engine
+type EsotericMarker struct{}

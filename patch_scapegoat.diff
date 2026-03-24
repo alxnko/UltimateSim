@@ -1,0 +1,16 @@
+<<<<<<< SEARCH
+// Phase 36.1: The Scapegoat & Witch Hunt Engine
+type ScapegoatComponent struct {
+	TargetBeliefID uint32
+	Active         bool
+	_              [3]byte // Pad to 8 bytes
+}
+=======
+// Phase 36.1: The Scapegoat & Witch Hunt Engine
+type ScapegoatComponent struct {
+	TargetBeliefID uint32
+	Active         bool
+	TargetEsoteric bool
+	_              [2]byte // Pad to 8 bytes
+}
+>>>>>>> REPLACE

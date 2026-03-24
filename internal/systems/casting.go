@@ -6,6 +6,7 @@ import (
 	"github.com/mlange-42/arche/ecs"
 )
 
+// Evolution: Phase 49 - The Witch Hunt Engine
 // Phase 20.2: Abstract Physics (The "Magic" Expansion)
 // CastingSystem scans for NPCs with the JobCaster role.
 // It checks the underlying MapGrid for ManaData. If Mana > 50, it triggers an override
@@ -13,11 +14,13 @@ import (
 
 type CastingSystem struct {
 	mapGrid *engine.MapGrid
+	toTag   []ecs.Entity
 }
 
 func NewCastingSystem(world *ecs.World, mapGrid *engine.MapGrid) *CastingSystem {
 	return &CastingSystem{
 		mapGrid: mapGrid,
+		toTag:   make([]ecs.Entity, 0, 10),
 	}
 }
 
@@ -25,9 +28,12 @@ func (s *CastingSystem) Update(world *ecs.World) {
 	// Query for entities that have Position and JobComponent
 	posID := ecs.ComponentID[components.Position](world)
 	jobID := ecs.ComponentID[components.JobComponent](world)
+	esotericID := ecs.ComponentID[components.EsotericMarker](world)
 
 	filter := ecs.All(posID, jobID)
 	query := world.Query(&filter)
+
+	s.toTag = s.toTag[:0]
 
 	for query.Next() {
 		job := (*components.JobComponent)(query.Get(jobID))
@@ -66,6 +72,18 @@ func (s *CastingSystem) Update(world *ecs.World) {
 
 			// Write back tile data
 			s.mapGrid.Tiles[idx] = tile
+
+			// Evolution: Phase 49 - The Witch Hunt Engine
+			// NPCs successfully casting magic are tagged with an EsotericMarker
+			if !world.Has(query.Entity(), esotericID) {
+				s.toTag = append(s.toTag, query.Entity())
+			}
+		}
+	}
+
+	for _, entity := range s.toTag {
+		if world.Alive(entity) && !world.Has(entity, esotericID) {
+			world.Add(entity, esotericID)
 		}
 	}
 }

@@ -8,6 +8,7 @@ import (
 	"github.com/mlange-42/arche/ecs"
 )
 
+// Evolution: Phase 49 - The Witch Hunt Engine
 // Phase 18.2: Detection & The Guard System
 // JusticeSystem evaluates MemoryEvents and assigns CrimeMarkers to entities committing illegal actions within a Jurisdiction bounds.
 // It also directs Guards towards entities tagged with a CrimeMarker to enforce punishments.
@@ -117,6 +118,7 @@ func (s *JusticeSystem) Update(world *ecs.World) {
 	storageID := ecs.ComponentID[components.StorageComponent](world)
 		contraID := ecs.ComponentID[components.ContrabandComponent](world)
 	beliefID := ecs.ComponentID[components.BeliefComponent](world) // Phase 36.1
+	esotericID := ecs.ComponentID[components.EsotericMarker](world) // Phase 49
 
 	npcQuery := world.Query(ecs.All(memID, posID, affID))
 
@@ -164,12 +166,19 @@ func (s *JusticeSystem) Update(world *ecs.World) {
 			// Phase 36.1: The Scapegoat & Witch Hunt Engine
 			// The state actively criminalizes minorities during crises.
 			if !isCriminal && activeJur.Scapegoat != nil && activeJur.Scapegoat.Active {
-				if world.Has(entity, beliefID) {
-					bel := (*components.BeliefComponent)(world.Get(entity, beliefID))
-					for bIdx := 0; bIdx < len(bel.Beliefs); bIdx++ {
-						if bel.Beliefs[bIdx].BeliefID == activeJur.Scapegoat.TargetBeliefID {
-							isCriminal = true
-							break
+				// Evolution: Phase 49 - The Witch Hunt Engine
+				if activeJur.Scapegoat.TargetEsoteric {
+					if world.Has(entity, esotericID) {
+						isCriminal = true
+					}
+				} else {
+					if world.Has(entity, beliefID) {
+						bel := (*components.BeliefComponent)(world.Get(entity, beliefID))
+						for bIdx := 0; bIdx < len(bel.Beliefs); bIdx++ {
+							if bel.Beliefs[bIdx].BeliefID == activeJur.Scapegoat.TargetBeliefID {
+								isCriminal = true
+								break
+							}
 						}
 					}
 				}

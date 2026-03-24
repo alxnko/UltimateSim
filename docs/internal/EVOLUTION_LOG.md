@@ -702,3 +702,23 @@ If an NPC survives a massive plague or disaster, they might form a `TraumaticTra
 
 **Architecture Validation:**
 Strict Data-Oriented Design (DOD) was maintained via `arche-go`. Slices are pre-allocated and `h.Beliefs` uses deep copy `copy(beliefs, belComp.Beliefs)` during death extraction to prevent ECS lock panics during the iterator, followed by a separate allocation loop. Validated through E2E `TestIdeologicalSuccession_Integration`.
+
+## Evolution: Phase 49 - The Witch Hunt Engine
+**Date:** 2026-03-31
+**Focus:** Integration (Culture + Magic + Justice)
+
+**The Problem (Vision Gap):**
+The Vision document notes that "Magic" and "Religion" are abstract extensions of physical realities. We implemented Phase 20.2 (`CastingSystem`) to allow NPCs to mechanically alter map state (Mana) and we implemented Phase 36 (`ScapegoatSystem`) where states blame minority religions for crises to relieve trauma. However, there was no bridge connecting esoteric magic directly to societal fear. A user could cast world-altering magic with zero societal backlash, violating the principle of consequences.
+
+**The Solution (Autonomous DOD Execution):**
+I created the **Witch Hunt Engine** bridging Phase 20.2 with Phase 36 and Phase 18.
+1.  **EsotericMarker Component:** Created a DOD-compliant 0-byte tag component `EsotericMarker`.
+2.  **Casting Trace:** Modified `CastingSystem` to tag any NPC that successfully executes an abstract physics alteration with the `EsotericMarker`.
+3.  **The Witch Hunt Overide:** Modified `ScapegoatSystem`. During a massive trauma event (e.g. `Trauma >= 15`), the state evaluates the local population. If *any* NPC holds the `EsotericMarker`, the state ignores standard minority beliefs and unilaterally blames the magic casters by setting `TargetEsoteric = true`.
+4.  **Justice Flagging:** Modified `JusticeSystem` so that when `TargetEsoteric` is true, holding an `EsotericMarker` is flagged as an illegal action, triggering `CrimeMarker` assignment and subsequent penal logic (banishment, execution, or fines).
+
+**The Butterfly Effect:**
+A Caster uses magic to heat a local tile (`CastingSystem`), acquiring the `EsotericMarker`. A random natural disaster (`NaturalDisasterSystem`) later strikes the city, drastically spiking local `Trauma` > 15. The `ScapegoatSystem` triggers, sees the Caster, and legally criminalizes "Magic" to relieve the state's panic. The `JusticeSystem` assigns a `CrimeMarker` to the Caster. A Guard detects the crime, arrests the Caster, confiscates their wealth, and banishes them from the city entirely, all emerging systematically without scripted events.
+
+**Architecture Validation:**
+Strict Data-Oriented Design (DOD) was maintained via `arche-go`. Slices in `CastingSystem` are pre-allocated and reused on the struct, preventing GC bloat and nested ECS query panics. Validated through E2E `TestWitchHuntSystem_Integration` verifying the entire chain from Casting to CrimeMarker logic.

@@ -317,3 +317,11 @@ func TestMercenaryContractComponentSize(t *testing.T) {
 		t.Errorf("Expected MercenaryContractComponent to be %d bytes for DOD, got %d", expected, actual)
 	}
 }
+
+func TestEsotericMarkerSize(t *testing.T) {
+	expected := uintptr(0)
+	actual := unsafe.Sizeof(EsotericMarker{})
+	if actual != expected {
+		t.Errorf("Expected EsotericMarker to be %d bytes for DOD, got %d", expected, actual)
+	}
+}
