@@ -722,3 +722,24 @@ If an NPC survives a massive plague or disaster, they might form a `TraumaticTra
 
 **Architecture Validation:**
 Strict Data-Oriented Design (DOD) was maintained via `arche-go`. Slices are pre-allocated and `h.Beliefs` uses deep copy `copy(beliefs, belComp.Beliefs)` during death extraction to prevent ECS lock panics during the iterator, followed by a separate allocation loop. Validated through E2E `TestIdeologicalSuccession_Integration`.
+
+## Evolution: Phase 50 - The Military-Industrial Complex (War Economy Engine)
+**Date:** 2026-03-29
+**Focus:** Integration (Geopolitics + Macroeconomics + Sovereignty)
+
+**The Problem (Vision Gap):**
+The Vision document outlines a "Total Simulation" where "Nations, wars, and trade routes are not scripted. They happen because local people need food...". Previously, `ResourceWarSystem` triggered a war (via massive negative hooks), but the state didn't actually participate economically. The war effort didn't consume physical resources, completely isolating Phase 29 (Wars) from Phase 13 (Economics) and Phase 35 (Legitimacy).
+
+**The Solution (Autonomous DOD Execution):**
+I created the **Military-Industrial Complex (War Economy Engine)**.
+1. Implemented `WarEconomySystem` that periodically evaluates all Capital entities with an active `WarTrackerComponent`.
+2. The state natively drains `StorageComponent.Iron` to fuel the war effort.
+3. If Iron depletes, the state forcibly buys more using its `TreasuryComponent` while artificially spiking `MarketComponent.IronPrice`. This inherently triggers `CareerChangeSystem`, forcing the populace to become Artisans to profit from the war, driving up food prices and worsening the initial famine that caused the war.
+4. If the state's Treasury hits zero (`< 100`), the state bankrupts itself. It defaults on the war (`Active = false`) and suffers a massive 50-point drop in `LegitimacyComponent.Score`.
+5. This natively triggers Phase 27.1 (`MilitaryRevoltSystem`), causing the bankrupt King's own guards to murder him.
+
+**The Butterfly Effect:**
+A starving nation declares war (Phase 29). The King burns Iron, driving up Iron prices locally (Phase 50). Blacksmiths profit, while Farmers change careers to Blacksmiths (Phase 13), exacerbating the famine. The King drains the State Treasury to keep the war going. Eventually, the treasury bankrupts. The King loses the war, legitimacy drops below 20, and his military natively revolts and assassinates him (Phase 27/35). The entire macro-loop is perfectly closed without hardcoded events.
+
+**Architecture Validation:**
+Strict Data-Oriented Design (DOD) was maintained via `arche-go`. The system uses single flat loops mapping `CapID`, `WarCompID`, `StorageID`, `MarketID`, and `TreasID`. Validated through deterministic E2E `TestWarEconomySystem_Integration` covering all logical state branches (Drain -> Spike -> Bankrupt -> Drop).
