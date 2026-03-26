@@ -722,3 +722,19 @@ If an NPC survives a massive plague or disaster, they might form a `TraumaticTra
 
 **Architecture Validation:**
 Strict Data-Oriented Design (DOD) was maintained via `arche-go`. Slices are pre-allocated and `h.Beliefs` uses deep copy `copy(beliefs, belComp.Beliefs)` during death extraction to prevent ECS lock panics during the iterator, followed by a separate allocation loop. Validated through E2E `TestIdeologicalSuccession_Integration`.
+
+## Evolution: Phase 50 - The Military-Industrial Complex (War Economy Engine)
+- **Goal:** Execute the "Systemic Emergence" objective by implementing a missing mechanic from the Vision ("Wars are not scripted. They happen because local people need food, harbor grudges, or follow ambitious leaders."). This engine directly grounds the state's military power (War) to physical logistics and capital, proving that wars cannot be infinitely sustained without economic capacity.
+- **DOD Implementation:**
+  - Designed `WarEconomySystem` (`internal/systems/war_economy.go`) operating on a periodic 50-tick offset to evaluate active wars.
+  - Sourced all components (`WarTrackerComponent`, `StorageComponent`, `TreasuryComponent`, `MarketComponent`, `LegitimacyComponent`) into a flat `[]warEconomyNodeData` slice.
+  - Iterates flat slices to evaluate resources and trigger state changes without nested `arche-go` ECS locks.
+- **The Butterfly Effect:**
+  - Plugs directly into Phase 29 (Resource Wars), Phase 13 (Macroeconomics), and Phase 35 (Sovereignty/Military Revolts).
+  - When a Country declares war via `ResourceWarSystem`, `WarTrackerComponent.Active` is set.
+  - The `WarEconomySystem` immediately begins draining `StorageComponent.Iron` to fund the weapons and armor.
+  - If `Iron` is completely depleted, the state automatically leverages its `TreasuryComponent.Wealth` to buy emergency Iron, heavily spiking local `MarketComponent.IronPrice` in the process.
+  - This massive price spike organically signals Phase 13's `CareerChangeSystem` and Phase 15's `JobMarketSystem` to reallocate peasant labor toward `JobArtisan` (Blacksmithing) purely through price discovery.
+  - However, if the state is Bankrupt (0 Wealth) and has no Iron, the war effort collapses. The system naturally deducts massive `LegitimacyComponent.Score`.
+  - Once Legitimacy drops below 20, the `MilitaryRevoltSystem` natively intercepts this failure. The standing army defects, forms bandit factions, and sparks a `BloodFeud` civil war to execute the bankrupt ruler. Wars are now heavily limited by GDP.
+  - Verified 100% deterministic through `go test ./internal/systems -v -run TestWarEconomySystem_Integration -count=2`.
