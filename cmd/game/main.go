@@ -1,6 +1,8 @@
 package main
 
 import (
+	"flag"
+	"fmt"
 	"log"
 	"net/http"
 	_ "net/http/pprof"
@@ -161,13 +163,21 @@ func BuildSimulation(gridWidth, gridHeight int, seedVal byte, status *render.Loa
 
 func main() {
 	// Phase 01.6: Telemetry & Profiling
-	// Boot net/http/pprof instance on localhost:6060
-	go func() {
-		log.Println("Starting pprof server on localhost:6060")
-		if err := http.ListenAndServe("localhost:6060", nil); err != nil {
-			log.Fatalf("pprof server failed: %v", err)
-		}
-	}()
+	// Use flags to control pprof for security
+	pprofEnabled := flag.Bool("pprof", false, "Enable pprof profiling server")
+	pprofPort := flag.Int("pprof-port", 6060, "Port for pprof profiling server")
+	flag.Parse()
+
+	if *pprofEnabled {
+		// Boot net/http/pprof instance on localhost
+		go func() {
+			addr := fmt.Sprintf("localhost:%d", *pprofPort)
+			log.Printf("Starting pprof server on %s\n", addr)
+			if err := http.ListenAndServe(addr, nil); err != nil {
+				log.Fatalf("pprof server failed: %v", err)
+			}
+		}()
+	}
 
 	// NOTE: Simulation is now driven manually by the render loop to prevent race conditions in the ECS world.
 
