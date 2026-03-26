@@ -124,12 +124,14 @@ func (s *TaxationSystem) Update(world *ecs.World) {
 
 	// Evolution: Phase 42 - The Tax Evasion Engine
 	// Pre-cache all NPCs for rapid iteration to prevent nested ECS queries during evasion logic.
+	// We group NPCs by CityID to optimize lookups during the village loop.
 	npcQuery := s.world.Query(filter.All(s.npcID, s.identID, s.affilID))
-	var npcsData []npcTaxData
+	npcsByCity := make(map[uint32][]npcTaxData)
 	for npcQuery.Next() {
 		npcIdent := (*components.Identity)(npcQuery.Get(s.identID))
 		npcAffil := (*components.Affiliation)(npcQuery.Get(s.affilID))
-		npcsData = append(npcsData, npcTaxData{
+
+		npcsByCity[npcAffil.CityID] = append(npcsByCity[npcAffil.CityID], npcTaxData{
 			IdentityID: npcIdent.ID,
 			CityID:     npcAffil.CityID,
 		})
@@ -150,10 +152,10 @@ func (s *TaxationSystem) Update(world *ecs.World) {
 			// If village loyalty is less than state corruption, they refuse to pay.
 			if loyalty.Value < countryData.Corruption {
 				if s.hooks != nil {
-					// Iterate through pre-cached NPCs and issue grudges against the Capital Ruler
-					for i := 0; i < len(npcsData); i++ {
-						if npcsData[i].CityID == affil.CityID {
-							s.hooks.AddHook(npcsData[i].IdentityID, countryData.RulerID, -50)
+					// Retrieve pre-cached NPCs for this specific city
+					if cityNPCs, ok := npcsByCity[affil.CityID]; ok {
+						for i := 0; i < len(cityNPCs); i++ {
+							s.hooks.AddHook(cityNPCs[i].IdentityID, countryData.RulerID, -50)
 						}
 					}
 				}
