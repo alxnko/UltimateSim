@@ -757,3 +757,19 @@ Strict Data-Oriented Design (DOD) was maintained via `arche-go`. The system uses
   - However, if the state is Bankrupt (0 Wealth) and has no Iron, the war effort collapses. The system naturally deducts massive `LegitimacyComponent.Score`.
   - Once Legitimacy drops below 20, the `MilitaryRevoltSystem` natively intercepts this failure. The standing army defects, forms bandit factions, and sparks a `BloodFeud` civil war to execute the bankrupt ruler. Wars are now heavily limited by GDP.
   - Verified 100% deterministic through `go test ./internal/systems -v -run TestWarEconomySystem_Integration -count=2`.
+
+## Evolution: Phase 51 - The Debt-Trap Political Coup Engine
+- **Date:** 2026-03-29
+- **Focus:** Integration (Economy + Governance + Justice)
+- **Goal:** Execute the "Systemic Emergence" objective by implementing a missing mechanic from the Vision ("Extreme Debt Traps allow Guilds to execute unpaid Hooks obtained as collateral, seizing political control without armies.").
+- **DOD Implementation:**
+  - Designed `PoliticalCoupSystem` (`internal/systems/political_coup.go`) operating on a periodic 100-tick offset to map active `AdministrationMarker` rulers against their `SparseHookGraph` debt exposure.
+  - Sourced all components (`NPC`, `Identity`, `Affiliation`) into a pre-allocated flat `[]coupNodeData` slice.
+  - Iterates flat slices to evaluate systemic vulnerabilities and execute `arche-go` additions and removals strictly outside the iterator loop, completely preventing ECS panics and maintaining O(1) performance.
+- **The Butterfly Effect:**
+  - Bridges Phase 15.3 (Predatory Lending Engine) and Phase 46 (Generational Debt Engine) directly to Phase 43 (Organic Administration Engine).
+  - A Ruler takes a massive loan to fund a war but defaults. The Creditor (Guild Leader) gains a massive `-250` debt hook.
+  - The `PoliticalCoupSystem` intercepts this massive localized hook imbalance.
+  - The Creditor executes the collateral: the negative hook is zeroed out, and the `AdministrationMarker` is forcibly stripped from the ruler and given to the Creditor.
+  - A bloodless political coup occurs natively. The Creditor now rules the city.
+  - Verified 100% deterministic through `go test ./internal/systems -v -run TestPoliticalCoup_Integration -count=2`.
