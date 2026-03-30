@@ -39,8 +39,8 @@ func TestWarEconomySystem_Integration(t *testing.T) {
 	legit := (*components.LegitimacyComponent)(world.Get(e, legitID))
 	legit.Score = 100
 
-	// Tick 1-99: No evaluation
-	for i := 1; i < 100; i++ {
+	// Tick 1-49: No evaluation
+	for i := 1; i < 50; i++ {
 		sys.Update(&world)
 	}
 
@@ -48,18 +48,18 @@ func TestWarEconomySystem_Integration(t *testing.T) {
 		t.Fatalf("Expected Iron to be 6, got %d", storage.Iron)
 	}
 
-	// Tick 100: Iron deducts 5
+	// Tick 50: Iron deducts 5
 	sys.Update(&world)
 	if storage.Iron != 1 {
 		t.Fatalf("Expected Iron to drop to 1, got %d", storage.Iron)
 	}
 
-	// Tick 101-199
-	for i := 101; i < 200; i++ {
+	// Tick 51-99
+	for i := 51; i < 100; i++ {
 		sys.Update(&world)
 	}
 
-	// Tick 200: Iron drops below 5, state purchases
+	// Tick 100: Iron drops below 5, state purchases
 	sys.Update(&world)
 
 	if storage.Iron != 50 { // 0 + 50
@@ -69,44 +69,29 @@ func TestWarEconomySystem_Integration(t *testing.T) {
 		t.Fatalf("Expected Wealth to drop to 50, got %f", treasury.Wealth)
 	}
 	if market.IronPrice != 51.0 { // 1 + 50
-		t.Fatalf("Expected IronPrice to spike to 51, got %f", market.IronPrice)
+		t.Fatalf("Expected IronPrice to spike to 55, got %f", market.IronPrice)
 	}
 	if !war.Active {
 		t.Fatalf("Expected war to still be active")
 	}
 
-	// Tick 201-1199: Drain the 50 Iron (10 updates of -5 each)
-	for i := 201; i < 1200; i++ {
+	// Tick 101-599: Drain the 50 Iron (10 updates of -5 each)
+	for i := 101; i < 600; i++ {
 		sys.Update(&world)
 	}
 
-	// At tick 1100, iron is exactly 5. 1100 updates it to 0.
-	// Oh wait, 10 updates of -5 is 50.
-	// The 10 updates are at ticks 300, 400, 500, 600, 700, 800, 900, 1000, 1100, 1200.
-	// At tick 200, iron went from 1 to 0, then immediately bought 50. So it has 50.
-	// Tick 300: 50 -> 45
-	// Tick 400: 45 -> 40
-	// Tick 500: 40 -> 35
-	// Tick 600: 35 -> 30
-	// Tick 700: 30 -> 25
-	// Tick 800: 25 -> 20
-	// Tick 900: 20 -> 15
-	// Tick 1000: 15 -> 10
-	// Tick 1100: 10 -> 5
-	// Tick 1200: 5 -> 0.
-
-	sys.Update(&world) // This is tick 1200. It deducts the last 5 iron.
+	sys.Update(&world) // This is tick 600. It deducts the last 5 iron.
 
 	if storage.Iron != 0 {
 		t.Fatalf("Expected Iron to drain back to 0, got %d", storage.Iron)
 	}
 
-	// Tick 1201-1299
-	for i := 1201; i < 1300; i++ {
+	// Tick 601-649
+	for i := 601; i < 650; i++ {
 		sys.Update(&world)
 	}
 
-	// Tick 1300: State tries to buy but Treasury is 50.0 (Bankrupt)
+	// Tick 650: State tries to buy but Treasury is 50.0 (Bankrupt)
 	sys.Update(&world)
 
 	if war.Active {
@@ -115,8 +100,11 @@ func TestWarEconomySystem_Integration(t *testing.T) {
 
 	if legit.Score != 50 { // 100 - 50
 		t.Fatalf("Expected Legitimacy to drop to 50 due to war loss, got %d", legit.Score)
-// TestWarEconomySystem_Integration verifies the War Economy Engine's systemic triggers (Phase 50).
-func TestWarEconomySystem_Integration(t *testing.T) {
+	}
+}
+
+// TestWarEconomySystem_Determinism verifies the War Economy Engine's systemic triggers (Phase 50).
+func TestWarEconomySystem_Determinism(t *testing.T) {
 	world := ecs.NewWorld()
 
 	warID := ecs.ComponentID[components.WarTrackerComponent](&world)
@@ -135,10 +123,10 @@ func TestWarEconomySystem_Integration(t *testing.T) {
 	war.Active = true
 
 	storage := (*components.StorageComponent)(world.Get(capital, storageID))
-	storage.Iron = 10 // Exact amount needed for one war tick
+	storage.Iron = 5 // Exact amount needed for one war tick
 
 	treasury := (*components.TreasuryComponent)(world.Get(capital, treasID))
-	treasury.Wealth = 100 // Exact amount needed for one emergency iron purchase
+	treasury.Wealth = 100.0 // Exact amount needed for one emergency iron purchase
 
 	market := (*components.MarketComponent)(world.Get(capital, marketID))
 	market.IronPrice = 5.0
@@ -146,14 +134,14 @@ func TestWarEconomySystem_Integration(t *testing.T) {
 	legitimacy := (*components.LegitimacyComponent)(world.Get(capital, legitID))
 	legitimacy.Score = 100
 
-	// Tick 50: Should drain 10 Iron
+	// Tick 50: Should drain 5 Iron
 	sys.tickCounter = 49
 	sys.Update(&world)
 
 	if storage.Iron != 0 {
 		t.Errorf("Expected Iron to drain to 0, got %d", storage.Iron)
 	}
-	if treasury.Wealth != 100 {
+	if treasury.Wealth != 100.0 {
 		t.Errorf("Expected Wealth to be untouched during normal drain, got %f", treasury.Wealth)
 	}
 	if market.IronPrice != 5.0 {
@@ -163,18 +151,18 @@ func TestWarEconomySystem_Integration(t *testing.T) {
 		t.Errorf("Expected Legitimacy to remain 100 during normal drain, got %d", legitimacy.Score)
 	}
 
-	// Tick 100: Iron is 0, should buy iron using 100 Wealth and increase IronPrice by 5
+	// Tick 100: Iron is 0, should buy 50 iron using 100 Wealth and increase IronPrice by 50.0
 	sys.tickCounter = 99
 	sys.Update(&world)
 
 	if treasury.Wealth != 0 {
 		t.Errorf("Expected Wealth to drain to 0, got %f", treasury.Wealth)
 	}
-	if storage.Iron != 10 {
-		t.Errorf("Expected Iron to jump to 10 from emergency buy, got %d", storage.Iron)
+	if storage.Iron != 50 {
+		t.Errorf("Expected Iron to jump to 50 from emergency buy, got %d", storage.Iron)
 	}
-	if market.IronPrice != 10.0 {
-		t.Errorf("Expected IronPrice to spike to 10.0, got %f", market.IronPrice)
+	if market.IronPrice != 55.0 {
+		t.Errorf("Expected IronPrice to spike to 55.0, got %f", market.IronPrice)
 	}
 	if legitimacy.Score != 100 {
 		t.Errorf("Expected Legitimacy to remain 100 during emergency buy, got %d", legitimacy.Score)
@@ -183,12 +171,12 @@ func TestWarEconomySystem_Integration(t *testing.T) {
 	// Drain Iron again manually to simulate war usage after the emergency buy
 	storage.Iron = 0
 
-	// Tick 150: Bankrupt (Iron 0, Wealth 0), should drain Legitimacy
+	// Tick 150: Bankrupt (Iron 0, Wealth 0), should drain Legitimacy by 50
 	sys.tickCounter = 149
 	sys.Update(&world)
 
-	if legitimacy.Score != 90 {
-		t.Errorf("Expected Legitimacy to drop to 90 due to bankruptcy, got %d", legitimacy.Score)
+	if legitimacy.Score != 50 {
+		t.Errorf("Expected Legitimacy to drop to 50 due to bankruptcy, got %d", legitimacy.Score)
 	}
 	if treasury.Wealth != 0 {
 		t.Errorf("Expected Wealth to remain 0, got %f", treasury.Wealth)
@@ -208,10 +196,10 @@ func TestWarEconomySystem_Integration(t *testing.T) {
 	war2.Active = true
 
 	storage2 := (*components.StorageComponent)(world2.Get(capital2, storageID))
-	storage2.Iron = 10
+	storage2.Iron = 5
 
 	treasury2 := (*components.TreasuryComponent)(world2.Get(capital2, treasID))
-	treasury2.Wealth = 100
+	treasury2.Wealth = 100.0
 
 	market2 := (*components.MarketComponent)(world2.Get(capital2, marketID))
 	market2.IronPrice = 5.0
