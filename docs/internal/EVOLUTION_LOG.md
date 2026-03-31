@@ -773,3 +773,18 @@ Strict Data-Oriented Design (DOD) was maintained via `arche-go`. The system uses
   - The Creditor executes the collateral: the negative hook is zeroed out, and the `AdministrationMarker` is forcibly stripped from the ruler and given to the Creditor.
   - A bloodless political coup occurs natively. The Creditor now rules the city.
   - Verified 100% deterministic through `go test ./internal/systems -v -run TestPoliticalCoup_Integration -count=2`.
+
+## Evolution: Phase 52 - Artifact Aura Engine
+- **Date:** 2026-04-03
+- **Focus:** Depth & Integration (Artifacts + Governance)
+- **Goal:** Execute the "Systemic Emergence" objective by implementing a missing mechanic from the Vision ("Artifacts (e.g., 'Sword of Bektur') that carry historical memory and grant 'Auras of Legitimacy.'").
+- **DOD Implementation:**
+  - Modified `LegitimacySystem` (`internal/systems/legitimacy.go`) to query for `EquipmentComponent`.
+  - Added a tight logic block to iterate the `EquipmentComponent`, scaling the `Weapon.Prestige` down (1 point per 10 prestige, capped at 30) and applying it to the DOD `Legitimacy.Score`.
+- **The Butterfly Effect:**
+  - Plugs directly into Phase 32.1 (Artifact Equipment), Phase 35.1 (Sovereign Legitimacy), and Phase 27.1 (Military Revolts).
+  - A highly corrupt Ruler (`Legitimacy.Score = 0`) faces an imminent `MilitaryRevolt` from their `JobGuard` retainers.
+  - The Ruler equips a legendary artifact (`LegendComponent.Prestige = 300`).
+  - The `LegitimacySystem` reads the physical aura of the item, synthetically bolstering the `Score` back to 30.
+  - The `MilitaryRevoltSystem` is naturally bypassed. An unpopular, deeply corrupt ruler mathematically prevents civil war purely because they physically hold the "Sword of Bektur."
+  - Verified 100% deterministic through `go test ./internal/systems -v -run TestLegitimacySystem -count=2`.

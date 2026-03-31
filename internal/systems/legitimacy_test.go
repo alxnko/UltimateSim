@@ -134,3 +134,102 @@ func TestLegitimacySystem_Integration(t *testing.T) {
 		t.Fatalf("Expected Guard to gain -100 hook against Capital, got %d", hookVal)
 	}
 }
+
+func TestLegitimacySystem_ArtifactAura_Integration(t *testing.T) {
+	world := ecs.NewWorld()
+
+	ecs.ComponentID[components.Position](&world)
+	ecs.ComponentID[components.Identity](&world)
+	ecs.ComponentID[components.JobComponent](&world)
+	ecs.ComponentID[components.SecretComponent](&world)
+	ecs.ComponentID[components.Affiliation](&world)
+	ecs.ComponentID[components.JurisdictionComponent](&world)
+	ecs.ComponentID[components.CapitalComponent](&world)
+	ecs.ComponentID[components.LegitimacyComponent](&world)
+	ecs.ComponentID[components.TreasuryComponent](&world)
+	ecs.ComponentID[components.EquipmentComponent](&world) // Phase 52
+
+	hookGraph := engine.NewSparseHookGraph()
+
+	legitimacySystem := NewLegitimacySystem(&world, hookGraph)
+	revoltSystem := NewMilitaryRevoltSystem(&world, hookGraph)
+
+	// Create a Capital Jurisdiction with massive corruption
+	capEnt := world.NewEntity(
+		ecs.ComponentID[components.Position](&world),
+		ecs.ComponentID[components.Identity](&world),
+		ecs.ComponentID[components.JurisdictionComponent](&world),
+		ecs.ComponentID[components.Affiliation](&world),
+		ecs.ComponentID[components.CapitalComponent](&world),
+		ecs.ComponentID[components.LegitimacyComponent](&world),
+		ecs.ComponentID[components.TreasuryComponent](&world),
+		ecs.ComponentID[components.EquipmentComponent](&world), // The Artifact
+	)
+
+	capIdent := (*components.Identity)(world.Get(capEnt, ecs.ComponentID[components.Identity](&world)))
+	capIdent.ID = 101
+
+	capPos := (*components.Position)(world.Get(capEnt, ecs.ComponentID[components.Position](&world)))
+	capPos.X = 10.0
+	capPos.Y = 10.0
+
+	capAff := (*components.Affiliation)(world.Get(capEnt, ecs.ComponentID[components.Affiliation](&world)))
+	capAff.CityID = 2
+
+	capJur := (*components.JurisdictionComponent)(world.Get(capEnt, ecs.ComponentID[components.JurisdictionComponent](&world)))
+	capJur.RadiusSquared = 100.0
+	capJur.Corruption = 25 // Severe corruption (-50 penalty)
+
+	capTreasury := (*components.TreasuryComponent)(world.Get(capEnt, ecs.ComponentID[components.TreasuryComponent](&world)))
+	capTreasury.Wealth = 0.0 // No economic bonus
+
+	capLegitimacy := (*components.LegitimacyComponent)(world.Get(capEnt, ecs.ComponentID[components.LegitimacyComponent](&world)))
+	capLegitimacy.Score = 100 // Pre-calc state
+
+	// Equip the LegendComponent (Aura of Legitimacy)
+	capEquip := (*components.EquipmentComponent)(world.Get(capEnt, ecs.ComponentID[components.EquipmentComponent](&world)))
+	capEquip.Equipped = true
+	capEquip.Weapon.Prestige = 300 // Max bonus of +30
+
+	// Create a Guard
+	guardNPC := world.NewEntity(
+		ecs.ComponentID[components.Identity](&world),
+		ecs.ComponentID[components.Position](&world),
+		ecs.ComponentID[components.JobComponent](&world),
+		ecs.ComponentID[components.SecretComponent](&world),
+		ecs.ComponentID[components.Affiliation](&world),
+	)
+
+	guardIdent := (*components.Identity)(world.Get(guardNPC, ecs.ComponentID[components.Identity](&world)))
+	guardIdent.ID = 201
+
+	guardPos := (*components.Position)(world.Get(guardNPC, ecs.ComponentID[components.Position](&world)))
+	guardPos.X = 10.0
+	guardPos.Y = 10.0
+
+	guardJob := (*components.JobComponent)(world.Get(guardNPC, ecs.ComponentID[components.JobComponent](&world)))
+	guardJob.JobID = components.JobGuard
+	guardJob.EmployerID = capIdent.ID
+
+	guardAff := (*components.Affiliation)(world.Get(guardNPC, ecs.ComponentID[components.Affiliation](&world)))
+	guardAff.CityID = 2
+
+	guardSecrets := (*components.SecretComponent)(world.Get(guardNPC, ecs.ComponentID[components.SecretComponent](&world)))
+	guardSecrets.Secrets = []components.Secret{}
+
+	// Step A: Calculate new legitimacy
+	// Calculation: Base 50 - 50 (corruption) + 0 (wealth) + 0 (hooks) + 30 (Artifact Aura) = 30
+	// 30 is > 20, so revolt should NOT trigger.
+	for i := 0; i < 50; i++ {
+		legitimacySystem.Update(&world)
+		revoltSystem.Update(&world)
+	}
+
+	if capLegitimacy.Score != 30 {
+		t.Fatalf("Expected Artifact Aura to bolster Legitimacy to 30, got %d", capLegitimacy.Score)
+	}
+
+	if guardJob.JobID != components.JobGuard {
+		t.Fatalf("Expected guard to remain loyal despite massive corruption because of Artifact Aura Legitimacy, got JobID %d", guardJob.JobID)
+	}
+}

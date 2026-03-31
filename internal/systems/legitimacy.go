@@ -24,6 +24,7 @@ type LegitimacySystem struct {
 	treasID  ecs.ID
 	jurID    ecs.ID
 	capID    ecs.ID
+	equipID  ecs.ID
 }
 
 func NewLegitimacySystem(world *ecs.World, hooks *engine.SparseHookGraph) *LegitimacySystem {
@@ -35,6 +36,7 @@ func NewLegitimacySystem(world *ecs.World, hooks *engine.SparseHookGraph) *Legit
 		treasID:     ecs.ComponentID[components.TreasuryComponent](world),
 		jurID:       ecs.ComponentID[components.JurisdictionComponent](world),
 		capID:       ecs.ComponentID[components.CapitalComponent](world),
+		equipID:     ecs.ComponentID[components.EquipmentComponent](world),
 	}
 }
 
@@ -74,7 +76,20 @@ func (s *LegitimacySystem) Update(world *ecs.World) {
 			newScore -= corruptionPenalty
 		}
 
-		// 3. Public Sentiment (Hooks pointing at the ruler)
+		// 3. Phase 52 - Artifact Aura Engine (Equipped LegendComponent)
+		if world.Has(query.Entity(), s.equipID) {
+			equip := (*components.EquipmentComponent)(query.Get(s.equipID))
+			if equip.Equipped {
+				// Convert 10 prestige into 1 legitimacy, capped at +30 (massive geopolitical Aura)
+				auraBonus := float32(equip.Weapon.Prestige) / 10.0
+				if auraBonus > 30.0 {
+					auraBonus = 30.0
+				}
+				newScore += auraBonus
+			}
+		}
+
+		// 4. Public Sentiment (Hooks pointing at the ruler)
 		if s.hooks != nil {
 			incomingHooks := s.hooks.GetAllIncomingHooks(ident.ID)
 			var totalSentiment float32 = 0.0

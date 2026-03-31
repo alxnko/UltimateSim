@@ -6,6 +6,9 @@ This document serves as the comprehensive and definitive index of all actually i
 
 ---
 
+## Phase 52: The Artifact Aura Engine
+- **Phase 52.1 - Auras of Legitimacy**: Bridges Phase 32.1 (Physical Items/Artifacts), Phase 35 (Sovereign Legitimacy), and Phase 27.1 (Military Revolts). Integrated directly into `LegitimacySystem` (`internal/systems/legitimacy.go`). The system actively queries for an active `EquipmentComponent` attached to a ruling capital/entity. If a `LegendComponent` is equipped, the system leverages its historical `Prestige` value, mathematically scaling it into a direct bonus to the ruler's `LegitimacyComponent.Score`. This systematically fulfills the geopolitical condition where a highly corrupt or impoverished ruler survives mass military defection solely because they possess a physical item carrying historical authority (e.g. "The Sword of Bektur").
+
 ## Phase 49: The Witch Hunt Engine
 - **Phase 49.1 - The Witch Hunt Engine**: Bridges Phase 20.2 (Abstract Physics/Magic) directly into the carceral state (Phase 36/18). Added `EsotericMarker` and `TraitEsoteric`. When a `JobCaster` successfully casts magic via `CastingSystem`, they are permanently marked via DOD component mapping. During systemic crises (high `Trauma`), the `ScapegoatSystem` evaluates the map geometry; if it detects active `EsotericMarker` entities, it unilaterally blames them, overriding natural religious minority targeting. This flags the `TargetEsoteric` boolean on the jurisdiction, triggering the `JusticeSystem` to organically criminalize (`InteractionEsoteric`) any magical practitioners or esoteric legacy holders, sending Guards to violently execute or banish them, perfectly simulating systemic witch hunts without hardcoded story events.
 
