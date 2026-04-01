@@ -127,3 +127,113 @@ func TestInformationTradeSystem_Integration(t *testing.T) {
 	// Prevent unused warning for ruinID
 	_ = ruinID
 }
+
+// Phase 34.2: The Lingua Franca Engine
+// Proves that massively wealthy factions can impose their LanguageID on poorer factions during trade.
+
+func TestInformationTradeSystem_LinguaFranca(t *testing.T) {
+	world := ecs.NewWorld()
+
+	// Initialize SecretRegistry to avoid panics when generating rumors
+	engine.GetSecretRegistry()
+
+	// Initialize component mappings
+	posID := ecs.ComponentID[components.Position](&world)
+	secretID := ecs.ComponentID[components.SecretComponent](&world)
+	needsID := ecs.ComponentID[components.Needs](&world)
+	identID := ecs.ComponentID[components.Identity](&world)
+	memID := ecs.ComponentID[components.Memory](&world)
+	affilID := ecs.ComponentID[components.Affiliation](&world)
+	cultureID := ecs.ComponentID[components.CultureComponent](&world)
+	treasuryID := ecs.ComponentID[components.TreasuryComponent](&world)
+
+	hookGraph := engine.NewSparseHookGraph()
+	tradeSys := NewInformationTradeSystem(&world, hookGraph)
+
+	// Seller's City (Massively Wealthy)
+	sellerCity := world.NewEntity(affilID, treasuryID)
+	sellerCityAffil := (*components.Affiliation)(world.Get(sellerCity, affilID))
+	sellerCityAffil.CityID = 10
+	sellerCityTreasury := (*components.TreasuryComponent)(world.Get(sellerCity, treasuryID))
+	sellerCityTreasury.Wealth = 10000.0 // > 5000 and > 5x buyer wealth
+
+	// Buyer's City (Poor)
+	buyerCity := world.NewEntity(affilID, treasuryID)
+	buyerCityAffil := (*components.Affiliation)(world.Get(buyerCity, affilID))
+	buyerCityAffil.CityID = 20
+	buyerCityTreasury := (*components.TreasuryComponent)(world.Get(buyerCity, treasuryID))
+	buyerCityTreasury.Wealth = 1000.0
+
+	// 1. Create a Seller NPC (Wealthy City) with a High-Value Secret
+	sellerNPC := world.NewEntity(posID, secretID, needsID, identID, memID, affilID, cultureID)
+	sellerPos := (*components.Position)(world.Get(sellerNPC, posID))
+	sellerPos.X = 10.0
+	sellerPos.Y = 10.0
+
+	sellerNeeds := (*components.Needs)(world.Get(sellerNPC, needsID))
+	sellerNeeds.Wealth = 5.0
+	sellerNeeds.Food = 20.0
+
+	sellerIdent := (*components.Identity)(world.Get(sellerNPC, identID))
+	sellerIdent.ID = 100
+	sellerIdent.BaseTraits = components.TraitGossip
+
+	sellerSecrets := (*components.SecretComponent)(world.Get(sellerNPC, secretID))
+	sellerSecrets.Secrets = append(sellerSecrets.Secrets, components.Secret{
+		OriginID: 100,
+		SecretID: 42,
+		Virality: 250,
+		BeliefID: 0,
+	})
+
+	sellerMem := (*components.Memory)(world.Get(sellerNPC, memID))
+	sellerMem.Head = 0
+
+	sellerAffil := (*components.Affiliation)(world.Get(sellerNPC, affilID))
+	sellerAffil.CityID = 10
+
+	sellerCulture := (*components.CultureComponent)(world.Get(sellerNPC, cultureID))
+	sellerCulture.LanguageID = 55 // Seller's language
+
+	// 2. Create a Buyer NPC (Poor City) without the Secret
+	buyerNPC := world.NewEntity(posID, secretID, needsID, identID, memID, affilID, cultureID)
+	buyerPos := (*components.Position)(world.Get(buyerNPC, posID))
+	buyerPos.X = 10.5
+	buyerPos.Y = 10.5
+
+	buyerNeeds := (*components.Needs)(world.Get(buyerNPC, needsID))
+	buyerNeeds.Wealth = 1000.0
+	buyerNeeds.Food = 100.0
+
+	buyerIdent := (*components.Identity)(world.Get(buyerNPC, identID))
+	buyerIdent.ID = 200
+
+	buyerSecrets := (*components.SecretComponent)(world.Get(buyerNPC, secretID))
+	buyerSecrets.Secrets = []components.Secret{}
+
+	buyerMem := (*components.Memory)(world.Get(buyerNPC, memID))
+	buyerMem.Head = 0
+
+	buyerAffil := (*components.Affiliation)(world.Get(buyerNPC, affilID))
+	buyerAffil.CityID = 20
+
+	buyerCulture := (*components.CultureComponent)(world.Get(buyerNPC, cultureID))
+	buyerCulture.LanguageID = 99 // Buyer's original language
+	buyerCulture.ForeignLanguageID = 0
+	buyerCulture.ForeignInteractionTicks = 0
+
+	// 3. Execute Trade System (Needs to run 15 times to hit offset tick)
+	for i := 0; i < 15; i++ {
+		tradeSys.Update(&world)
+	}
+
+	// Post-Trade Assertions
+	buyerCulture = (*components.CultureComponent)(world.Get(buyerNPC, cultureID))
+
+	if buyerCulture.ForeignLanguageID != 55 {
+		t.Errorf("Expected Buyer's ForeignLanguageID to be updated to 55, got %d", buyerCulture.ForeignLanguageID)
+	}
+	if buyerCulture.ForeignInteractionTicks != 50 {
+		t.Errorf("Expected Buyer's ForeignInteractionTicks to be updated to 50, got %d", buyerCulture.ForeignInteractionTicks)
+	}
+}

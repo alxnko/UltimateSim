@@ -773,3 +773,20 @@ Strict Data-Oriented Design (DOD) was maintained via `arche-go`. The system uses
   - The Creditor executes the collateral: the negative hook is zeroed out, and the `AdministrationMarker` is forcibly stripped from the ruler and given to the Creditor.
   - A bloodless political coup occurs natively. The Creditor now rules the city.
   - Verified 100% deterministic through `go test ./internal/systems -v -run TestPoliticalCoup_Integration -count=2`.
+
+## Evolution: Phase 34.2 - The Lingua Franca Engine
+- **Date:** 2026-03-31
+- **Focus:** Integration (Memetics + Economy + Geopolitics)
+- **Goal:** Execute the "Systemic Emergence" objective by implementing a missing link from the Vision document: "Dominant merchant guild languages naturally become the global _Lingua Franca_." This structurally bridges `InformationTradeSystem` (Economy/Information) and `LanguageDriftSystem` (Memetics).
+- **DOD Implementation:**
+  - Designed Phase 34.2 into the existing `InformationTradeSystem` (`internal/systems/information_trade.go`) without introducing new structs, maintaining DOD padding rules.
+  - Added pre-caching for `TreasuryComponent` linked to `CityID` using a flat map `cityTreasuries` to evaluate faction wealth in O(1) time without nested ECS locks.
+  - Modified the trade logic so that if the seller's `Affiliation` points to a city with > 5000 wealth and > 5x the buyer's city's wealth, the seller overrides the buyer's `CultureComponent` natively during the secret transfer.
+- **The Butterfly Effect:**
+  - Plugs deeply into Phase 13/15 (Wealth Creation) and Phase 07.3 (Linguistic Drift).
+  - A highly successful Capital accumulates massive physical wealth via taxation (Phase 42) and trade (Phase 09.1).
+  - Its citizens, empowered by this systemic wealth, travel across the map exchanging Information (Secrets) with poorer frontier villagers.
+  - Due to the massive wealth disparity, the frontier villagers adopt the seller's `LanguageID` (`ForeignLanguageID` is set and `ForeignInteractionTicks` spikes).
+  - This natively drives Phase 07.3's `LanguageDriftSystem` to permanently switch the poor village to the wealthy Capital's language.
+  - Because of this emergent assimilation, `CulturalFrictionSystem` (Phase 33.1) evaluates a match. Loyalty stops draining. Thus, economic hegemony natively guarantees geopolitical stability and cultural imperialism without scripted narrative events.
+  - Verified 100% deterministic through `go test ./internal/systems -v -run TestInformationTradeSystem_LinguaFranca -count=2`.
