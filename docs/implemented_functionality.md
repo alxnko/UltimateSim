@@ -6,6 +6,9 @@ This document serves as the comprehensive and definitive index of all actually i
 
 ---
 
+## Phase 52: Artifact Aura Engine
+- **Phase 52.1 - Auras of Legitimacy**: Bridges the physical artifact layer directly to Sovereignty and Geopolitics. Modified `LegitimacySystem` to dynamically query for `EquipmentComponent`. If a ruler wields an equipped legendary item (`Prestige > 0`), it mathematically scales the prestige (Prestige / 10.0) and adds it as a flat bonus to `LegitimacyComponent.Score`. This acts as an "Aura of Legitimacy", mathematically averting `MilitaryRevoltSystem` uprisings even if a King's economy and corruption scores should natively trigger a revolution, creating massive reliance on historical objects to maintain macro-state stability.
+
 ## Phase 49: The Witch Hunt Engine
 - **Phase 49.1 - The Witch Hunt Engine**: Bridges Phase 20.2 (Abstract Physics/Magic) directly into the carceral state (Phase 36/18). Added `EsotericMarker` and `TraitEsoteric`. When a `JobCaster` successfully casts magic via `CastingSystem`, they are permanently marked via DOD component mapping. During systemic crises (high `Trauma`), the `ScapegoatSystem` evaluates the map geometry; if it detects active `EsotericMarker` entities, it unilaterally blames them, overriding natural religious minority targeting. This flags the `TargetEsoteric` boolean on the jurisdiction, triggering the `JusticeSystem` to organically criminalize (`InteractionEsoteric`) any magical practitioners or esoteric legacy holders, sending Guards to violently execute or banish them, perfectly simulating systemic witch hunts without hardcoded story events.
 

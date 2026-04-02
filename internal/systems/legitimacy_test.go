@@ -25,6 +25,7 @@ func TestLegitimacySystem_Integration(t *testing.T) {
 	ecs.ComponentID[components.CapitalComponent](&world)
 	ecs.ComponentID[components.LegitimacyComponent](&world)
 	ecs.ComponentID[components.TreasuryComponent](&world)
+	ecs.ComponentID[components.EquipmentComponent](&world)
 
 	// Create SparseHookGraph
 	hookGraph := engine.NewSparseHookGraph()
@@ -105,20 +106,81 @@ func TestLegitimacySystem_Integration(t *testing.T) {
 	}
 
 	// Step B: Inject massive corruption and negative public sentiment to crush legitimacy
+	// But introduce Phase 52.1 Auras of Legitimacy!
 	capJur.Corruption = 20           // -40 penalty
 	capTreasury.Wealth = 0.0         // 0 bonus
 	hookGraph.AddHook(999, capIdent.ID, -500) // Someone hates the King -> -50 penalty
 
-	// Run systems again (tick counters hit intervals)
+	// Add an ancient artifact to the King's entity
+	// Let's use an 800 prestige artifact (+80 Legitimacy)
+	world.Add(capEnt, ecs.ComponentID[components.EquipmentComponent](&world))
+	capEquip := (*components.EquipmentComponent)(world.Get(capEnt, ecs.ComponentID[components.EquipmentComponent](&world)))
+	capEquip.Equipped = true
+	capEquip.Weapon = components.LegendComponent{
+		Prestige: 800, // Grants +80 Legitimacy
+	}
+
+	// Re-get capLegitimacy since it was modified by another system maybe? Actually no,
+	// wait, let's just make sure the component is retrieved properly and updated.
+	// Oh! I added the EquipmentComponent. But `capLegitimacy.Score` might be 0 because
+	// the `Update` loop was called for 50 ticks, but wait. `capLegitimacy` is a pointer
+	// retrieved earlier from the world. If we added a component to `capEnt`, Arche-Go
+	// might have reallocated the entity's memory! So the old `capLegitimacy` pointer is invalid!
+
+	// Let's re-acquire the pointer.
+	capLegitimacy = (*components.LegitimacyComponent)(world.Get(capEnt, ecs.ComponentID[components.LegitimacyComponent](&world)))
+
+	// Run systems to update score. Legitimacy triggers every 50 ticks, Revolt every 10 ticks.
+	// But wait, if revoltSystem triggers BEFORE legitimacySystem updates, the guard might revolt!
+	// Legitimacy System needs to update first. Let's step tick-by-tick carefully.
 	for i := 0; i < 50; i++ {
 		legitimacySystem.Update(&world)
+		// Don't run revolt system yet! Let Legitimacy update first.
+	}
+
+	// Expected Legitimacy: Base 50 + 0 (wealth) - 40 (corruption) - 50 (hooks) + 80 (Artifact) = 40 Legitimacy
+	if capLegitimacy.Score != 40 {
+		t.Fatalf("Expected legitimacy to be held up by artifact at 40, got %d", capLegitimacy.Score)
+	}
+
+	// Now we can safely run the revolt system. It shouldn't revolt because 40 >= 20.
+	for i := 0; i < 50; i++ {
 		revoltSystem.Update(&world)
 	}
 
-	// Base 50 + 0 (wealth) - 40 (corruption) - 50 (hooks) = -40 Legitimacy -> 0
-	if capLegitimacy.Score != 0 {
-		t.Fatalf("Expected legitimacy to crash to 0, got %d", capLegitimacy.Score)
+	// The Guard's job component might also have moved in memory. Re-acquire it.
+	guardJob = (*components.JobComponent)(world.Get(guardNPC, ecs.ComponentID[components.JobComponent](&world)))
+
+	// Assertion: The Guard did NOT revolt because the artifact is holding the state together
+	if guardJob.JobID != components.JobGuard {
+		t.Fatalf("Expected Guard to remain loyal due to ancient artifact aura, but became %d", guardJob.JobID)
 	}
+
+	// Step C: The Artifact is stolen or unequipped
+	capEquip.Equipped = false
+
+	// Re-acquire pointers again just in case memory shifted, though removing a flag won't do it.
+	// But let's just make sure we get the newest job status.
+	// We run Legitimacy System first to crash the score.
+	for i := 0; i < 50; i++ {
+		legitimacySystem.Update(&world)
+	}
+
+	// Expected Legitimacy: Base 50 + 0 (wealth) - 40 (corruption) - 50 (hooks) = -40 -> 0 Legitimacy
+	if capLegitimacy.Score != 0 {
+		t.Fatalf("Expected legitimacy to crash to 0 without the artifact, got %d", capLegitimacy.Score)
+	}
+
+	// Now run the Revolt System so the guard acts on the 0 legitimacy.
+	for i := 0; i < 50; i++ {
+		revoltSystem.Update(&world)
+	}
+
+	guardJob = (*components.JobComponent)(world.Get(guardNPC, ecs.ComponentID[components.JobComponent](&world)))
+
+	// Re-acquire guardIdent to get the ID correctly
+	guardIdent = (*components.Identity)(world.Get(guardNPC, ecs.ComponentID[components.Identity](&world)))
+	capIdent = (*components.Identity)(world.Get(capEnt, ecs.ComponentID[components.Identity](&world)))
 
 	// Assertion: Guard has dropped JobGuard and became a Bandit due to low legitimacy
 	if guardJob.JobID != components.JobBandit {

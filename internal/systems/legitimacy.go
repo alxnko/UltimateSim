@@ -24,6 +24,7 @@ type LegitimacySystem struct {
 	treasID  ecs.ID
 	jurID    ecs.ID
 	capID    ecs.ID
+	equipID  ecs.ID
 }
 
 func NewLegitimacySystem(world *ecs.World, hooks *engine.SparseHookGraph) *LegitimacySystem {
@@ -35,6 +36,7 @@ func NewLegitimacySystem(world *ecs.World, hooks *engine.SparseHookGraph) *Legit
 		treasID:     ecs.ComponentID[components.TreasuryComponent](world),
 		jurID:       ecs.ComponentID[components.JurisdictionComponent](world),
 		capID:       ecs.ComponentID[components.CapitalComponent](world),
+		equipID:     ecs.ComponentID[components.EquipmentComponent](world),
 	}
 }
 
@@ -74,7 +76,7 @@ func (s *LegitimacySystem) Update(world *ecs.World) {
 			newScore -= corruptionPenalty
 		}
 
-		// 3. Public Sentiment (Hooks pointing at the ruler)
+		// 4. Public Sentiment (Hooks pointing at the ruler)
 		if s.hooks != nil {
 			incomingHooks := s.hooks.GetAllIncomingHooks(ident.ID)
 			var totalSentiment float32 = 0.0
@@ -93,6 +95,18 @@ func (s *LegitimacySystem) Update(world *ecs.World) {
 			}
 
 			newScore += totalSentiment
+		}
+
+		// Phase 52.1: Auras of Legitimacy (Artifact Equipment)
+		// 3. Aura of Legitimacy
+		if world.Has(query.Entity(), s.equipID) {
+			equip := (*components.EquipmentComponent)(world.Get(query.Entity(), s.equipID))
+			if equip.Equipped && equip.Weapon.Prestige > 0 {
+				// The artifact's prestige mathematically scales to provide massive state legitimacy
+				// e.g., 500 Prestige Sword grants +50 Legitimacy
+				artifactBonus := float32(equip.Weapon.Prestige) / 10.0
+				newScore += artifactBonus
+			}
 		}
 
 		// Mathematical Bounds Check

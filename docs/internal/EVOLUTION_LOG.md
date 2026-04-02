@@ -773,3 +773,18 @@ Strict Data-Oriented Design (DOD) was maintained via `arche-go`. The system uses
   - The Creditor executes the collateral: the negative hook is zeroed out, and the `AdministrationMarker` is forcibly stripped from the ruler and given to the Creditor.
   - A bloodless political coup occurs natively. The Creditor now rules the city.
   - Verified 100% deterministic through `go test ./internal/systems -v -run TestPoliticalCoup_Integration -count=2`.
+
+## Evolution: Phase 52.1 - Auras of Legitimacy (Artifact Engine)
+- **Focus:** Integration (Physical Objects/Artifacts + Sovereignty + Geopolitics)
+- **Goal:** Execute the "Systemic Emergence" objective by implementing a missing link from the Vision document: "Artifacts (e.g., 'Sword of Bektur') that carry historical memory and grant 'Auras of Legitimacy'". Previously, equipped legend items had no geopolitical impact.
+- **DOD Implementation:**
+  - Modified `LegitimacySystem` (`internal/systems/legitimacy.go`) to dynamically query `ecs.ComponentID[components.EquipmentComponent]`.
+  - Added an evaluation loop during the offset score calculation: If a Capital/Ruler entity actively has an `EquipmentComponent` marked as `Equipped == true` containing a `Weapon.Prestige > 0`, it scales the prestige mathematically (`Prestige / 10.0`) and adds it directly as a flat bonus to `LegitimacyComponent.Score`.
+- **The Butterfly Effect:**
+  - Plugs deeply into Phase 35 (Legitimacy), Phase 27 (Military Revolts), Phase 32 (Artifact Equipment), and Phase 09 (Legend Items).
+  - A deeply corrupt King (`Corruption = 50`) bankrupts their city, plunging their `LegitimacyComponent.Score` to near zero.
+  - Normally, the `MilitaryRevoltSystem` would natively trigger, causing the guards to turn to Banditry and assassinate the King.
+  - However, the King possesses an ancient artifact with `Prestige: 500`. The `LegitimacySystem` calculates a massive +50 Aura of Legitimacy.
+  - The sheer awe of the artifact overrides the economic collapse, holding the state together mathematically.
+  - If a thief (`JusticeSystem`) steals the artifact, or it is lost in battle (`DeathSystem`), the Aura is removed. The King's true legitimacy crashes to 0 on the next tick, and the delayed revolution instantly executes.
+  - Verified 100% deterministic through `go test ./internal/systems -v -run TestLegitimacySystem_Integration -count=2`.
