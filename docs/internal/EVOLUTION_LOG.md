@@ -773,3 +773,37 @@ Strict Data-Oriented Design (DOD) was maintained via `arche-go`. The system uses
   - The Creditor executes the collateral: the negative hook is zeroed out, and the `AdministrationMarker` is forcibly stripped from the ruler and given to the Creditor.
   - A bloodless political coup occurs natively. The Creditor now rules the city.
   - Verified 100% deterministic through `go test ./internal/systems -v -run TestPoliticalCoup_Integration -count=2`.
+
+## Evolution: Phase 52.1 - Artifact Aura Engine
+**Focus:** Integration (Logistics/Artifacts + Sovereignty)
+
+**The Problem (Vision Gap):**
+Artifacts currently spawned via `DeathSystem` inherit prestige and are dropped upon death, but their presence doesn't actually interact with sovereign rule or prevent military revolts organically.
+
+**The Solution (Autonomous DOD Execution):**
+I created the **Artifact Aura Engine**.
+1. Modified `LegitimacySystem` to query for `EquipmentComponent`.
+2. Add the `LegendComponent.Prestige` of an equipped weapon directly to `LegitimacyComponent.Score`.
+
+**The Butterfly Effect:**
+A Sovereign ruler acquires an ancient legendary artifact. This structurally boosts their legitimacy score locally by providing an Aura of Legitimacy. If their kingdom experiences a famine driving wealth to zero or severe corruption, the artifact provides a physical bulwark against a Military Revolt, preventing the `MilitaryRevoltSystem` from executing them organically.
+
+**Architecture Validation:**
+Strict Data-Oriented Design (DOD) was maintained via `arche-go`. Added size validation testing for  previously. Component verification ran cleanly.
+
+## Evolution: Phase 52.1 - Artifact Aura Engine
+**Focus:** Integration (Logistics/Artifacts + Sovereignty)
+
+**The Problem (Vision Gap):**
+Artifacts currently spawned via `DeathSystem` inherit prestige and are dropped upon death, but their presence doesn't actually interact with sovereign rule or prevent military revolts organically.
+
+**The Solution (Autonomous DOD Execution):**
+I created the **Artifact Aura Engine**.
+1. Modified `LegitimacySystem` to query for `EquipmentComponent`.
+2. Add the `LegendComponent.Prestige` of an equipped weapon directly to `LegitimacyComponent.Score`.
+
+**The Butterfly Effect:**
+A Sovereign ruler acquires an ancient legendary artifact. This structurally boosts their legitimacy score locally by providing an Aura of Legitimacy. If their kingdom experiences a famine driving wealth to zero or severe corruption, the artifact provides a physical bulwark against a Military Revolt, preventing the `MilitaryRevoltSystem` from executing them organically.
+
+**Architecture Validation:**
+Strict Data-Oriented Design (DOD) was maintained via `arche-go`. Added size validation testing for EquipmentComponent previously. Component verification ran cleanly.

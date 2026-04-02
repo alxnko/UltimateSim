@@ -12,6 +12,45 @@ import (
 // The "Butterfly Effect" proving Legitimacy Score calculation ties to Economy (Treasury),
 // Justice (Corruption), Public Sentiment (Hooks), and finally triggers Military Revolts.
 
+func TestLegitimacySystem_ArtifactAura(t *testing.T) {
+	world := ecs.NewWorld()
+
+	ecs.ComponentID[components.Position](&world)
+	ecs.ComponentID[components.Identity](&world)
+	ecs.ComponentID[components.CapitalComponent](&world)
+	ecs.ComponentID[components.LegitimacyComponent](&world)
+	ecs.ComponentID[components.EquipmentComponent](&world)
+
+	hookGraph := engine.NewSparseHookGraph()
+	legitimacySystem := NewLegitimacySystem(&world, hookGraph)
+
+	// Create Ruler
+	ruler := world.NewEntity(
+		ecs.ComponentID[components.Identity](&world),
+		ecs.ComponentID[components.CapitalComponent](&world),
+		ecs.ComponentID[components.LegitimacyComponent](&world),
+		ecs.ComponentID[components.EquipmentComponent](&world),
+	)
+
+	legitimacy := (*components.LegitimacyComponent)(world.Get(ruler, ecs.ComponentID[components.LegitimacyComponent](&world)))
+	legitimacy.Score = 50
+
+	equip := (*components.EquipmentComponent)(world.Get(ruler, ecs.ComponentID[components.EquipmentComponent](&world)))
+	equip.Equipped = true
+	equip.Weapon = components.LegendComponent{
+		Prestige: 30, // Artifact aura adds 30 legitimacy
+	}
+
+	for i := 0; i < 50; i++ {
+		legitimacySystem.Update(&world)
+	}
+
+	// Base 50 (reset each time calculation runs) + 30 (Artifact) = 80
+	if legitimacy.Score != 80 {
+		t.Fatalf("Expected legitimacy to be 80 due to Artifact Aura, got %d", legitimacy.Score)
+	}
+}
+
 func TestLegitimacySystem_Integration(t *testing.T) {
 	world := ecs.NewWorld()
 

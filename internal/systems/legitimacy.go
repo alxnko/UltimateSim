@@ -45,6 +45,9 @@ func (s *LegitimacySystem) Update(world *ecs.World) {
 		return
 	}
 
+	// Evolution: Phase 52.1 - Artifact Aura Engine
+	equipID := ecs.ComponentID[components.EquipmentComponent](world)
+
 	// Iterate over all governing entities that have a Legitimacy Score
 	query := world.Query(ecs.All(s.identID, s.legitID, s.capID))
 
@@ -93,6 +96,14 @@ func (s *LegitimacySystem) Update(world *ecs.World) {
 			}
 
 			newScore += totalSentiment
+		}
+
+		// Evolution: Phase 52.1 - Artifact Aura Engine
+		if world.Has(query.Entity(), equipID) {
+			equip := (*components.EquipmentComponent)(query.Get(equipID))
+			if equip.Equipped {
+				newScore += float32(equip.Weapon.Prestige)
+			}
 		}
 
 		// Mathematical Bounds Check
