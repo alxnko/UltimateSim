@@ -94,6 +94,7 @@ func BuildSimulation(gridWidth, gridHeight int, seedVal byte, status *render.Loa
 	tickManager.AddSystem(systems.NewCityBinderSystem(), engine.PhaseResolution)
 	tickManager.AddSystem(systems.NewSettlementRuleSystem(grid), engine.PhaseResolution)
 	tickManager.AddSystem(systems.NewPriceDiscoverySystem(), engine.PhaseResolution)
+	tickManager.AddSystem(systems.NewBlackMarketSystem(world), engine.PhaseResolution)
 	tickManager.AddSystem(systems.NewRuinTransformationSystem(world), engine.PhaseResolution)
 	tickManager.AddSystem(systems.NewAdministrativeDecaySystem(), engine.PhaseResolution)
 

@@ -758,6 +758,21 @@ Strict Data-Oriented Design (DOD) was maintained via `arche-go`. The system uses
   - Once Legitimacy drops below 20, the `MilitaryRevoltSystem` natively intercepts this failure. The standing army defects, forms bandit factions, and sparks a `BloodFeud` civil war to execute the bankrupt ruler. Wars are now heavily limited by GDP.
   - Verified 100% deterministic through `go test ./internal/systems -v -run TestWarEconomySystem_Integration -count=2`.
 
+## Evolution: Phase 53 - The Black Market Smuggling Engine
+- **Focus:** Integration (Economy + Governance + Logistics)
+- **Goal:** Execute the "Systemic Emergence" objective by bridging the Justice Engine's Contraband logic directly into the Economic Price Discovery loop. Simulating how state prohibition natively creates hyper-profitable black markets, incentivizing caravans to smuggle illegal goods.
+- **DOD Implementation:**
+  - Implemented `BlackMarketSystem` (`internal/systems/black_market.go`) adhering strictly to `arche-go` ECS standards.
+  - Iterates over all active `JurisdictionComponent` entities that contain a `ContrabandComponent`, pre-caching their bounds and illegal item bitmasks into a flat slice.
+  - Sequentially parses `Village` entities, injecting a 5.0x Risk Premium multiplier into their local `MarketComponent` prices for any flagged contraband item.
+- **The Butterfly Effect:**
+  - Plugs deeply into Phase 13.1 (Market Logic), Phase 09.1 (Caravans), and Phase 18 (Justice).
+  - A Capital passes a law banning `ItemIron` (Contraband).
+  - `PriceDiscoverySystem` establishes the base price, but `BlackMarketSystem` immediately intercepts and spikes the local Iron price by 5x.
+  - A desperate NPC or `CaravanSpawnerSystem` mathematically detects this massive price disparity across the map. They buy Iron cheaply elsewhere and physically pathfind toward the banning jurisdiction to sell it for a massive profit.
+  - If they succeed, they become extremely wealthy. However, if a `JobGuard` intercepts them within the Jurisdiction, the existing `JusticeSystem` natively detects the contraband, flags them with a `CrimeMarker`, confiscates their wealth via fines, and banishes them, naturally enriching the state. A perfect systemic loop between law, economics, and crime.
+  - Verified 100% deterministic through `go test ./internal/systems -v -run TestBlackMarketSystem_Integration -count=2`.
+
 ## Evolution: Phase 51 - The Debt-Trap Political Coup Engine
 - **Date:** 2026-03-29
 - **Focus:** Integration (Economy + Governance + Justice)
