@@ -773,3 +773,19 @@ Strict Data-Oriented Design (DOD) was maintained via `arche-go`. The system uses
   - The Creditor executes the collateral: the negative hook is zeroed out, and the `AdministrationMarker` is forcibly stripped from the ruler and given to the Creditor.
   - A bloodless political coup occurs natively. The Creditor now rules the city.
   - Verified 100% deterministic through `go test ./internal/systems -v -run TestPoliticalCoup_Integration -count=2`.
+
+## Evolution: Phase 53 - The Black Market Smuggling Engine
+- **Date:** 2026-04-02
+- **Focus:** Integration (Economy + Justice + Labor)
+- **Goal:** Execute the "Systemic Emergence" objective by fulfilling the Vision gap where illegal goods (Contraband) should artificially drive up market margins, forcing otherwise honest NPCs into illegal career paths simply to exploit the state's artificial scarcity.
+- **DOD Implementation:**
+  - Designed `BlackMarketSystem` (`internal/systems/black_market.go`).
+  - Pre-extracts `JurisdictionComponent.RadiusSquared` and `ContrabandComponent.Contraband` bitmasks into a flat array (`jurNodeData`) to avoid nested ECS queries.
+  - Sequentially parses `Village` entities with `MarketComponent` prices. If a village resides within the jurisdiction, the system mathematically multiplies the price of all local illegal items by a 5.0x Risk Premium.
+- **The Butterfly Effect:**
+  - Bridges Phase 18.1 (Contraband Logic) to Phase 13.1 (Price Discovery) and Phase 13.2 (Career Change).
+  - A Capital makes Wood illegal (`Contraband = 1`).
+  - The `BlackMarketSystem` artificially spikes the local `WoodPrice` by 5.0x because smugglers face a risk premium to supply it.
+  - The massive new `WoodPrice` native triggers the existing `CareerChangeSystem` thresholds. Normal `JobArtisan` citizens are organically enticed by the massive margins and unilaterally abandon their businesses to become `JobLumberjack` workers inside the contraband zone.
+  - The Governance action (banning wood) naturally creates an illicit smuggling pipeline without hardcoded narrative popups, confirming full ecosystem connectivity.
+  - Verified 100% deterministic through `go test ./internal/systems -run TestBlackMarketSystem_Integration`.
