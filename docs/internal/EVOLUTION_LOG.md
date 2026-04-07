@@ -774,6 +774,36 @@ Strict Data-Oriented Design (DOD) was maintained via `arche-go`. The system uses
   - A bloodless political coup occurs natively. The Creditor now rules the city.
   - Verified 100% deterministic through `go test ./internal/systems -v -run TestPoliticalCoup_Integration -count=2`.
 
+## Evolution: Phase 52 - The Artifact Aura Engine (Auras of Legitimacy)
+**Focus:** Integration (Legends + Sovereignty)
+
+**The Problem (Vision Gap):**
+The Vision states: "Artifacts (e.g., 'Sword of Bektur') that carry historical memory and grant 'Auras of Legitimacy.'" Previously, legendary artifacts were physical items that could boost prestige via jealousy, but they were ignored by the state machinery. A King wielding a legendary sword was politically identical to a King wielding a rusty dagger, isolating Phase 32 from Phase 35.
+
+**The Solution (Autonomous DOD Execution):**
+I bridged the gap by modifying the `LegitimacySystem`. It now dynamically checks if a reigning Capital Ruler (e.g. King) possesses an `EquipmentComponent`. If they are equipped with a `LegendComponent` whose `Prestige` exceeds the `ExtremePrestigeThreshold` (100), the system algorithmically translates the artifact's physical prestige into a massive bonus to their `LegitimacyComponent.Score`.
+
+**The Butterfly Effect:**
+A King rules a highly corrupt city. Normally, the corruption (`JurisdictionComponent.Corruption = 25`) drops their `LegitimacyComponent.Score` to 0, which natively triggers the `MilitaryRevoltSystem`. The standing army revolts.
+However, the King equips the legendary Sword of Bektur (Prestige 200). The `LegitimacySystem` detects the Aura of Legitimacy, adding 40 points to the score. The King survives the legitimacy crash purely due to the historical artifact, stabilizing the empire without changing economic policy.
+Tested and verified completely deterministic through `TestLegitimacySystem_ArtifactAura`.
+
+## Evolution: Phase 53 - The Black Market Smuggling Engine
+**Focus:** Integration (Justice + Economy)
+
+**The Problem (Vision Gap):**
+The Vision demands interconnected feedback loops. Previously, Phase 18 allowed the State to declare certain items (like Iron) as `ContrabandComponent`, and Guards would punish carriers. However, Phase 13 (Macroeconomics) and `MarketComponent` completely ignored this legal reality. Iron remained the same price whether it was legal or highly criminalized, providing zero economic incentive for the risk of smuggling.
+
+**The Solution (Autonomous DOD Execution):**
+I created the `BlackMarketSystem`.
+1. The system pre-caches `JurisdictionComponent` entities that enforce a `ContrabandComponent`.
+2. It evaluates all `Village` entities containing a `MarketComponent`.
+3. If a Village is located within a contraband jurisdiction, the system maps the illegal bitmasks and algorithmically spikes the local market price of the illegal goods by 5x (the Risk Premium).
+
+**The Butterfly Effect:**
+A Capital criminalizes Iron (`Contraband = 1 << ItemIron`). The `BlackMarketSystem` intercepts the state's laws, artificially spiking the `IronPrice` in local markets from 10.0 to 50.0. A starving NPC on the frontier checks prices via `PriceDiscoverySystem` and realizes Iron smuggling is massively profitable. They acquire Iron and route a `Caravan` into the city. They risk getting caught by `JusticeSystem` Guards, but if they succeed, they make 5x profit. State law organically generates Black Markets.
+Tested and verified completely deterministic through `TestBlackMarketSystem_Integration`.
+
 ## Evolution: Phase 54 - The Radicalization Engine (Echo Chamber)
 **Focus:** Integration (Geography + Culture/Memetics + Geopolitics)
 
