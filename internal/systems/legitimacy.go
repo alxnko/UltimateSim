@@ -19,11 +19,12 @@ type LegitimacySystem struct {
 	tickCounter uint64
 
 	// Pre-cached component IDs
-	identID  ecs.ID
-	legitID  ecs.ID
-	treasID  ecs.ID
-	jurID    ecs.ID
-	capID    ecs.ID
+	identID ecs.ID
+	legitID ecs.ID
+	treasID ecs.ID
+	jurID   ecs.ID
+	capID   ecs.ID
+	equipID ecs.ID
 }
 
 func NewLegitimacySystem(world *ecs.World, hooks *engine.SparseHookGraph) *LegitimacySystem {
@@ -35,6 +36,7 @@ func NewLegitimacySystem(world *ecs.World, hooks *engine.SparseHookGraph) *Legit
 		treasID:     ecs.ComponentID[components.TreasuryComponent](world),
 		jurID:       ecs.ComponentID[components.JurisdictionComponent](world),
 		capID:       ecs.ComponentID[components.CapitalComponent](world),
+		equipID:     ecs.ComponentID[components.EquipmentComponent](world),
 	}
 }
 
@@ -93,6 +95,20 @@ func (s *LegitimacySystem) Update(world *ecs.World) {
 			}
 
 			newScore += totalSentiment
+		}
+
+		// Evolution: Phase 52 - Artifact Aura Engine
+		// 4. Auras of Legitimacy (Equipped Artifacts)
+		if world.Has(query.Entity(), s.equipID) {
+			equip := (*components.EquipmentComponent)(query.Get(s.equipID))
+			if equip.Equipped && equip.Weapon.Prestige >= components.ExtremePrestigeThreshold {
+				// Significant bonus for wielding a legendary artifact (scales with prestige)
+				auraBonus := float32(equip.Weapon.Prestige) / 5.0
+				if auraBonus > 50.0 {
+					auraBonus = 50.0 // Cap max bonus at 50 points
+				}
+				newScore += auraBonus
+			}
 		}
 
 		// Mathematical Bounds Check
