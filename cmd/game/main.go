@@ -69,6 +69,8 @@ func BuildSimulation(gridWidth, gridHeight int, seedVal byte, status *render.Loa
 	tickManager.AddSystem(systems.NewNaturalDisasterSystem(world, grid), engine.PhaseResolution)
 	tickManager.AddSystem(systems.NewExposureSystem(world, grid), engine.PhaseResolution)
 	tickManager.AddSystem(systems.NewRustSystem(), engine.PhaseResolution)
+	// Phase 55: The Ecological Collapse Engine
+	tickManager.AddSystem(systems.NewDeforestationSystem(world, grid), engine.PhaseResolution)
 	// --- PHASE: AI ---
 	tickManager.AddSystem(systems.NewDesperationSystem(world), engine.PhaseAI)
 	tickManager.AddSystem(systems.NewBanditrySystem(world), engine.PhaseAI)

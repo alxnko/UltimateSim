@@ -823,3 +823,24 @@ When loyalty drops to 0, the `VassalRebellionSystem` unilaterally forces the vil
 
 **Architecture Validation:**
 Data-Oriented Design (DOD) was strictly maintained. `mapGrid` array reads execute in O(1). Structural queries pre-cache NPC beliefs into flat slices `[]npcData` and use standard nested map lookups (`map[uint32]map[uint32]int32`) outside of the archetype loop to resolve the consensus algorithm, entirely preventing runtime panics. Validated 100% deterministic through `TestEchoChamber_Integration`.
+
+## Evolution: Phase 55 - The Ecological Collapse Engine
+**Focus:** Integration (Geography + Economy + Biology)
+
+**The Problem (Vision Gap):**
+The Vision explicitly outlines "Resource Depletion: Wood and stone are tied to local tiles. Over-harvesting to hastily build a city inevitably causes a crisis (e.g., heating shortage in winter), forcing the city to adapt, trade, or start a resource war."
+Previously, while `MapGrid` tiles possessed a `WoodValue` (Geography) and `StorageComponent` tracked `Wood` (Economy), there was no physical link between them. Villages magically produced resources without directly degrading the local map biome, isolating the ecological reality from the economic model.
+
+**The Solution (Autonomous DOD Execution):**
+I created the **Ecological Collapse Engine** (`DeforestationSystem`).
+1. Evaluates all `JobLumberjack` NPCs.
+2. Checks the `MapGrid` tile directly underneath their active `Position`.
+3. If the tile has `WoodValue` > 0, it physically extracts the resource (decrementing MapGrid `WoodValue`) and adds it to their employer's `StorageComponent`.
+
+**The Butterfly Effect:**
+A city rapidly expands, hiring more lumberjacks. `DeforestationSystem` continuously extracts `WoodValue` from the surrounding tiles. Eventually, `WoodValue` drops to 0, representing total deforestation. The local `StorageComponent.Wood` stops growing natively.
+When Phase 13.4 `CalendarSystem` hits Winter, the `WinterHeatingSystem` automatically begins draining the finite `StorageComponent.Wood` supply to keep NPCs warm.
+Because there is no local wood left to harvest, the wood stockpile runs dry. The `VitalsComponent.Pain` of all NPCs natively spikes, leading to mass death (Biology). This forces the city to either begin importing wood via long-distance trade or launch a `ResourceWar` to survive the winter, perfectly executing the "Emergence over Scripting" vision.
+
+**Architecture Validation:**
+Strict Data-Oriented Design (DOD) maintained. Employer IDs and Storages are mapped in an initial pass into `map[uint64]*components.StorageComponent`, turning nested ECS queries into an O(1) map lookup. Passed deterministic E2E verification via `TestDeforestationSystem_Integration`.
