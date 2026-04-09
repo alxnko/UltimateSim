@@ -823,3 +823,17 @@ When loyalty drops to 0, the `VassalRebellionSystem` unilaterally forces the vil
 
 **Architecture Validation:**
 Data-Oriented Design (DOD) was strictly maintained. `mapGrid` array reads execute in O(1). Structural queries pre-cache NPC beliefs into flat slices `[]npcData` and use standard nested map lookups (`map[uint32]map[uint32]int32`) outside of the archetype loop to resolve the consensus algorithm, entirely preventing runtime panics. Validated 100% deterministic through `TestEchoChamber_Integration`.
+
+## Evolution: Phase 55 - The Ecological Collapse Engine (DeforestationSystem)
+- **Goal:** Execute the "Systemic Emergence" objective by bridging Geography and Economy. Fulfilling the Vision missing link: "Resource Depletion: Wood and stone are tied to local tiles. Over-harvesting to hastily build a city inevitably causes a crisis".
+- **DOD Implementation:**
+  - Designed `DeforestationSystem` (`internal/systems/deforestation.go`) strictly adhering to Data-Oriented Design constraints.
+  - Caches employer and village `StorageComponent`s into a map for fast lookup (`map[uint64]*components.StorageComponent`).
+  - Sequentially parses all `JobLumberjack` NPCs. They extract `WoodValue` from the `engine.MapGrid` tile they physically occupy and place it into their employer's (or village's) `StorageComponent.Wood`.
+- **The Butterfly Effect:**
+  - Plugs into Phase 31.5 (Winter Heating Engine) and Phase 21 (Desperation).
+  - A massive city hires too many `JobLumberjack` NPCs to rapidly expand. The lumberjacks quickly deplete all local `WoodValue` from the `MapGrid`.
+  - The wood tile value drops to 0, preventing further harvesting.
+  - Winter hits. The `WinterHeatingSystem` drains the accumulated `StorageComponent.Wood` at a massive rate based on the population size.
+  - The wood reserves run out. The `WinterHeatingSystem` triggers a Freezing Crisis, decaying `LoyaltyComponent` and spawning `DiseaseEntity` (Hypothermia), plunging the city into civil war and pandemic solely due to its unchecked initial ecological destruction.
+  - Verified 100% deterministic through `go test ./internal/systems -v -run TestDeforestationSystem -count=2`.
