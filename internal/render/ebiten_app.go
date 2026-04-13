@@ -4,9 +4,11 @@ import (
 	"image/color"
 	"sync"
 
+	"github.com/ALXNKO/UltimateSim/internal/components"
 	"github.com/ALXNKO/UltimateSim/internal/engine"
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/ebitenutil"
+	"github.com/mlange-42/arche/ecs"
 )
 
 // LoadingStatus tracks the asynchronous generation of the simulation.
@@ -54,7 +56,16 @@ func (app *EbitenApp) Update() error {
 	app.Status.TM.Tick()
 
 	// Update Camera based on player position if possessed
-	// (Logic for this will be expanded in Task 5)
+	posID := ecs.ComponentID[components.Position](app.Status.TM.World)
+	possessedID := ecs.ComponentID[components.Possessed](app.Status.TM.World)
+	
+	query := app.Status.TM.World.Query(ecs.All(posID, possessedID))
+	if query.Next() {
+		pos := (*components.Position)(query.Get(posID))
+		app.CamX = float64(pos.X)
+		app.CamY = float64(pos.Y)
+	}
+	query.Close()
 
 	return nil
 }
