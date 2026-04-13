@@ -76,7 +76,19 @@ While the macroscopic simulation dictates economies and empires, the player expe
 - **Emergent Chaos:** The player's immediate, violent, or stealthy actions (e.g., assassinating a king, starting a tavern brawl) ripple upwards immediately, forcing the macro-simulation to adapt to the sudden death of key nodes or the physical destruction of critical infrastructure.
 - **Free Agency:** The player can choose their role. They can live as a humble woodcutter fulfilling `JobContracts`, or use inherited wealth and Hooks to hire an army of NPCs to overthrow a monarch. The constraints are physical and systemic, not hardcoded.
 
-## 9. Future Expansion Slots (Infinite Extensibility)
+## 9. The Visual Parity Mandate (Macro Lenses & Micro Textures)
+
+For the simulation to be deeply playable, the player must be able to parse complex data intuitively at any scale. No system operates solely as "background math."
+
+- **The Macro Lenses:** When zoomed out, the player can toggle dozens of strategic overlays:
+  - *Political Lenses:* Showing exact boundaries of Empires, independent City-States, and contested borders.
+  - *Cultural & Religious Lenses:* Heatmaps showing the spread of dominant languages, mutant dialects, and creeping ideological schisms (Phase 38).
+  - *Economic Lenses:* Visualized trade routes (Caravan paths), regional inflation rates, and resource deficit highlights (e.g., a city flashing red due to a starvation loop).
+  - *Entropy Lenses:* Mapping disease vectors (Phase 10), localized corruption (Phase 22), and crime density.
+- **Micro-Scale Textures & Interaction:** When zoomed in, the abstract data must map to concrete reality. A city with a high "Wealth" value doesn't just display a number; it physically spawns higher-tier textures (stone roads instead of dirt, opulent mansion sprites, guards in heavy armor). A city facing a famine generates emaciated NPC sprites, ruined crop textures, and begging animations.
+- **Physicalized Systems:** If an NPC is sick, they must exhibit coughing animations and vomit textures. If a village is converting to a new religion, the player must see an NPC physically constructing a new shrine. The player's ability to engage with the system is guaranteed by ensuring every systemic variable has an interactable visual anchor in the game world.
+
+## 10. Future Expansion Slots (Infinite Extensibility)
 
 Because the mechanics operate on pure ECS Need Vectors rather than hardcoded scripts, the simulation supports infinite modular expansions. Planned expansions include:
 
