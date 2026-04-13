@@ -845,3 +845,20 @@ The war effectively cannibalizes the working class until the ensuing labor strik
 
 **Architecture Validation:**
 Validated perfectly deterministic via `TestConscriptionSystem_Integration`, mapping the exact flow from War -> Depopulation -> Labor Crisis -> Wage Spike.
+## Evolution: Phase 57 - The Class Warfare Engine (Guillotine)
+**Focus:** Integration (Biology + Economy + Governance/Justice)
+
+**The Problem (Vision Gap):**
+The Vision states: "Nations, wars, and trade routes are not scripted. They happen because local people need food, harbor grudges, or follow ambitious leaders." Previously, peasant starvation triggered petty theft, but immense economic disparity didn't structurally threaten the ruling class. A King hoarding food during a famine was immune to consequence unless they went militarily bankrupt.
+
+**The Solution (Autonomous DOD Execution):**
+I created the `ClassWarfareSystem`.
+1. It pre-caches `AdministrationMarker` Rulers, their associated `StorageComponent.Food` (Hoards), and their local `MarketComponent.FoodPrice`.
+2. It iterates over all active `NPC`s with `Needs`.
+3. If an NPC is starving (`Food < 20`), too poor to afford the current `FoodPrice`, AND the local Ruler has a massive hoard (`Food > 500`), the system algorithmically generates a negative hook (`SparseHookGraph`) directly against the Ruler's `Identity`.
+
+**The Butterfly Effect:**
+A drought hits, destroying crops (`SpoilageSystem` or `Ecology`). Local food plummets. The Ruler enacts forced labor (`PenalLaborSystem`) to build a monument while hoarding the city's remaining food in their `StorageComponent`. The `MarketComponent` artificially spikes food prices.
+The `ClassWarfareSystem` detects the starving lower class and generates compounding `-5` hooks against the Ruler for every cycle they starve.
+When the hook threshold hits `-100`, the `BloodFeudSystem` activates. The peasants organically trigger a blood feud against the administration, leading to targeted assassinations of the sovereign purely born from macroeconomic inequality, closing the gameplay loop.
+Validated deterministic execution via `TestClassWarfare_Integration`.
