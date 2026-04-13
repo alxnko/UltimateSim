@@ -62,3 +62,20 @@ To push the engine to the absolute limit of the medium, the final layers introdu
 - **[Phase 36: Siege Warfare, Artillery & Fortification](roadmap/36_siege_warfare.md):** Protracted city sieges. Crafting trebuchets to shatter walls, sappers tunneling under defenses, and starving out populations by blockading caravans.
 - **[Phase 37: Naval Combat, Shipboarding & Privateering](roadmap/37_naval_combat.md):** Ships as mobile sub-grids where crews walk the decks. Firing cannons to sink vessels, locking grids for boarding actions, and state-sponsored piracy.
 - **[Phase 38: Ideological Schisms & Cultural Revolutions](roadmap/38_ideological_schisms.md):** The mutation of religious/political beliefs. Emergent civil wars, class-based revolutions, and the systemic overthrow of monarchies by desperate, ideologically united peasants.
+
+## The Infinite Frontier (Total Systemic Mastery)
+
+To guarantee 100% feature-completeness against games like Dwarf Fortress, the engine expands into complex physics, deep time, hydrology, and apocalyptic survival.
+
+- **[Phase 39: Fluid Dynamics & Hydrology](roadmap/39_fluid_dynamics.md):** Volumetric water flow, building dams, aqueducts, and watermills to power adjacent machinery, risking catastrophic floods.
+- **[Phase 40: Advanced Agriculture & Soil Mechanics](roadmap/40_advanced_agriculture.md):** Tracking soil nitrogen, crop rotation cycles, and digging irrigation trenches to prevent famines.
+- **[Phase 41: Megastructures & Z-Level Architecture](roadmap/41_megastructures.md):** Multi-story building construction via scaffolding, Z-level pathfinding, and physics-based structural collapse.
+- **[Phase 42: The Judicial Web & Legal Precedents](roadmap/42_judicial_web.md):** Trials, juries, incarceration in physical prison cells, and stealthy prison breaks.
+- **[Phase 43: Metallurgy, Alloys & Thermodynamics](roadmap/43_metallurgy.md):** Temperature-based forging, crafting alloys like steel, and quenching mechanics that alter weapon stats.
+- **[Phase 44: Astronomy, Astrology & Celestial Mechanics](roadmap/44_astronomy.md):** Planetary orbits, moon phases driving tidal shifts, and rare eclipses supercharging esoteric rituals.
+- **[Phase 45: Genealogy, Mutation & Bloodline Curses](roadmap/45_genealogy.md):** Deep inheritance tracking causing inbreeding depression or passing down inheritable magical curses across centuries.
+- **[Phase 46: The Underworld Economy & Crime Syndicates](roadmap/46_underworld_economy.md):** Thieves guilds, turf wars, smuggling networks, and subterranean black markets.
+- **[Phase 47: Siege Defense & Trap Engineering](roadmap/47_siege_defense.md):** Logic gates, pressure plates, automated crossbow turrets, trapdoors, and pouring boiling oil from walls.
+- **[Phase 48: Symbiotic & Parasitic Entities (Vampirism)](roadmap/48_parasitic_entities.md):** Diseases that alter metabolism (e.g., needing blood). Hidden vampires blending into society hunted by specialized AI investigators.
+- **[Phase 49: Emergent Institutions & Bureaucracy](roadmap/49_institutions.md):** Universities, orphanages, and banks performing fractional reserve lending that can trigger devastating bank runs.
+- **[Phase 50: The Final Entropy (Apocalyptic Events)](roadmap/50_apocalyptic_events.md):** Meteor strikes or elder god awakenings that wipe continents, forcing massive global migration and testing the simulation's ultimate survival limits.
