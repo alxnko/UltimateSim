@@ -158,6 +158,7 @@ func BuildSimulation(gridWidth, gridHeight int, seedVal byte, status *render.Loa
 	status.Mutex.Lock()
 	status.TM = tickManager
 	status.Grid = grid
+	status.HookGraph = hookGraph
 	status.Done = true
 	status.Mutex.Unlock()
 }
@@ -198,6 +199,11 @@ func main() {
 		inputSys := &systems.PlayerInputSystem{}
 		inputSys.Initialize(status.TM.World)
 		status.TM.AddSystem(inputSys, engine.PhaseInput)
+
+		// Add PlayerDirectorSystem to the PhaseResolution phase
+		directorSys := systems.NewPlayerDirectorSystem(status.HookGraph)
+		directorSys.Initialize(status.TM.World)
+		status.TM.AddSystem(directorSys, engine.PhaseResolution)
 	}
 
 	app := render.NewEbitenApp(factory)
