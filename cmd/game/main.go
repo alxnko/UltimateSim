@@ -8,6 +8,7 @@ import (
 	_ "net/http/pprof"
 	"runtime"
 
+	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/ALXNKO/UltimateSim/internal/engine"
 	"github.com/ALXNKO/UltimateSim/internal/render"
 	"github.com/ALXNKO/UltimateSim/internal/systems"
@@ -179,14 +180,29 @@ func main() {
 		}()
 	}
 
-	// NOTE: Simulation is now driven manually by the render loop to prevent race conditions in the ECS world.
+	// NOTE: Simulation is now driven by Ebitengine via EbitenApp.
 
-	// Phase 11.1: Switch Pattern Loop -> Unified Raylib loop
-	// We handle everything in raylib to prevent OpenGL CGO collision with Ebiten.
-	// Phase 01.4: Hardware Affinity
-	// Pin the Window Context Goroutine to prevent OS-level cache invalidations on multicore CPUs
-	runtime.LockOSThread()
+	// Unified Ebitengine Window Configuration
+	ebiten.SetWindowSize(800, 600)
+	ebiten.SetWindowTitle("Boundless Sovereigns - 2D Action RPG Mode")
+	ebiten.SetWindowResizingMode(ebiten.WindowResizingModeEnabled)
 
-	// Delegate state management entirely to RaylibApp, passing the factory function
-	render.RunRaylibApp(BuildSimulation)
+	// Wrap BuildSimulation to include PlayerInputSystem registration
+	factory := func(w, h int, s byte, status *render.LoadingStatus) {
+		BuildSimulation(w, h, s, status)
+		
+		status.Mutex.Lock()
+		defer status.Mutex.Unlock()
+		
+		// Add PlayerInputSystem to the PhaseInput phase
+		inputSys := &systems.PlayerInputSystem{}
+		inputSys.Initialize(status.TM.World)
+		status.TM.AddSystem(inputSys, engine.PhaseInput)
+	}
+
+	app := render.NewEbitenApp(factory)
+
+	if err := ebiten.RunGame(app); err != nil {
+		log.Fatal(err)
+	}
 }
