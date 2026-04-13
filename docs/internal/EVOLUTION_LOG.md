@@ -824,6 +824,27 @@ When loyalty drops to 0, the `VassalRebellionSystem` unilaterally forces the vil
 **Architecture Validation:**
 Data-Oriented Design (DOD) was strictly maintained. `mapGrid` array reads execute in O(1). Structural queries pre-cache NPC beliefs into flat slices `[]npcData` and use standard nested map lookups (`map[uint32]map[uint32]int32`) outside of the archetype loop to resolve the consensus algorithm, entirely preventing runtime panics. Validated 100% deterministic through `TestEchoChamber_Integration`.
 
+## Evolution: Phase 56 - The Conscription Engine (Demographic War Attrition)
+**Date:** 2026-03-31
+**Focus:** Integration (Geopolitics + Biology + Economy)
+
+**The Problem (Vision Gap):**
+The Vision states a "Total Simulation" where wars are not scripted but have physical limits. Previously, Phase 50 (War Economy) meant wars mathematically burned physical resources (`Iron`) and capital (`Wealth`), but they entirely lacked a human, demographic cost. `PopulationComponent` was unaffected by war, severing the link between military action and biological/labor reality.
+
+**The Solution (Autonomous DOD Execution):**
+I created the **Conscription Engine** (`ConscriptionSystem`).
+1. The system evaluates `CapitalComponent` entities actively participating in wars via `WarTrackerComponent.Active == true`.
+2. It mathematically drafts citizens every 300 ticks, decrementing `PopulationComponent.Count` and securely truncating the abstract `Citizens` array.
+3. Strict Data-Oriented Design (DOD) was maintained via single-loop arrays without nested `arche-go` ECS queries, keeping O(1) performance.
+
+**The Butterfly Effect:**
+A starving nation declares war to seize resources (Phase 29). The `WarEconomySystem` begins burning Iron (Phase 50). Natively, the `ConscriptionSystem` (Phase 56) activates, slowly draining the city's population.
+The population drop structurally triggers the `LaborCrisisSystem` (Phase 47). Surviving laborers experience extreme labor scarcity and demand a 300% `WageRate` spike.
+The state, having spent its Treasury on Iron, cannot afford the exorbitant wages. Unpaid workers natively quit, gain `StrikeMarker`s, and generate massive `-50` `BloodFeud` grudges against the King.
+The war effectively cannibalizes the working class until the ensuing labor strike organically mutates into a civil war revolution against the state, closing the systemic loop perfectly.
+
+**Architecture Validation:**
+Validated perfectly deterministic via `TestConscriptionSystem_Integration`, mapping the exact flow from War -> Depopulation -> Labor Crisis -> Wage Spike.
 ## Evolution: Phase 57 - The Class Warfare Engine (Guillotine)
 **Focus:** Integration (Biology + Economy + Governance/Justice)
 
