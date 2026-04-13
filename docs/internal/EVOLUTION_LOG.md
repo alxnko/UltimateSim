@@ -790,3 +790,106 @@ Strict Data-Oriented Design (DOD) was maintained via `arche-go`. The system uses
   - This natively drives Phase 07.3's `LanguageDriftSystem` to permanently switch the poor village to the wealthy Capital's language.
   - Because of this emergent assimilation, `CulturalFrictionSystem` (Phase 33.1) evaluates a match. Loyalty stops draining. Thus, economic hegemony natively guarantees geopolitical stability and cultural imperialism without scripted narrative events.
   - Verified 100% deterministic through `go test ./internal/systems -v -run TestInformationTradeSystem_LinguaFranca -count=2`.
+## Evolution: Phase 52 - The Artifact Aura Engine (Auras of Legitimacy)
+**Focus:** Integration (Legends + Sovereignty)
+
+**The Problem (Vision Gap):**
+The Vision states: "Artifacts (e.g., 'Sword of Bektur') that carry historical memory and grant 'Auras of Legitimacy.'" Previously, legendary artifacts were physical items that could boost prestige via jealousy, but they were ignored by the state machinery. A King wielding a legendary sword was politically identical to a King wielding a rusty dagger, isolating Phase 32 from Phase 35.
+
+**The Solution (Autonomous DOD Execution):**
+I bridged the gap by modifying the `LegitimacySystem`. It now dynamically checks if a reigning Capital Ruler (e.g. King) possesses an `EquipmentComponent`. If they are equipped with a `LegendComponent` whose `Prestige` exceeds the `ExtremePrestigeThreshold` (100), the system algorithmically translates the artifact's physical prestige into a massive bonus to their `LegitimacyComponent.Score`.
+
+**The Butterfly Effect:**
+A King rules a highly corrupt city. Normally, the corruption (`JurisdictionComponent.Corruption = 25`) drops their `LegitimacyComponent.Score` to 0, which natively triggers the `MilitaryRevoltSystem`. The standing army revolts.
+However, the King equips the legendary Sword of Bektur (Prestige 200). The `LegitimacySystem` detects the Aura of Legitimacy, adding 40 points to the score. The King survives the legitimacy crash purely due to the historical artifact, stabilizing the empire without changing economic policy.
+Tested and verified completely deterministic through `TestLegitimacySystem_ArtifactAura`.
+
+## Evolution: Phase 53 - The Black Market Smuggling Engine
+**Focus:** Integration (Justice + Economy)
+
+**The Problem (Vision Gap):**
+The Vision demands interconnected feedback loops. Previously, Phase 18 allowed the State to declare certain items (like Iron) as `ContrabandComponent`, and Guards would punish carriers. However, Phase 13 (Macroeconomics) and `MarketComponent` completely ignored this legal reality. Iron remained the same price whether it was legal or highly criminalized, providing zero economic incentive for the risk of smuggling.
+
+**The Solution (Autonomous DOD Execution):**
+I created the `BlackMarketSystem`.
+1. The system pre-caches `JurisdictionComponent` entities that enforce a `ContrabandComponent`.
+2. It evaluates all `Village` entities containing a `MarketComponent`.
+3. If a Village is located within a contraband jurisdiction, the system maps the illegal bitmasks and algorithmically spikes the local market price of the illegal goods by 5x (the Risk Premium).
+
+**The Butterfly Effect:**
+A Capital criminalizes Iron (`Contraband = 1 << ItemIron`). The `BlackMarketSystem` intercepts the state's laws, artificially spiking the `IronPrice` in local markets from 10.0 to 50.0. A starving NPC on the frontier checks prices via `PriceDiscoverySystem` and realizes Iron smuggling is massively profitable. They acquire Iron and route a `Caravan` into the city. They risk getting caught by `JusticeSystem` Guards, but if they succeed, they make 5x profit. State law organically generates Black Markets.
+Tested and verified completely deterministic through `TestBlackMarketSystem_Integration`.
+
+## Evolution: Phase 54 - The Radicalization Engine (Echo Chamber)
+**Focus:** Integration (Geography + Culture/Memetics + Geopolitics)
+
+**The Problem (Vision Gap):**
+The Vision states: "Emergent Culture (Idea Virus)... Geographical separation causes Cultural Drift." We had systems dealing with Culture (Phase 07) and Geography/Isolation (Phase 09.3), but the integration between them was lacking. Previously, isolated cities required explicit wandering preachers to shift ideologies.
+
+**The Solution (Autonomous DOD Execution):**
+I created the **Radicalization Engine** (`EchoChamberSystem`).
+1. Evaluates all `Village` entities against the map grid's `FootTraffic` metric. If the tile has `FootTraffic < 50` (meaning Caravans or Wanderers avoid it due to terrain cost), the village is considered an isolated Echo Chamber.
+2. Extracts active NPCs and calculates the dominant `BeliefID` purely through flat arrays, avoiding nested queries.
+3. Automatically mathematically amplifies the dominant belief while forcibly decaying competing minority beliefs without the need for an external agent.
+
+**The Butterfly Effect:**
+A distant mountain village naturally loses trade caravans due to high `MovementCost`. The `FootTraffic` on the map tile decays. The `EchoChamberSystem` intercepts this geographic isolation and amplifies the village's dominant divergent belief. Over 500 ticks, this radicalization creates extreme ideological divergence from the cosmopolitan Capital.
+The `CulturalFrictionSystem` natively detects this Memetic shift and drains the village's `LoyaltyComponent`.
+When loyalty drops to 0, the `VassalRebellionSystem` unilaterally forces the village to secede from the country, naturally triggering frontier holy wars against the Capital, fulfilling the Vision where Geopolitics emerges organically from simple Geographic realities.
+
+**Architecture Validation:**
+Data-Oriented Design (DOD) was strictly maintained. `mapGrid` array reads execute in O(1). Structural queries pre-cache NPC beliefs into flat slices `[]npcData` and use standard nested map lookups (`map[uint32]map[uint32]int32`) outside of the archetype loop to resolve the consensus algorithm, entirely preventing runtime panics. Validated 100% deterministic through `TestEchoChamber_Integration`.
+
+## Evolution: Phase 55 - The Ecological Collapse Engine (Deforestation)
+- **Date:** 2026-04-11
+- **Focus:** Integration (Geography + Economy)
+- **Goal:** Execute the "Systemic Emergence" objective by bridging the physical map resources with the material economy, directly implementing "Wood and stone are tied to local tiles. Over-harvesting to hastily build a city inevitably causes a crisis".
+- **DOD Implementation:**
+  - Designed `DeforestationSystem` (`internal/systems/deforestation.go`) to evaluate `JobLumberjack` NPCs at their workplace.
+  - Sourced all components (`NPC`, `Position`, `JobComponent`, `StorageComponent`, `Identity`, `Village`, `BusinessComponent`) using ECS queries.
+  - Uses a flat caching map `activeStorages` per-tick to map Employer IDs to `StorageComponent` pointers to avoid O(N^2) inner looping.
+- **The Butterfly Effect:**
+  - Plugs into Phase 15.2 (Employment & Wages) and Phase 02 (Geography).
+  - Lumberjacks physically extract `WoodValue` directly from the `MapGrid.Resources` array based on their location.
+  - Wood is deposited organically into their Employer's `StorageComponent`.
+  - When `WoodValue` drops to 0, the MapGrid Tile's `BiomeID` physically changes (e.g. from Forest to Grassland), demonstrating permanent ecological damage from economic activity.
+  - This eventually links into Phase 31.5 (The Winter Heating Engine), as deforested tiles will prevent wood acquisition, plunging the town into a hypothermia crisis without scripted events.
+  - Verified 100% deterministic through `go test ./internal/systems -v -run TestDeforestationSystem_Deterministic`.
+## Evolution: Phase 56 - The Conscription Engine (Demographic War Attrition)
+**Date:** 2026-03-31
+**Focus:** Integration (Geopolitics + Biology + Economy)
+
+**The Problem (Vision Gap):**
+The Vision states a "Total Simulation" where wars are not scripted but have physical limits. Previously, Phase 50 (War Economy) meant wars mathematically burned physical resources (`Iron`) and capital (`Wealth`), but they entirely lacked a human, demographic cost. `PopulationComponent` was unaffected by war, severing the link between military action and biological/labor reality.
+
+**The Solution (Autonomous DOD Execution):**
+I created the **Conscription Engine** (`ConscriptionSystem`).
+1. The system evaluates `CapitalComponent` entities actively participating in wars via `WarTrackerComponent.Active == true`.
+2. It mathematically drafts citizens every 300 ticks, decrementing `PopulationComponent.Count` and securely truncating the abstract `Citizens` array.
+3. Strict Data-Oriented Design (DOD) was maintained via single-loop arrays without nested `arche-go` ECS queries, keeping O(1) performance.
+
+**The Butterfly Effect:**
+A starving nation declares war to seize resources (Phase 29). The `WarEconomySystem` begins burning Iron (Phase 50). Natively, the `ConscriptionSystem` (Phase 56) activates, slowly draining the city's population.
+The population drop structurally triggers the `LaborCrisisSystem` (Phase 47). Surviving laborers experience extreme labor scarcity and demand a 300% `WageRate` spike.
+The state, having spent its Treasury on Iron, cannot afford the exorbitant wages. Unpaid workers natively quit, gain `StrikeMarker`s, and generate massive `-50` `BloodFeud` grudges against the King.
+The war effectively cannibalizes the working class until the ensuing labor strike organically mutates into a civil war revolution against the state, closing the systemic loop perfectly.
+
+**Architecture Validation:**
+Validated perfectly deterministic via `TestConscriptionSystem_Integration`, mapping the exact flow from War -> Depopulation -> Labor Crisis -> Wage Spike.
+## Evolution: Phase 57 - The Class Warfare Engine (Guillotine)
+**Focus:** Integration (Biology + Economy + Governance/Justice)
+
+**The Problem (Vision Gap):**
+The Vision states: "Nations, wars, and trade routes are not scripted. They happen because local people need food, harbor grudges, or follow ambitious leaders." Previously, peasant starvation triggered petty theft, but immense economic disparity didn't structurally threaten the ruling class. A King hoarding food during a famine was immune to consequence unless they went militarily bankrupt.
+
+**The Solution (Autonomous DOD Execution):**
+I created the `ClassWarfareSystem`.
+1. It pre-caches `AdministrationMarker` Rulers, their associated `StorageComponent.Food` (Hoards), and their local `MarketComponent.FoodPrice`.
+2. It iterates over all active `NPC`s with `Needs`.
+3. If an NPC is starving (`Food < 20`), too poor to afford the current `FoodPrice`, AND the local Ruler has a massive hoard (`Food > 500`), the system algorithmically generates a negative hook (`SparseHookGraph`) directly against the Ruler's `Identity`.
+
+**The Butterfly Effect:**
+A drought hits, destroying crops (`SpoilageSystem` or `Ecology`). Local food plummets. The Ruler enacts forced labor (`PenalLaborSystem`) to build a monument while hoarding the city's remaining food in their `StorageComponent`. The `MarketComponent` artificially spikes food prices.
+The `ClassWarfareSystem` detects the starving lower class and generates compounding `-5` hooks against the Ruler for every cycle they starve.
+When the hook threshold hits `-100`, the `BloodFeudSystem` activates. The peasants organically trigger a blood feud against the administration, leading to targeted assassinations of the sovereign purely born from macroeconomic inequality, closing the gameplay loop.
+Validated deterministic execution via `TestClassWarfare_Integration`.

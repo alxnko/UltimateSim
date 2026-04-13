@@ -134,3 +134,63 @@ func TestLegitimacySystem_Integration(t *testing.T) {
 		t.Fatalf("Expected Guard to gain -100 hook against Capital, got %d", hookVal)
 	}
 }
+
+// Evolution: Phase 52 - Artifact Aura Engine
+func TestLegitimacySystem_ArtifactAura(t *testing.T) {
+	world := ecs.NewWorld()
+
+	ecs.ComponentID[components.Position](&world)
+	ecs.ComponentID[components.Identity](&world)
+	ecs.ComponentID[components.JobComponent](&world)
+	ecs.ComponentID[components.SecretComponent](&world)
+	ecs.ComponentID[components.Affiliation](&world)
+	ecs.ComponentID[components.JurisdictionComponent](&world)
+	ecs.ComponentID[components.CapitalComponent](&world)
+	ecs.ComponentID[components.LegitimacyComponent](&world)
+	ecs.ComponentID[components.TreasuryComponent](&world)
+	equipID := ecs.ComponentID[components.EquipmentComponent](&world)
+
+	hookGraph := engine.NewSparseHookGraph()
+	legitimacySystem := NewLegitimacySystem(&world, hookGraph)
+
+	// Create Capital with high corruption but wields a legendary weapon
+	capEnt := world.NewEntity(
+		ecs.ComponentID[components.Position](&world),
+		ecs.ComponentID[components.Identity](&world),
+		ecs.ComponentID[components.JurisdictionComponent](&world),
+		ecs.ComponentID[components.Affiliation](&world),
+		ecs.ComponentID[components.CapitalComponent](&world),
+		ecs.ComponentID[components.LegitimacyComponent](&world),
+		ecs.ComponentID[components.TreasuryComponent](&world),
+		equipID,
+	)
+
+	capIdent := (*components.Identity)(world.Get(capEnt, ecs.ComponentID[components.Identity](&world)))
+	capIdent.ID = 100
+
+	capJur := (*components.JurisdictionComponent)(world.Get(capEnt, ecs.ComponentID[components.JurisdictionComponent](&world)))
+	capJur.Corruption = 25 // -50 penalty
+
+	capTreasury := (*components.TreasuryComponent)(world.Get(capEnt, ecs.ComponentID[components.TreasuryComponent](&world)))
+	capTreasury.Wealth = 0.0
+
+	capLegitimacy := (*components.LegitimacyComponent)(world.Get(capEnt, ecs.ComponentID[components.LegitimacyComponent](&world)))
+	capLegitimacy.Score = 100 // initial
+
+	capEquip := (*components.EquipmentComponent)(world.Get(capEnt, equipID))
+	capEquip.Equipped = true
+	capEquip.Weapon = components.LegendComponent{
+		Prestige: 200, // 200 / 5 = +40 bonus
+	}
+
+	// Wait for tick
+	for i := 0; i < 50; i++ {
+		legitimacySystem.Update(&world)
+	}
+
+	// Base 50 - 50 (corruption) + 40 (artifact aura) = 40.
+	// Mutiny triggers at < 20, so 40 saves the ruler.
+	if capLegitimacy.Score != 40 {
+		t.Fatalf("Expected artifact aura to save legitimacy at 40, got %d", capLegitimacy.Score)
+	}
+}
