@@ -28,7 +28,7 @@ This is the central index for the hyper-granular technical pipeline for the `arc
 - **[Phase 8: 2D Visual Layer (Ebitengine)](roadmap/08_visual_2d.md):** Ebiten hooks, sub-tick interpolation drawing, and Map rendering.
 - **[Phase 9: Logistics, Infrastructure, & Artifacts](roadmap/09_logistics_artifacts.md):** `CaravanEntity` spawning, `DecaySystem`, Desire Paths (`FootTraffic`), and `LegendComponent` legacy spawns.
 - **[Phase 10: State Failure & Frictional Limits](roadmap/10_state_failure.md):** `LoanContractComponent` default logic, `AdministrativeDecaySystem`, and `DiseaseEntity` lethality grids.
-- **[Phase 11: Possession Mechanics (Orchestrator)](roadmap/11_possession.md):** **The Graphics Orchestrator**, Ebiten/Raylib context switching, and Instanced 3D Rendering of village meshes.
+- **[Phase 11: Possession Mechanics (Orchestrator)](roadmap/11_possession.md):** **The Graphics Orchestrator**, Ebiten/Raylib context switching, Instanced 3D Rendering of village meshes, and foundational Action-RPG mechanics (real-time movement, combat hitboxes, stealth).
 - **[Phase 12: Network Delta Sync & Multiplayer](roadmap/12_multiplayer.md):** Deterministic state predictions, UDP payload parsing, and sparse update transfers.
 - **[Phase 13: Stability, Tooling, & Balance Loops](roadmap/13_stability.md):** `MarketComponent` local price discovery, `CareerChangeSystem`, Jealousy metrics, `WinterPulse`, and `go-sqlite3` saves.
 - **[Phase 14: True Individual NPCs & Dynamic Villages](roadmap/14_individual_npcs.md):** Migrating from abstracted Clusters to individual `NPC` entities, adding `FamilyID/ClanID` logic, and implementing dynamic Village hubs.

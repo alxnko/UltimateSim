@@ -58,7 +58,16 @@ Negative feedback loops strictly punish unchecked growth or endless wealth.
 - **The Biological Pulse:** Winter spikes metabolic food consumption and slows movement, transitioning the game into an indoor political/scheming season.
 - **Systemic Entropy (Plagues & Disasters):** Plagues spread along trade routes causing massive labor shortages. Surviving peasants demand higher wages, spontaneously forming revolutionary Trade Unions. Plagues leave behind _Immune Memory_, radically shifting global power balances the next time the algorithm triggers. Natural Disasters shift basic map parameters, forcing massive population resets.
 
-## 7. Future Expansion Slots (Infinite Extensibility)
+## 8. Action-RPG Interactions (Micro-Scale Chaos)
+
+While the macroscopic simulation dictates economies and empires, the player experiences the world at the microscopic level, akin to an immersive sim or action-RPG like *Streets of Rogue*.
+
+- **Direct Control:** The player has real-time WASD movement over their possessed entity, engaging in skill-based physical combat, dodging, and spatial stealth (line-of-sight and noise).
+- **Systemic Item Usage:** Items are not just stat sticks; they interact with the ECS simulation. Throwing a bottle of spoiled food can poison a well or distract a guard. Lockpicks physically bypass `DoorComponent` restrictions.
+- **Physicalized Dialogue:** Extracting secrets or spending Hooks happens in real-time space. Threatening an NPC with a weapon drawn yields different systemic results than bribing them with physical coins dropped on the ground.
+- **Emergent Chaos:** The player's immediate, violent, or stealthy actions (e.g., assassinating a king, starting a tavern brawl) ripple upwards immediately, forcing the macro-simulation to adapt to the sudden death of key nodes or the physical destruction of critical infrastructure.
+
+## 9. Future Expansion Slots (Infinite Extensibility)
 
 Because the mechanics operate on pure ECS Need Vectors rather than hardcoded scripts, the simulation supports infinite modular expansions. Planned expansions include:
 

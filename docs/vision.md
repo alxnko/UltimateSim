@@ -2,7 +2,7 @@
 
 **The High Concept:**
 Boundless Sovereigns is a "bottom-up" medieval society engine where grand strategy emerges from individual agency. The simulation accounts for Physical, Cultural, and Systemic forces that bind independent AI agents (Pops) to the map.
-Players inhabit a clan within a living ecosystem, shifting from the micro-management of _The Guild_ and _Kenshi_ to the macro-politics of _Europa Universalis_.
+Players inhabit a physical character in a living ecosystem, blending the systemic, emergent action-RPG chaos of _Streets of Rogue_ with the deep, grand-strategy simulation of _Kenshi_ and _Europa Universalis_. You directly control your current character in real-time, engaging in combat, stealth, persuasion, and systemic manipulation, while the macroscopic simulation reacts to your microscopic actions.
 
 **Core Philosophy:**
 

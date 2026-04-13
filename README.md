@@ -1,6 +1,6 @@
 # UltimateSim (Boundless Sovereigns)
 
-A Total Simulation grand strategy game built on Go and an ECS (`arche-go`) engine.
+A systemic Action-RPG and Total Simulation grand strategy game (like Streets of Rogue meets Kenshi) built on Go and an ECS (`arche-go`) engine.
 
 ## Documentation
 
@@ -16,10 +16,9 @@ The codebase uses a strictly maintained set of documentation to coordinate local
 
 ### Prerequisites
 - [Go](https://go.dev/dl/) (version 1.21+)
-- A C compiler (for Raylib, if building with CGO enabled)
 
 ### Build
-To build the game as a single executable without external dependencies (using pure Go Raylib):
+To build the game as a single executable without external dependencies (pure Go):
 ```ps1
 $env:CGO_ENABLED=0; go build -o game.exe ./cmd/game
 ```
@@ -30,15 +29,12 @@ $env:CGO_ENABLED=0; go build -o game.exe ./cmd/game
 ```
 
 ## Controls
-- **2D Mode**:
-    - `WASD` / Arrows: Pan map
-    - `Right-Click + Drag`: Pan map
-    - `Mouse Wheel`: Zoom to cursor
-    - `Left Click`: Select Entity
-    - `SPACE`: Pause/Resume Simulation
-- **3D Mode (Possession)**:
-    - `TAB` / `P`: Toggle Possession Mode
+- **Global Strategy / Action-RPG Mode**:
     - `WASD`: Move possessed entity
+    - `Mouse Wheel`: Zoom camera
+    - `Left Click`: Attack / Primary Action
+    - `Right-Click`: Interact
+    - `SPACE`: Pause/Resume Simulation
     - `ESC`: Exit Game
 
 ---

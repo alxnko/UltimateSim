@@ -24,7 +24,7 @@ Because the engine is strictly constructed on ECS `arche-go` foundations, the co
 The engine must handle shifting instantly between the grand strategic view and the granular individual view without dropping simulation state.
 
 - **Hybrid Map View (Ebitengine):** Uses `Ebitengine` for high-performance 2D strategic map overlays. This acts as the geopolitical "paint" showing emergent borders, active physical trade routes (Desire Paths), language heatmaps, and town density.
-- **Character Possession View (raylib-go):** Uses `raylib-go` the moment a player "possesses" a specific Clan member, shifting the camera into the city streets. The 3D render engine handles direct 3rd-person movement, object interaction, and visual representation of the ECS data (e.g., visually seeing a blacksmith hammering a rusted piece of iron).
+- **Character Possession View (raylib-go):** Uses `raylib-go` the moment a player "possesses" a specific Clan member, shifting the camera into the city streets for the Action-RPG layer. The 3D render engine handles direct 3rd-person movement, hitbox-based real-time combat, stealth mechanics, and visual representation of the ECS data (e.g., visually seeing a blacksmith hammering a rusted piece of iron, or tossing a physics-based item to cause a distraction).
 
 ## 4. Persistence & Modding
 
