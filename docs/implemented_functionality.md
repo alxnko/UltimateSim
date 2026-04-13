@@ -1,6 +1,9 @@
-# Implemented Functionality
-
-This document serves as the comprehensive and definitive index of all actually implemented packages, ECS Components, ECS Systems, and underlying logic within the Boundless Sovereigns simulation engine.
+## Phase 50: 2D Action-RPG Transition
+- **2D Action-RPG Rewrite**: Transitioned the engine from a 3D/2D hybrid to a unified 2D Action-RPG experience. Removed `raylib-go` and consolidated all rendering into `Ebitengine`.
+- **PlayerInputSystem**: Implemented real-time WASD movement for entities bearing the `Possessed` component, bypassing autonomous `WanderSystem` AI.
+- **EbitenApp**: Replaced the macro-strategy/3D view with a unified 2D camera that scales from strategic geopolitical views down to 1:1 street-level action.
+- **PlayerDirectorSystem**: Added a simulation-aware director that evaluates local entropy (crimes, grudges) to suggest emergent "Agent of Chaos" opportunities to the player.
+- **Camera Follow**: Implemented smooth camera tracking for the possessed player entity within the physical ECS map grid.
 
 **Note to AI Agents:** This document must be kept completely up-to-date. Any time a new struct, system, or mechanic is created, modified, or identified as undocumented, it must be added here immediately.
 
