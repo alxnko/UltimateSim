@@ -44,14 +44,23 @@ func (s *StatePlaying) Update(sm *StateManager) error {
 
 	qCheck := world.Query(ecs.All(possessedID))
 	hasPossessed := qCheck.Next()
-	qCheck.Close()
+	if hasPossessed {
+		qCheck.Close()
+	}
 
 	if !hasPossessed {
 		qNPC := world.Query(ecs.All(npcID))
+		var npcEnt ecs.Entity
+		var hasNPC bool
 		if qNPC.Next() {
-			world.Add(qNPC.Entity(), possessedID)
+			npcEnt = qNPC.Entity()
+			hasNPC = true
+			qNPC.Close()
 		}
-		qNPC.Close()
+
+		if hasNPC {
+			world.Add(npcEnt, possessedID)
+		}
 	}
 
 	s.Status.TM.Tick()
@@ -61,8 +70,8 @@ func (s *StatePlaying) Update(sm *StateManager) error {
 		pos := (*components.Position)(query.Get(posID))
 		s.CamX = float64(pos.X)
 		s.CamY = float64(pos.Y)
+		query.Close()
 	}
-	query.Close()
 
 	return nil
 }
@@ -129,7 +138,6 @@ func (s *StatePlaying) Draw(screen *ebiten.Image) {
 
 		ebitenutil.DrawRect(screen, sx-4, sy-4, 8, 8, clr)
 	}
-	query.Close()
 	
 	// HUD Overlays
 	ebitenutil.DebugPrintAt(screen, "HP: 100/100 | Food: 80/100", 10, 10)
