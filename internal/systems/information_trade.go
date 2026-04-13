@@ -7,6 +7,7 @@ import (
 )
 
 // Phase 34.1: The Information Broker Engine (Information Trade System)
+// Phase 34.2: The Lingua Franca Engine
 // Treats information (Secrets) as a tangible commodity in the ECS.
 // NPCs with low wealth but high-value secrets will explicitly seek out and sell
 // unknown secrets to wealthier NPCs in their vicinity, bridging the Memetic and Economic pillars.
@@ -16,35 +17,43 @@ type InformationTradeSystem struct {
 	HookGraph   *engine.SparseHookGraph
 
 	// Component IDs
-	posID    ecs.ID
-	secretID ecs.ID
-	needsID  ecs.ID
-	identID  ecs.ID
-	ruinID   ecs.ID
-	memoryID ecs.ID
+	posID      ecs.ID
+	secretID   ecs.ID
+	needsID    ecs.ID
+	identID    ecs.ID
+	ruinID     ecs.ID
+	memoryID   ecs.ID
+	affilID    ecs.ID
+	cultureID  ecs.ID
+	treasuryID ecs.ID
 }
 
 // NewInformationTradeSystem creates a new InformationTradeSystem.
 func NewInformationTradeSystem(world *ecs.World, hookGraph *engine.SparseHookGraph) *InformationTradeSystem {
 	return &InformationTradeSystem{
-		HookGraph: hookGraph,
-		posID:     ecs.ComponentID[components.Position](world),
-		secretID:  ecs.ComponentID[components.SecretComponent](world),
-		needsID:   ecs.ComponentID[components.Needs](world),
-		identID:   ecs.ComponentID[components.Identity](world),
-		ruinID:    ecs.ComponentID[components.RuinComponent](world),
-		memoryID:  ecs.ComponentID[components.Memory](world),
+		HookGraph:  hookGraph,
+		posID:      ecs.ComponentID[components.Position](world),
+		secretID:   ecs.ComponentID[components.SecretComponent](world),
+		needsID:    ecs.ComponentID[components.Needs](world),
+		identID:    ecs.ComponentID[components.Identity](world),
+		ruinID:     ecs.ComponentID[components.RuinComponent](world),
+		memoryID:   ecs.ComponentID[components.Memory](world),
+		affilID:    ecs.ComponentID[components.Affiliation](world),
+		cultureID:  ecs.ComponentID[components.CultureComponent](world),
+		treasuryID: ecs.ComponentID[components.TreasuryComponent](world),
 	}
 }
 
 // nodeTradeData is a flat cache for DOD optimized proximity checking
 type nodeTradeData struct {
-	entity ecs.Entity
-	pos    *components.Position
-	secret *components.SecretComponent
-	needs  *components.Needs
-	ident  *components.Identity
-	memory *components.Memory
+	entity  ecs.Entity
+	pos     *components.Position
+	secret  *components.SecretComponent
+	needs   *components.Needs
+	ident   *components.Identity
+	memory  *components.Memory
+	affil   *components.Affiliation
+	culture *components.CultureComponent
 }
 
 // Update evaluates entities for information trading.
@@ -56,19 +65,40 @@ func (s *InformationTradeSystem) Update(world *ecs.World) {
 		return
 	}
 
+	// Pre-cache Treasuries by CityID
+	cityTreasuries := make(map[uint32]*components.TreasuryComponent)
+	treasuryQuery := world.Query(ecs.All(s.affilID, s.treasuryID))
+	for treasuryQuery.Next() {
+		affil := (*components.Affiliation)(treasuryQuery.Get(s.affilID))
+		treasury := (*components.TreasuryComponent)(treasuryQuery.Get(s.treasuryID))
+		cityTreasuries[affil.CityID] = treasury
+	}
+
 	filter := ecs.All(s.posID, s.secretID, s.needsID, s.identID, s.memoryID).Without(s.ruinID)
 	query := world.Query(&filter)
 
 	var nodes []nodeTradeData
 
 	for query.Next() {
+		var affil *components.Affiliation
+		if world.Has(query.Entity(), s.affilID) {
+			affil = (*components.Affiliation)(query.Get(s.affilID))
+		}
+
+		var culture *components.CultureComponent
+		if world.Has(query.Entity(), s.cultureID) {
+			culture = (*components.CultureComponent)(query.Get(s.cultureID))
+		}
+
 		nodes = append(nodes, nodeTradeData{
-			entity: query.Entity(),
-			pos:    (*components.Position)(query.Get(s.posID)),
-			secret: (*components.SecretComponent)(query.Get(s.secretID)),
-			needs:  (*components.Needs)(query.Get(s.needsID)),
-			ident:  (*components.Identity)(query.Get(s.identID)),
-			memory: (*components.Memory)(query.Get(s.memoryID)),
+			entity:  query.Entity(),
+			pos:     (*components.Position)(query.Get(s.posID)),
+			secret:  (*components.SecretComponent)(query.Get(s.secretID)),
+			needs:   (*components.Needs)(query.Get(s.needsID)),
+			ident:   (*components.Identity)(query.Get(s.identID)),
+			memory:  (*components.Memory)(query.Get(s.memoryID)),
+			affil:   affil,
+			culture: culture,
 		})
 	}
 
@@ -169,6 +199,22 @@ func (s *InformationTradeSystem) Update(world *ecs.World) {
 						if s.HookGraph != nil {
 							s.HookGraph.AddHook(seller.ident.ID, buyer.ident.ID, 1)
 							s.HookGraph.AddHook(buyer.ident.ID, seller.ident.ID, 1)
+						}
+
+						// Phase 34.2: The Lingua Franca Engine
+						// If the seller's faction is massively wealthier than the buyer's (> 5000 wealth and > 5x buyer's wealth),
+						// the seller imposes their LanguageID on the buyer.
+						if seller.affil != nil && buyer.affil != nil && seller.culture != nil && buyer.culture != nil {
+							sellerTreasury, sHasTreas := cityTreasuries[seller.affil.CityID]
+							buyerTreasury, bHasTreas := cityTreasuries[buyer.affil.CityID]
+
+							if sHasTreas && bHasTreas {
+								if sellerTreasury.Wealth > 5000.0 && sellerTreasury.Wealth > 5.0*buyerTreasury.Wealth {
+									// Impose language
+									buyer.culture.ForeignLanguageID = seller.culture.LanguageID
+									buyer.culture.ForeignInteractionTicks += 50
+								}
+							}
 						}
 
 						traded = true
