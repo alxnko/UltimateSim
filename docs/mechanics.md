@@ -58,6 +58,14 @@ Negative feedback loops strictly punish unchecked growth or endless wealth.
 - **The Biological Pulse:** Winter spikes metabolic food consumption and slows movement, transitioning the game into an indoor political/scheming season.
 - **Systemic Entropy (Plagues & Disasters):** Plagues spread along trade routes causing massive labor shortages. Surviving peasants demand higher wages, spontaneously forming revolutionary Trade Unions. Plagues leave behind _Immune Memory_, radically shifting global power balances the next time the algorithm triggers. Natural Disasters shift basic map parameters, forcing massive population resets.
 
+## 7. Physical Labor, Crafting, & Construction (The Rimworld Layer)
+
+To truly root the macroscopic economy in microscopic reality, all goods and infrastructure must be physically created through paid labor and time.
+
+- **Physical Construction:** Cities do not abstractly "grow" based on an algorithm. When a wealthy noble or a guild desires a new house or a defensive wall, they generate a `ConstructionContract`. Unemployed or contracted NPCs physically haul stone and wood to the designated tiles, spending time (ticks) to hammer the `StructureComponent` into existence.
+- **Crafting & Workbenches:** Advanced goods (swords, armor, tools) require specific `FurnitureEntities` (e.g., an Anvil or Loom). An artisan must physically walk to the workbench, hold the required raw materials, and spend time processing them into finished goods. If an artisan lacks a workbench, they cannot produce advanced goods, regardless of their skill or the city's wealth.
+- **The Labor Economy:** Labor is a tangible commodity. Players and NPCs can post or accept `JobContracts` (e.g., "Haul 50 Wood", "Build 4 Walls", "Craft 10 Swords"). The employer's wealth is physically transferred to the laborer upon completion. Players can participate in this micro-economy to earn wages, or amass enough wealth to hire autonomous NPCs to build their personal estates.
+
 ## 8. Action-RPG Interactions (Micro-Scale Chaos)
 
 While the macroscopic simulation dictates economies and empires, the player experiences the world at the microscopic level, akin to an immersive sim or action-RPG like *Streets of Rogue*.
@@ -66,6 +74,7 @@ While the macroscopic simulation dictates economies and empires, the player expe
 - **Systemic Item Usage:** Items are not just stat sticks; they interact with the ECS simulation. Throwing a bottle of spoiled food can poison a well or distract a guard. Lockpicks physically bypass `DoorComponent` restrictions.
 - **Physicalized Dialogue:** Extracting secrets or spending Hooks happens in real-time space. Threatening an NPC with a weapon drawn yields different systemic results than bribing them with physical coins dropped on the ground.
 - **Emergent Chaos:** The player's immediate, violent, or stealthy actions (e.g., assassinating a king, starting a tavern brawl) ripple upwards immediately, forcing the macro-simulation to adapt to the sudden death of key nodes or the physical destruction of critical infrastructure.
+- **Free Agency:** The player can choose their role. They can live as a humble woodcutter fulfilling `JobContracts`, or use inherited wealth and Hooks to hire an army of NPCs to overthrow a monarch. The constraints are physical and systemic, not hardcoded.
 
 ## 9. Future Expansion Slots (Infinite Extensibility)
 
