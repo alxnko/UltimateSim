@@ -9,8 +9,9 @@ import (
 
 // PlayerDirectorSystem evaluates local simulation state to suggest emergent actions.
 type PlayerDirectorSystem struct {
-	hookGraph *engine.SparseHookGraph
-	filter    ecs.Filter
+	hookGraph   *engine.SparseHookGraph
+	filter      ecs.Filter
+	tickCounter uint64
 }
 
 // NewPlayerDirectorSystem creates a new PlayerDirectorSystem.
@@ -31,6 +32,7 @@ func (s *PlayerDirectorSystem) Initialize(world *ecs.World) {
 
 // Update evaluates surroundings and prints suggestions to the console (as a placeholder for UI).
 func (s *PlayerDirectorSystem) Update(world *ecs.World) {
+	s.tickCounter++
 	query := world.Query(s.filter)
 	for query.Next() {
 		pos := (*components.Position)(query.Get(ecs.ComponentID[components.Position](world)))
@@ -52,7 +54,7 @@ func (s *PlayerDirectorSystem) Update(world *ecs.World) {
 		// 2. Scan for nearby Grudges (Opportunities for Mercenary Work)
 		// This logic would ideally use the hook graph to find nearby NPCs with high negative hooks.
 		// For now, we'll just print a generic message based on the tick count.
-		if world.Tick() % 1000 == 0 {
+		if s.tickCounter % 1000 == 0 {
 			fmt.Printf("[DIRECTOR] TIP: The local Clan ID %d is harboring grudges. Check the tavern for contracts.\n", id.ID % 10)
 		}
 	}
