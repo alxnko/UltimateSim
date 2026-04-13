@@ -335,3 +335,22 @@ func TestMercenaryContractComponentSize(t *testing.T) {
 		t.Errorf("Expected MercenaryContractComponent to be %d bytes for DOD, got %d", expected, actual)
 	}
 }
+
+func TestPossessedComponent(t *testing.T) {
+	world := ecs.NewWorld()
+	posComp := ecs.ComponentID[Possessed](&world)
+	e := world.NewEntity(posComp)
+
+	if !world.Has(e, posComp) {
+		t.Errorf("expected entity to have Possessed component")
+	}
+}
+
+func TestPossessedSize(t *testing.T) {
+	// Tag component should be 0 bytes (but unsafe.Sizeof might return 0 or small depending on compiler)
+	// Arche-Go handles 0-sized components efficiently.
+	size := unsafe.Sizeof(Possessed{})
+	if size > 1 {
+		t.Errorf("Possessed tag component should be 0 or 1 byte, got %d", size)
+	}
+}
