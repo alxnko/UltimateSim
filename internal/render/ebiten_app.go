@@ -13,12 +13,13 @@ import (
 
 // LoadingStatus tracks the asynchronous generation of the simulation.
 type LoadingStatus struct {
-	Progress float32
-	Message  string
-	Done     bool
-	TM       *engine.TickManager
-	Grid     *engine.MapGrid
-	Mutex    sync.Mutex
+	Progress  float32
+	Message   string
+	Done      bool
+	TM        *engine.TickManager
+	Grid      *engine.MapGrid
+	HookGraph *engine.SparseHookGraph
+	Mutex     sync.Mutex
 }
 
 // EbitenApp is the primary 2D Action-RPG renderer and simulation driver.
