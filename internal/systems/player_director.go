@@ -49,7 +49,6 @@ func (s *PlayerDirectorSystem) Update(world *ecs.World) {
 				fmt.Printf("[DIRECTOR] ALERT: Local criminal detected. Bounty available.\n")
 			}
 		}
-		crimeQuery.Close()
 
 		// 2. Scan for nearby Grudges (Opportunities for Mercenary Work)
 		// This logic would ideally use the hook graph to find nearby NPCs with high negative hooks.
