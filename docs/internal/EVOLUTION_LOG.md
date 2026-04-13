@@ -839,3 +839,41 @@ Data-Oriented Design (DOD) was strictly maintained. `mapGrid` array reads execut
   - When `WoodValue` drops to 0, the MapGrid Tile's `BiomeID` physically changes (e.g. from Forest to Grassland), demonstrating permanent ecological damage from economic activity.
   - This eventually links into Phase 31.5 (The Winter Heating Engine), as deforested tiles will prevent wood acquisition, plunging the town into a hypothermia crisis without scripted events.
   - Verified 100% deterministic through `go test ./internal/systems -v -run TestDeforestationSystem_Deterministic`.
+## Evolution: Phase 56 - The Conscription Engine (Demographic War Attrition)
+**Date:** 2026-03-31
+**Focus:** Integration (Geopolitics + Biology + Economy)
+
+**The Problem (Vision Gap):**
+The Vision states a "Total Simulation" where wars are not scripted but have physical limits. Previously, Phase 50 (War Economy) meant wars mathematically burned physical resources (`Iron`) and capital (`Wealth`), but they entirely lacked a human, demographic cost. `PopulationComponent` was unaffected by war, severing the link between military action and biological/labor reality.
+
+**The Solution (Autonomous DOD Execution):**
+I created the **Conscription Engine** (`ConscriptionSystem`).
+1. The system evaluates `CapitalComponent` entities actively participating in wars via `WarTrackerComponent.Active == true`.
+2. It mathematically drafts citizens every 300 ticks, decrementing `PopulationComponent.Count` and securely truncating the abstract `Citizens` array.
+3. Strict Data-Oriented Design (DOD) was maintained via single-loop arrays without nested `arche-go` ECS queries, keeping O(1) performance.
+
+**The Butterfly Effect:**
+A starving nation declares war to seize resources (Phase 29). The `WarEconomySystem` begins burning Iron (Phase 50). Natively, the `ConscriptionSystem` (Phase 56) activates, slowly draining the city's population.
+The population drop structurally triggers the `LaborCrisisSystem` (Phase 47). Surviving laborers experience extreme labor scarcity and demand a 300% `WageRate` spike.
+The state, having spent its Treasury on Iron, cannot afford the exorbitant wages. Unpaid workers natively quit, gain `StrikeMarker`s, and generate massive `-50` `BloodFeud` grudges against the King.
+The war effectively cannibalizes the working class until the ensuing labor strike organically mutates into a civil war revolution against the state, closing the systemic loop perfectly.
+
+**Architecture Validation:**
+Validated perfectly deterministic via `TestConscriptionSystem_Integration`, mapping the exact flow from War -> Depopulation -> Labor Crisis -> Wage Spike.
+## Evolution: Phase 57 - The Class Warfare Engine (Guillotine)
+**Focus:** Integration (Biology + Economy + Governance/Justice)
+
+**The Problem (Vision Gap):**
+The Vision states: "Nations, wars, and trade routes are not scripted. They happen because local people need food, harbor grudges, or follow ambitious leaders." Previously, peasant starvation triggered petty theft, but immense economic disparity didn't structurally threaten the ruling class. A King hoarding food during a famine was immune to consequence unless they went militarily bankrupt.
+
+**The Solution (Autonomous DOD Execution):**
+I created the `ClassWarfareSystem`.
+1. It pre-caches `AdministrationMarker` Rulers, their associated `StorageComponent.Food` (Hoards), and their local `MarketComponent.FoodPrice`.
+2. It iterates over all active `NPC`s with `Needs`.
+3. If an NPC is starving (`Food < 20`), too poor to afford the current `FoodPrice`, AND the local Ruler has a massive hoard (`Food > 500`), the system algorithmically generates a negative hook (`SparseHookGraph`) directly against the Ruler's `Identity`.
+
+**The Butterfly Effect:**
+A drought hits, destroying crops (`SpoilageSystem` or `Ecology`). Local food plummets. The Ruler enacts forced labor (`PenalLaborSystem`) to build a monument while hoarding the city's remaining food in their `StorageComponent`. The `MarketComponent` artificially spikes food prices.
+The `ClassWarfareSystem` detects the starving lower class and generates compounding `-5` hooks against the Ruler for every cycle they starve.
+When the hook threshold hits `-100`, the `BloodFeudSystem` activates. The peasants organically trigger a blood feud against the administration, leading to targeted assassinations of the sovereign purely born from macroeconomic inequality, closing the gameplay loop.
+Validated deterministic execution via `TestClassWarfare_Integration`.
