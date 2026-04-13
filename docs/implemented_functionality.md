@@ -1,3 +1,9 @@
+## Phase 51: UI State Machine Rewrite
+- **State Machine Architecture**: Added `internal/ui` package with a complete `GameState` interface and `StateManager`. Enables robust routing between game loops without polluting the ECS.
+- **Main Menu**: Boot into `StateMainMenu` offering a clean interface that transitions into the live simulation upon pressing Enter.
+- **StatePlaying**: Extracted all `EbitenApp` rendering logic into an isolated gameplay state. The camera is now dynamically bound to the `Possessed` entity in `StatePlaying.Update()`, solving "far away map" issues by guaranteeing auto-possession logic loops during initialization if a player lacks an active character.
+- **Action-RPG Input Overhaul**: Modified `PlayerInputSystem` to support Mouse Aim/Clicks. `Left-Click` intercepts attack triggers, and `Right-Click` intercepts interaction triggers towards the true-screen cursor coordinates.
+
 ## Phase 50: 2D Action-RPG Transition
 - **2D Action-RPG Rewrite**: Transitioned the engine from a 3D/2D hybrid to a unified 2D Action-RPG experience. Removed `raylib-go` and consolidated all rendering into `Ebitengine`.
 - **PlayerInputSystem**: Implemented real-time WASD movement for entities bearing the `Possessed` component, bypassing autonomous `WanderSystem` AI.
