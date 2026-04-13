@@ -824,6 +824,21 @@ When loyalty drops to 0, the `VassalRebellionSystem` unilaterally forces the vil
 **Architecture Validation:**
 Data-Oriented Design (DOD) was strictly maintained. `mapGrid` array reads execute in O(1). Structural queries pre-cache NPC beliefs into flat slices `[]npcData` and use standard nested map lookups (`map[uint32]map[uint32]int32`) outside of the archetype loop to resolve the consensus algorithm, entirely preventing runtime panics. Validated 100% deterministic through `TestEchoChamber_Integration`.
 
+## Evolution: Phase 55 - The Ecological Collapse Engine (Deforestation)
+- **Date:** 2026-04-11
+- **Focus:** Integration (Geography + Economy)
+- **Goal:** Execute the "Systemic Emergence" objective by bridging the physical map resources with the material economy, directly implementing "Wood and stone are tied to local tiles. Over-harvesting to hastily build a city inevitably causes a crisis".
+- **DOD Implementation:**
+  - Designed `DeforestationSystem` (`internal/systems/deforestation.go`) to evaluate `JobLumberjack` NPCs at their workplace.
+  - Sourced all components (`NPC`, `Position`, `JobComponent`, `StorageComponent`, `Identity`, `Village`, `BusinessComponent`) using ECS queries.
+  - Uses a flat caching map `activeStorages` per-tick to map Employer IDs to `StorageComponent` pointers to avoid O(N^2) inner looping.
+- **The Butterfly Effect:**
+  - Plugs into Phase 15.2 (Employment & Wages) and Phase 02 (Geography).
+  - Lumberjacks physically extract `WoodValue` directly from the `MapGrid.Resources` array based on their location.
+  - Wood is deposited organically into their Employer's `StorageComponent`.
+  - When `WoodValue` drops to 0, the MapGrid Tile's `BiomeID` physically changes (e.g. from Forest to Grassland), demonstrating permanent ecological damage from economic activity.
+  - This eventually links into Phase 31.5 (The Winter Heating Engine), as deforested tiles will prevent wood acquisition, plunging the town into a hypothermia crisis without scripted events.
+  - Verified 100% deterministic through `go test ./internal/systems -v -run TestDeforestationSystem_Deterministic`.
 ## Evolution: Phase 56 - The Conscription Engine (Demographic War Attrition)
 **Date:** 2026-03-31
 **Focus:** Integration (Geopolitics + Biology + Economy)
