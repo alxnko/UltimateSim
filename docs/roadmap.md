@@ -40,3 +40,25 @@ To elevate the gameplay experience into an immersive, zoomable action-RPG remini
 - **[Phase 24: Micro-Architecture](roadmap/24_micro_architecture.md):** Procedural generation of interiors. Walkable buildings, locking doors, and furniture (chests, anvils, beds) for targeted interaction and theft.
 - **[Phase 25: Combat, Stealth, & Chaos](roadmap/25_action_chaos.md):** The true Action-RPG layer. Melee swing arcs, projectiles, FOV shadowcasting, noise emission limits, and dynamic NPC reactions to systemic chaos.
 - **[Phase 26: Physical Labor, Crafting & Contracts](roadmap/26_labor_crafting.md):** *Rimworld*-style micro-economy. Physical construction of blueprints, workbench-dependent crafting, and dynamic job contract boards where NPCs and players buy and sell physical labor.
+
+## The Boundless Adventure (Dwarf Fortress Layer)
+
+To truly offer unlimited possibilities and a deep medieval life simulation, the game expands into deep procedural history, psychology, and unbound systemic interaction.
+
+- **[Phase 27: Deep Conversation & Knowledge Brokerage](roadmap/27_deep_conversation.md):** Pause-state dialogue, interrogations, extracting directions, paying for skill tutoring, and injecting forged secrets into the gossip matrix.
+- **[Phase 28: Procedural Lore, Artifacts, & Myth-Making](roadmap/28_procedural_lore.md):** Deep-time headless history generation. Procedural mega-beasts, forgotten ruins for archaeology, and Legendary items that emit systemic Auras.
+- **[Phase 29: Psychology, Moods & Mental Breaks](roadmap/29_psychology.md):** Sanity tracking, trauma, addictions, and mental breaks (berserk, catatonic) that permanently alter NPC genetics and pathfinding behaviors.
+- **[Phase 30: The Esoteric Arts (Alchemy & Rituals)](roadmap/30_esoteric_arts.md):** Flora gathering, brewing stat-altering potions, and physical rituals tied to planetary alignments that allow secret cults to manipulate macro-systems.
+- **[Phase 31: Flora, Fauna, & Animal Husbandry](roadmap/31_flora_fauna.md):** Dynamic ecosystems of predators and prey. Taming beasts, breeding animals for resources, and riding horses for mounted cavalry hitboxes.
+- **[Phase 32: Espionage, Disguises & Subterfuge](roadmap/32_espionage.md):** Spoofing identity with stolen uniforms to bypass guards, forging property deeds, and systemically poisoning food supplies for untraceable assassinations.
+
+## The Ultimate Simulation (Absolute Depth)
+
+To push the engine to the absolute limit of the medium, the final layers introduce deep Z-levels, catastrophic warfare, and the fragility of the human body and mind.
+
+- **[Phase 33: Advanced Medicine, Surgery & Mutilation](roadmap/33_advanced_medicine.md):** Localized limb damage, systemic infections from swamps, and doctors performing amputations and attaching wooden peg legs to save lives.
+- **[Phase 34: Subterranean Layers & Deep Mining (Z-Levels)](roadmap/34_subterranean_mining.md):** Expanding the map into 3D chunks. Digging underground caverns, mining ore veins, and managing structural integrity to prevent massive cave-ins.
+- **[Phase 35: Dynamic Weather, Seasons & Ecological Shifts](roadmap/35_dynamic_weather.md):** Moving weather fronts that generate mud to slow armies, freeze rivers for new paths, and cause droughts that annihilate crop harvests.
+- **[Phase 36: Siege Warfare, Artillery & Fortification](roadmap/36_siege_warfare.md):** Protracted city sieges. Crafting trebuchets to shatter walls, sappers tunneling under defenses, and starving out populations by blockading caravans.
+- **[Phase 37: Naval Combat, Shipboarding & Privateering](roadmap/37_naval_combat.md):** Ships as mobile sub-grids where crews walk the decks. Firing cannons to sink vessels, locking grids for boarding actions, and state-sponsored piracy.
+- **[Phase 38: Ideological Schisms & Cultural Revolutions](roadmap/38_ideological_schisms.md):** The mutation of religious/political beliefs. Emergent civil wars, class-based revolutions, and the systemic overthrow of monarchies by desperate, ideologically united peasants.
