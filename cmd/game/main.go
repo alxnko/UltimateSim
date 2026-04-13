@@ -12,6 +12,7 @@ import (
 	"github.com/ALXNKO/UltimateSim/internal/engine"
 	"github.com/ALXNKO/UltimateSim/internal/render"
 	"github.com/ALXNKO/UltimateSim/internal/systems"
+	"github.com/ALXNKO/UltimateSim/internal/ui"
 )
 
 // Phase 01.4: Hardware Affinity & Rendering Bridging
@@ -163,6 +164,22 @@ func BuildSimulation(gridWidth, gridHeight int, seedVal byte, status *render.Loa
 	status.Mutex.Unlock()
 }
 
+type Game struct {
+	sm *ui.StateManager
+}
+
+func (g *Game) Update() error {
+	return g.sm.Update()
+}
+
+func (g *Game) Draw(screen *ebiten.Image) {
+	g.sm.Draw(screen)
+}
+
+func (g *Game) Layout(outsideWidth, outsideHeight int) (int, int) {
+	return 800, 600
+}
+
 func main() {
 	// Phase 01.6: Telemetry & Profiling
 	// Use flags to control pprof for security
@@ -181,34 +198,42 @@ func main() {
 		}()
 	}
 
-	// NOTE: Simulation is now driven by Ebitengine via EbitenApp.
-
-	// Unified Ebitengine Window Configuration
 	ebiten.SetWindowSize(800, 600)
-	ebiten.SetWindowTitle("Boundless Sovereigns - 2D Action RPG Mode")
+	ebiten.SetWindowTitle("Boundless Sovereigns - Action RPG")
 	ebiten.SetWindowResizingMode(ebiten.WindowResizingModeEnabled)
 
-	// Wrap BuildSimulation to include PlayerInputSystem registration
-	factory := func(w, h int, s byte, status *render.LoadingStatus) {
-		BuildSimulation(w, h, s, status)
-		
+	sm := ui.NewStateManager()
+	
+	status := &render.LoadingStatus{}
+	
+	// Create Playing State first (but don't push it yet)
+	playingState := ui.NewStatePlaying(status)
+
+	// Create Main Menu
+	menuState := ui.NewStateMainMenu(func() {
+		// When "Start" is clicked, push the playing state
+		sm.Switch(playingState)
+	})
+
+	// Start the async engine build
+	go func() {
+		BuildSimulation(1024, 1024, 42, status)
+		// Register Input System manually here after it's built
 		status.Mutex.Lock()
-		defer status.Mutex.Unlock()
-		
-		// Add PlayerInputSystem to the PhaseInput phase
 		inputSys := &systems.PlayerInputSystem{}
 		inputSys.Initialize(status.TM.World)
 		status.TM.AddSystem(inputSys, engine.PhaseInput)
-
-		// Add PlayerDirectorSystem to the PhaseResolution phase
+		
 		directorSys := systems.NewPlayerDirectorSystem(status.HookGraph)
 		directorSys.Initialize(status.TM.World)
 		status.TM.AddSystem(directorSys, engine.PhaseResolution)
-	}
+		status.Mutex.Unlock()
+	}()
 
-	app := render.NewEbitenApp(factory)
+	sm.Push(menuState)
 
-	if err := ebiten.RunGame(app); err != nil {
+	game := &Game{sm: sm}
+	if err := ebiten.RunGame(game); err != nil {
 		log.Fatal(err)
 	}
 }
