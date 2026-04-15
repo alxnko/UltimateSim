@@ -893,3 +893,21 @@ A drought hits, destroying crops (`SpoilageSystem` or `Ecology`). Local food plu
 The `ClassWarfareSystem` detects the starving lower class and generates compounding `-5` hooks against the Ruler for every cycle they starve.
 When the hook threshold hits `-100`, the `BloodFeudSystem` activates. The peasants organically trigger a blood feud against the administration, leading to targeted assassinations of the sovereign purely born from macroeconomic inequality, closing the gameplay loop.
 Validated deterministic execution via `TestClassWarfare_Integration`.
+
+## Evolution: Phase 58 - The Agricultural Engine (AgricultureSystem)
+**Focus:** Integration (Ecology + Economy)
+
+**The Problem (Vision Gap):**
+The Vision describes an ecology that actively responds to the economy. Previously, Phase 55 (Deforestation) allowed lumberjacks to deplete forests. However, Food (the main biological driver) was abstracted away from the MapGrid. NPCs survived by buying food, but that food didn't permanently change the terrain it was extracted from, leaving a gap where over-farming did not have systemic ecological consequences.
+
+**The Solution (Autonomous DOD Execution):**
+I created the `AgricultureSystem`.
+1. It pre-caches active employers (`Village`, `BusinessComponent`) and their `StorageComponent` using Arche-Go filters, storing them in an `activeStorages` map for O(1) lookup.
+2. It iterates over all active `NPC`s with `JobFarmer` and a `Position`.
+3. It directly checks the `MapGrid.Resources` at the farmer's coordinate. If `FoodValue > 0`, it extracts it, adds it directly to the employer's storage, and most importantly, depletes the tile's `Moisture`.
+4. As `Moisture` drops, the system recalculates the tile's `BiomeID` using the core `DetermineBiome` function.
+
+**The Butterfly Effect:**
+A starving village employs dozens of Farmers to rapidly extract food from a `TemperateRainForest` tile. The food is sent to the `MarketComponent`, saving the population (Phase 13/15). However, the massive, repeated extraction drops the tile's `Moisture` from 200 down to 50. The tile organically mutates into a `TemperateDesert`.
+Because it is a desert, the `DetermineBiome` logic triggers. The `MovementSystem` detects the desert and increases the base movement cost (Phase 09). Caravans begin routing around the newly created desert, causing the village's `FootTraffic` to plummet. This isolation triggers the `EchoChamberSystem` (Phase 54), radicalizing the starving, isolated village, directly bridging Agricultural Policy to Geopolitical Radicalization without scripts.
+Validated perfectly deterministic via `TestAgricultureSystem_Deterministic`.
