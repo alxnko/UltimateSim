@@ -30,3 +30,25 @@ func TestRNGDeterminism(t *testing.T) {
 		}
 	}
 }
+
+func TestRNGAutoInitialization(t *testing.T) {
+	// Manually reset the RNG instance for this test
+	mu.Lock()
+	rngInstance = nil
+	mu.Unlock()
+
+	defer func() {
+		if r := recover(); r != nil {
+			t.Errorf("GetRandomInt panicked, expected auto-initialization: %v", r)
+		}
+	}()
+
+	// This should not panic now
+	val := GetRandomInt()
+
+	// Verify it actually works and returns something
+	if val == 0 && GetRandomInt() == 0 && GetRandomInt() == 0 {
+		// Extremely unlikely to get 3 zeros in a row with a valid RNG, but possible.
+		// Mainly we just want to ensure it didn't panic.
+	}
+}

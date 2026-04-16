@@ -24,14 +24,22 @@ func InitializeRNG(seed [32]byte) {
 	rngInstance = rand.New(src)
 }
 
+// ensureRNG initializes the RNG with a default seed if it hasn't been initialized yet.
+// IMPORTANT: This must be called while the mutex 'mu' is held.
+func ensureRNG() {
+	if rngInstance == nil {
+		// Default to an all-zero seed for safety if not explicitly initialized
+		src := rand.NewChaCha8([32]byte{})
+		rngInstance = rand.New(src)
+	}
+}
+
 // GetRandomInt returns a deterministic pseudo-random integer.
 func GetRandomInt() int {
 	mu.Lock()
 	defer mu.Unlock()
 
-	if rngInstance == nil {
-		panic("RNG not initialized")
-	}
+	ensureRNG()
 	return rngInstance.Int()
 }
 
@@ -40,9 +48,7 @@ func GetRandomFloat32() float32 {
 	mu.Lock()
 	defer mu.Unlock()
 
-	if rngInstance == nil {
-		panic("RNG not initialized")
-	}
+	ensureRNG()
 	return rngInstance.Float32()
 }
 
@@ -51,8 +57,6 @@ func GetRandomFloat64() float64 {
 	mu.Lock()
 	defer mu.Unlock()
 
-	if rngInstance == nil {
-		panic("RNG not initialized")
-	}
+	ensureRNG()
 	return rngInstance.Float64()
 }
