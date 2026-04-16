@@ -168,6 +168,7 @@ func (s *PenalLaborSystem) Update(world *ecs.World) {
 					if distSq < 100.0 { // Witnessed penal labor
 						// Generate massive negative grudge against the State Ruler
 						s.hookGraph.AddHook(ident.ID, event.RulerID, -50)
+						break // Optimization: Witnessed one, no need to check others this tick
 					}
 				}
 			}
