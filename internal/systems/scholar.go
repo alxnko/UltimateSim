@@ -3,6 +3,7 @@ package systems
 import (
 	"github.com/ALXNKO/UltimateSim/internal/components"
 	"github.com/mlange-42/arche/ecs"
+	"github.com/mlange-42/arche/filter"
 )
 
 // Phase 39.1: The Epistemological Engine (ScholarSystem)
@@ -42,8 +43,8 @@ func (s *ScholarSystem) Update(world *ecs.World) {
 		return
 	}
 
-	filter := ecs.All(s.npcID, s.posID, s.genID, s.needsID, s.secretID)
-	query := world.Query(filter)
+	f := filter.All(s.npcID, s.posID, s.genID, s.needsID, s.secretID)
+	query := world.Query(f)
 
 	type spawnData struct {
 		x       float32
