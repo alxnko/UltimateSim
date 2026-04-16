@@ -3,6 +3,7 @@ package engine
 import (
 	"database/sql"
 	"encoding/json"
+	"fmt"
 
 	"github.com/ALXNKO/UltimateSim/internal/components"
 	_ "modernc.org/sqlite"
@@ -141,6 +142,25 @@ func InitDB(path string) (*sql.DB, error) {
 	return db, nil
 }
 
+var tableDeleteQueries = map[string]string{
+	"entities":    "DELETE FROM entities",
+	"identity":    "DELETE FROM identity",
+	"position":    "DELETE FROM position",
+	"needs":       "DELETE FROM needs",
+	"affiliation": "DELETE FROM affiliation",
+	"tags":        "DELETE FROM tags",
+	"storage":     "DELETE FROM storage",
+	"velocity":    "DELETE FROM velocity",
+	"job":         "DELETE FROM job",
+	"memory":      "DELETE FROM memory",
+	"beliefs":     "DELETE FROM beliefs",
+	"genome":      "DELETE FROM genome",
+	"vitals":      "DELETE FROM vitals",
+	"population":  "DELETE FROM population",
+	"desperation": "DELETE FROM desperation",
+	"secrets":     "DELETE FROM secrets",
+}
+
 // SaveWorld serializes the core ECS state into SQLite.
 func SaveWorld(tm *TickManager, mapGrid *MapGrid, seedVal byte, db *sql.DB) error {
 	world := tm.World
@@ -165,7 +185,11 @@ func SaveWorld(tm *TickManager, mapGrid *MapGrid, seedVal byte, db *sql.DB) erro
 	// Clear out old entity rows to prevent resurrecting dead entities
 	tables := []string{"entities", "identity", "position", "needs", "affiliation", "tags", "storage", "velocity", "job", "memory", "beliefs", "genome", "vitals", "population", "desperation", "secrets"}
 	for _, table := range tables {
-		if _, err := tx.Exec("DELETE FROM " + table); err != nil {
+		query, ok := tableDeleteQueries[table]
+		if !ok {
+			return fmt.Errorf("unauthorized table delete attempt: %s", table)
+		}
+		if _, err := tx.Exec(query); err != nil {
 			return err
 		}
 	}
