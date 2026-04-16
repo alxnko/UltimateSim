@@ -29,6 +29,7 @@ const (
 	JobCaptain    uint8 = 9  // Phase 17.1: Maritime Labor Market
 	JobPenalLabor uint8 = 10 // Phase 45: The Penal Labor Engine
 	JobMercenary  uint8 = 11 // Phase 47: The Mercenary Engine
+	JobBuilder    uint8 = 12 // Phase 59: The Physical Construction Engine
 )
 
 // Phase 09.5: Item Inheritance Threshold
@@ -47,6 +48,10 @@ const (
 	InteractionTheft    uint8 = 4 // Phase 18.1: Law Definitions
 	InteractionMurder   uint8 = 5 // Phase 23.1: The Blood Feud Engine
 	InteractionEsoteric uint8 = 6 // Phase 49: The Witch Hunt Engine
+)
+
+const (
+	StructureHouse uint8 = 1
 )
 
 // Identity component
@@ -557,4 +562,20 @@ type DemographicsComponent struct {
 	PeakPopulation    uint32
 	LaborCrisisActive bool
 	_                 [3]byte // Padding to exactly 8 bytes
+}
+
+// Phase 59: The Physical Construction Engine
+type ConstructionSiteComponent struct {
+	WoodRequired  uint32
+	WoodGathered  uint32
+	StoneRequired uint32
+	StoneGathered uint32
+	Progress      uint32
+	MaxProgress   uint32
+	BuilderID     uint64 // The NPC ID assigned to this site
+}
+
+type StructureComponent struct {
+	StructureType uint32
+	Integrity     float32
 }

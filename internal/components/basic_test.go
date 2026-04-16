@@ -354,3 +354,23 @@ func TestPossessedSize(t *testing.T) {
 		t.Errorf("Possessed tag component should be 0 or 1 byte, got %d", size)
 	}
 }
+
+func TestConstructionComponentsSize(t *testing.T) {
+	expectedDemo := uintptr(8)
+	actualDemo := unsafe.Sizeof(DemographicsComponent{})
+	if actualDemo != expectedDemo {
+		t.Errorf("Expected DemographicsComponent to be %d bytes for DOD, got %d", expectedDemo, actualDemo)
+	}
+
+	expectedConstruction := uintptr(32)
+	actualConstruction := unsafe.Sizeof(ConstructionSiteComponent{})
+	if actualConstruction != expectedConstruction {
+		t.Errorf("Expected ConstructionSiteComponent to be %d bytes for DOD, got %d", expectedConstruction, actualConstruction)
+	}
+
+	expectedStructure := uintptr(8)
+	actualStructure := unsafe.Sizeof(StructureComponent{})
+	if actualStructure != expectedStructure {
+		t.Errorf("Expected StructureComponent to be %d bytes for DOD, got %d", expectedStructure, actualStructure)
+	}
+}

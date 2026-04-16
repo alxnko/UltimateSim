@@ -911,3 +911,22 @@ I created the `AgricultureSystem`.
 A starving village employs dozens of Farmers to rapidly extract food from a `TemperateRainForest` tile. The food is sent to the `MarketComponent`, saving the population (Phase 13/15). However, the massive, repeated extraction drops the tile's `Moisture` from 200 down to 50. The tile organically mutates into a `TemperateDesert`.
 Because it is a desert, the `DetermineBiome` logic triggers. The `MovementSystem` detects the desert and increases the base movement cost (Phase 09). Caravans begin routing around the newly created desert, causing the village's `FootTraffic` to plummet. This isolation triggers the `EchoChamberSystem` (Phase 54), radicalizing the starving, isolated village, directly bridging Agricultural Policy to Geopolitical Radicalization without scripts.
 Validated perfectly deterministic via `TestAgricultureSystem_Deterministic`.
+
+## Evolution: Phase 59 - The Physical Construction Engine (ConstructionSystem)
+**Focus:** Integration (Macroeconomics + Logistics + Demographics)
+
+**The Problem (Vision Gap):**
+The Vision describes "Physical Construction" (Section 7) where cities do not abstractly grow based on an algorithm but are physically built through paid labor and time. Previously, Demographics (Population) grew abstractly, and wealth sat idle. There was no physical bridge connecting a city's wealth to infrastructure creation and subsequent demographic shifts.
+
+**The Solution (Autonomous DOD Execution):**
+I created the `ConstructionSystem` and introduced `ConstructionSiteComponent` (24 bytes) and `StructureComponent` (8 bytes).
+1. The system pre-caches all wealthy `Village` entities.
+2. If a village has > 500 wealth, it drains the `Treasury` to organically spawn a `ConstructionSiteComponent` on the map.
+3. Unemployed or tasked NPCs with `JobBuilder` autonomously scan for empty sites, assign themselves, and physically walk to the map coordinate.
+4. Once at the site, builders physically drain `Wood` and `Stone` from the `StorageComponent` to advance the site's `Progress`.
+5. Upon completion, the site converts to a `StructureComponent` (e.g., `StructureHouse`), which permanently increases the village's `DemographicsComponent.PeakPopulation`.
+
+**The Butterfly Effect:**
+A wealthy city uses its treasury to mass-produce housing. Builders rapidly construct houses, drastically raising the city's `PeakPopulation` (e.g., from 100 to 300). However, the actual biological `Population.Count` remains at 100.
+This discrepancy (100 / 300 < 80%) organically triggers the existing `LaborCrisisSystem` (Phase 47). The simulation interprets the empty, overbuilt city as having suffered a massive demographic collapse relative to its infrastructure (a "Housing Bubble"), mathematically causing wages to triple and trade unions to strike without any hardcoded economic scripts.
+Validated perfectly deterministic via `TestConstructionSystem_Integration`.
