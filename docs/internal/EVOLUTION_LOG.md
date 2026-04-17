@@ -930,3 +930,22 @@ I created the `ConstructionSystem` and introduced `ConstructionSiteComponent` (2
 A wealthy city uses its treasury to mass-produce housing. Builders rapidly construct houses, drastically raising the city's `PeakPopulation` (e.g., from 100 to 300). However, the actual biological `Population.Count` remains at 100.
 This discrepancy (100 / 300 < 80%) organically triggers the existing `LaborCrisisSystem` (Phase 47). The simulation interprets the empty, overbuilt city as having suffered a massive demographic collapse relative to its infrastructure (a "Housing Bubble"), mathematically causing wages to triple and trade unions to strike without any hardcoded economic scripts.
 Validated perfectly deterministic via `TestConstructionSystem_Integration`.
+
+## Evolution: Phase 60 - The Physical Crafting Engine (CraftingSystem)
+**Focus:** Integration (Macroeconomics + Logistics + The Rimworld Layer)
+
+**The Problem (Vision Gap):**
+The Vision states in Section 7 (The Rimworld Layer) that "Advanced goods (swords, armor, tools) require specific FurnitureEntities (e.g., an Anvil or Loom). An artisan must physically walk to the workbench, hold the required raw materials, and spend time processing them into finished goods." Previously, `JobArtisan` existed as a tag, but there was no mechanic requiring them to physically use a workbench or consume raw resources to generate wealth, severing the link between raw material gathering and advanced economic output.
+
+**The Solution (Autonomous DOD Execution):**
+I created the `CraftingSystem` and introduced `WorkbenchEntity` and `WorkbenchComponent` (16 bytes).
+1. The system pre-caches all active `WorkbenchComponent`s alongside their employer's `StorageComponent` and `TreasuryComponent` using O(1) maps, eliminating nested ECS query loops.
+2. It iterates over all active `NPC`s possessing the `JobArtisan` role.
+3. If the artisan is physically positioned at their employer's workbench (within a precise distance) and the employer has sufficient raw `Iron` in their storage, the artisan processes it.
+4. The system directly drains `Iron` from the `StorageComponent` and heavily increases the `TreasuryComponent.Wealth`, simulating the physical creation and market sale of advanced goods.
+
+**The Butterfly Effect:**
+A mining settlement extracts high amounts of `Iron` but remains poor. An entrepreneur establishes a business with a `WorkbenchComponent` and hires unemployed NPCs as `JobArtisan`s. The artisans physically walk to the anvil and begin rapidly converting the stockpiled `Iron` into immense `Wealth`.
+This sudden influx of wealth drastically increases the town's economic power, which natively funds the `ConstructionSystem` (Phase 59) to mass-build new houses.
+However, if a neighboring state declares war and seizes the iron supply (Phase 50 - War Economy), the `StorageComponent` drains. The artisans, unable to craft without iron, stop generating wealth. The business goes bankrupt and fails to pay wages, causing the artisans to strike (`LaborCrisisSystem`, Phase 47), structurally turning an external supply chain disruption into an internal labor revolution.
+Validated perfectly deterministic via `TestCraftingSystem_Integration`.

@@ -579,3 +579,14 @@ type StructureComponent struct {
 	StructureType uint32
 	Integrity     float32
 }
+
+// Evolution: Phase 60 - The Physical Crafting Engine
+// WorkbenchEntity is a tag component identifying physical workbenches required for artisans.
+type WorkbenchEntity struct{}
+
+// WorkbenchComponent tracks the employer ownership and physical location of a workbench.
+type WorkbenchComponent struct {
+	EmployerID uint64
+	X          float32
+	Y          float32
+}
