@@ -930,3 +930,23 @@ I created the `ConstructionSystem` and introduced `ConstructionSiteComponent` (2
 A wealthy city uses its treasury to mass-produce housing. Builders rapidly construct houses, drastically raising the city's `PeakPopulation` (e.g., from 100 to 300). However, the actual biological `Population.Count` remains at 100.
 This discrepancy (100 / 300 < 80%) organically triggers the existing `LaborCrisisSystem` (Phase 47). The simulation interprets the empty, overbuilt city as having suffered a massive demographic collapse relative to its infrastructure (a "Housing Bubble"), mathematically causing wages to triple and trade unions to strike without any hardcoded economic scripts.
 Validated perfectly deterministic via `TestConstructionSystem_Integration`.
+
+## Evolution: Phase 60 - The Physical Crafting Engine (CraftingSystem)
+**Focus:** Integration (Logistics + Macroeconomics + Geography)
+
+**The Problem (Vision Gap):**
+The Vision states "Physical Labor, Crafting, & Construction (The Rimworld Layer)", noting that advanced goods require specific `FurnitureEntities` and must be physically produced by artisans at a workbench. Previously, while `JobArtisan` existed (from Phase 13.2), crafting was abstract and disconnected from physical coordinates or workstations. Artisans didn't physically exist in space relative to their production.
+
+**The Solution (Autonomous DOD Execution):**
+I created the `CraftingSystem` and introduced the `WorkbenchComponent`.
+1. The system pre-caches all active Employers (`Village`, `BusinessComponent`) and their `StorageComponent`/`TreasuryComponent` in an O(1) map.
+2. It pre-caches `WorkbenchComponent` entities and maps them to their respective `EmployerID`.
+3. It filters for active `NPC`s with `JobArtisan` and iterates over them.
+4. Artisans pathfind to their employer's closest `WorkbenchComponent`.
+5. Upon arrival at the workbench, they physically consume `Iron` from the employer's storage and output `Wealth` into the employer's treasury.
+
+**The Butterfly Effect:**
+A village employs an Artisan. The Artisan physically walks to a Workbench and hammers `Iron` into valuable goods, generating immense `Wealth` for the village treasury.
+Once the village's wealth crosses 500, the `ConstructionSystem` (Phase 59) autonomously detects the wealth. It drains the treasury to spawn a new `ConstructionSiteComponent`. Unemployed builders see the site, walk to it, and consume the village's `Wood` and `Stone` to build a new `StructureComponent` (House).
+The new house radically spikes the village's `PeakPopulation`, creating a demographic bubble that mathematically triggers a `LaborCrisis` (Phase 47), causing the original Artisan to demand 300% higher wages and eventually unionize.
+Validated perfectly deterministic via `TestCraftingSystem_Integration`.

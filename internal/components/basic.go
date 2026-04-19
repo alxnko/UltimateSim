@@ -579,3 +579,10 @@ type StructureComponent struct {
 	StructureType uint32
 	Integrity     float32
 }
+
+// Phase 60: The Physical Crafting Engine
+type WorkbenchComponent struct {
+	EmployerID uint64
+	X          float32
+	Y          float32
+}
