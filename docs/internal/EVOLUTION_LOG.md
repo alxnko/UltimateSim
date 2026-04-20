@@ -1,3 +1,16 @@
+## Evolution: Phase 61 - The Biological Sabotage Engine
+- **Goal:** Execute the "Systemic Emergence" objective by bridging Social Hierarchy (Hooks), Economy (Storage), Biology (Diseases), and Justice. Fulfilling the Vision missing link: "poison food supplies".
+- **DOD Implementation:**
+  - Implemented `BiologicalSabotageSystem` (`internal/systems/sabotage.go`) adhering to Data-Oriented Design by pre-caching `Village` components (Position, StorageComponent) and mapping them to their ruling `AdministrationMarker` IDs.
+  - Sequentially parses `NPC` entities; if an NPC has an extreme negative hook (`<= -100`) against a Ruler and is physically adjacent to the Village (`distSq < 2.0`), the system executes a sabotage event structurally outside the iteration loop to prevent Arche-Go panics.
+- **The Butterfly Effect:**
+  - Plugs seamlessly into Phase 57 (Class Warfare), Phase 10.3 (Biological Entropy), Phase 21 (Desperation), and Phase 18 (Justice).
+  - An NPC with an extreme grudge executes Sabotage: halving the Village's `StorageComponent.Food` and spawning a highly lethal `DiseaseEntity` at the exact location.
+  - The NPC's negative hook is neutralized, and they are immediately tagged with a `CrimeMarker` with a massive bounty, alerting nearby Guards.
+  - The sudden halving of food forces extreme `MarketComponent.FoodPrice` spikes, immediately driving peasants into `DesperationComponent` loops (Phase 21).
+  - The `DiseaseEntity` infects nearby citizens via `DiseaseVectorSystem`, mathematically dropping `PopulationComponent` levels and triggering Labor Crises.
+  - Verified 100% deterministic through `go test ./internal/systems -v -run TestBiologicalSabotageSystem_Integration -count=2`.
+
 ## Evolution: Phase 17.1 - Maritime Labor Engine
 - **Goal:** Execute the "Systemic Emergence" objective by bridging Naval Logistics (Phase 17) directly to Local Economics (Phase 15.2). Fulfilling the Vision missing link: "Maritime Labor Market: Ships require a massive crew of individual NPC entities holding the JobComponent(Sailor) and a JobComponent(Captain). Ship owners must pay high wages, drawing laborers away from farming/mining in coastal cities."
 - **DOD Implementation:**
