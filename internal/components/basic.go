@@ -493,6 +493,21 @@ type CrusadeComponent struct {
 	TargetCityID uint32
 }
 
+// Phase 62: The Psychological Stress Engine
+const (
+	BreakNormal    uint32 = 0
+	BreakBerserk   uint32 = 1
+	BreakCatatonic uint32 = 2
+)
+
+// SanityComponent tracks psychological stress derived from biological or social inputs.
+type SanityComponent struct {
+	Stress        float32
+	MaxStress     float32
+	BreakState    uint32
+	BreakCooldown uint32
+}
+
 // Phase 19.4: Advanced Biology (Vitals)
 type VitalsComponent struct {
 	Stamina       float32
