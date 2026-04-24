@@ -985,3 +985,25 @@ A drought hits, and a Ruler hoards food, spiking local `MarketComponent` food pr
 Driven by this systemic grudge, a peasant physically walks to the village and executes `BiologicalSabotageSystem`. The Ruler's food supply collapses, mathematically destroying their economic hoard.
 Simultaneously, a lethal `DiseaseEntity` spawns from the poisoned food, triggering the `DiseaseVector` system (Phase 10) which unleashes a plague upon the city. The peasant receives a `CrimeMarker`, organically activating the `JusticeSystem` (Phase 18) where guards will now physically hunt down the peasant. What began as macro-economic inequality natively morphs into localized biological terrorism and a city-wide manhunt, perfectly closing the loop.
 Validated perfectly deterministic via `TestBiologicalSabotageSystem_Integration`.
+
+## Evolution: Phase 63 - The Refugee Crisis Engine
+**Focus:** Integration (Geography + Migration + Culture + Justice)
+
+**The Problem (Vision Gap):**
+The Vision emphasizes that "Natural Disasters shift basic map parameters, forcing massive population resets," and "Biomes and resources dictate where people move." We previously had `MaritimeMigrationSystem` for oceanic escapes and `RuinResettlementSystem` for wandering NPCs, but no systemic, land-based reaction to localized economic collapse or starvation that drives cross-border displacement. A starving NPC would either die in place or turn to banditry, without seeking asylum in foreign geopolitical entities.
+
+**The Solution (Autonomous DOD Execution):**
+I created the `RefugeeSystem` alongside the new `AsylumSeekerComponent` (16 bytes).
+1. The system pre-caches all active, prosperous `Village` entities (`Food > 100`) across the map in an O(1) DOD slice.
+2. It filters for `NPC` entities facing critical starvation and poverty (`DesperationComponent.Level >= 80`).
+3. If triggered, the NPC structurally severs ties with their dying `CityID`, loses their `JobComponent` and `BusinessComponent`, and gains an `AsylumSeekerComponent`.
+4. The system calculates the distance to the nearest prosperous foreign village and enqueues an asynchronous `PathRequest`.
+5. Upon physically arriving (`distSq < 2.0`), the system strips the `AsylumSeekerComponent`, resets their `DesperationComponent.Level` to 0, and natively integrates them by assigning the new `Affiliation.CityID`.
+
+**The Butterfly Effect:**
+A drought hits City A, devastating its `StorageComponent.Food`. As the market food prices spike, local peasants begin starving, spiking their `DesperationComponent`.
+Hitting the threshold, an NPC becomes a refugee, legally severing themselves from City A and physically pathing to the prosperous City B.
+Upon arriving in City B, the refugee is integrated. However, the refugee speaks Language A, while City B speaks Language B. Furthermore, City B citizens possess the `BeliefXenophobia` trait (Phase 20.3).
+Because the refugee physically crossed into the Xenophobe's proximity range with a mismatched language, the `XenophobiaSystem` activates, instantly spawning a massive `-100` Grudge in the `SparseHookGraph` against the refugee. This natively triggers the `BloodFeudSystem` (Phase 23.1).
+What began as a purely localized agricultural failure structurally cascaded into an international refugee crisis and an emergent, racially-motivated geopolitical assassination loop without any hardcoded event scripts.
+Validated perfectly deterministic via `TestRefugeeSystem_Integration`.
