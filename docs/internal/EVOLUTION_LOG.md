@@ -56,6 +56,20 @@
 
 # Evolution Log
 
+## Evolution: Phase 63 - The Refugee Crisis Engine
+- **Goal:** Execute the "Systemic Emergence" objective by fulfilling the Vision gap: "NPCs fleeing famine or seeking new lands." Providing a systemic way for impoverished land-bound NPCs to organically flee their failing homes en masse toward prosperous cities.
+- **DOD Implementation:**
+  - Added an 8-byte DOD-compliant `AsylumSeekerComponent` in `internal/components/basic.go`.
+  - Created `RefugeeSystem` (`internal/systems/refugee.go`) running an `arche-go` compatible pipeline. It pre-caches `VillageEntity` treasuries to identify stable targets, then queries for highly desperate NPCs (`DesperationComponent.Level >= 80`).
+  - Upon evaluation, the NPC strips its `Affiliation.CityID` and receives the `AsylumSeekerComponent`, then physically updates its `Path` logic to run toward the new map coordinate.
+  - Upon physical arrival (`distSq < 4.0`), it assimilates to the new `CityID`.
+- **The Butterfly Effect:**
+  - Plugs deeply into Phase 21 (Desperation), Phase 18 (Justice), Phase 09 (Logistics), and Phase 20 (Traumatic Traditions).
+  - A local famine spikes Desperation. Before resorting to Banditry, a cluster of NPCs abandons the state, organically becoming stateless actors.
+  - They migrate to a wealthy neighbor. Their arrival immediately increases the demographic burden of the wealthy city.
+  - If the target city has a different culture or is xenophobic, the refugees natively trigger the `XenophobiaSystem`, organically generating immense `-100` grudges.
+  - Verified completely via deterministic `go test ./internal/systems -run TestRefugeeSystem_Integration`.
+
 ## Evolution: Phase 07.4 - The Linguistic Engine: Misunderstandings
 - **Goal:** Execute the "Systemic Emergence" objective by implementing a missing link from the Vision document: "Information shared via gossip has a _Translation Penalty_ between languages, causing Misunderstandings leading to accidental wars."
 - **DOD Implementation:**

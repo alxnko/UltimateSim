@@ -493,6 +493,13 @@ type CrusadeComponent struct {
 	TargetCityID uint32
 }
 
+// Phase 63: The Refugee Crisis Engine
+type AsylumSeekerComponent struct {
+	TargetCityID uint32
+	TicksFleeing uint16
+	_            [2]byte // Pad to 8 bytes
+}
+
 // Phase 62: The Psychological Stress Engine
 const (
 	BreakNormal    uint32 = 0
