@@ -1,3 +1,18 @@
+## Evolution: Phase 63 - The Refugee Crisis Engine
+- **Goal:** Execute the "Systemic Emergence" objective by bridging Macroeconomics (Wealth), Geography (Distance), Entropy (Desperation), and Culture (Xenophobia).
+- **DOD Implementation:**
+  - Implemented `RefugeeSystem` (`internal/systems/refugee_crisis.go`) strictly adhering to Data-Oriented Design constraints.
+  - The system pre-caches `TreasuryComponent` wealth of prosperous villages into a flat array structure.
+  - It sequentially parses active `NPC` entities; if an NPC faces extreme desperation (`DesperationComponent >= 80`) without a pending move, it identifies the nearest prosperous target.
+  - Structural ECS actions (adding the `AsylumSeekerComponent` and routing via HPA* queues) occur strictly *after* Arche-Go iteration loops to maintain query integrity.
+  - Assimilation successfully cleanses `DesperationComponent` and assigns the target `CityID` upon arrival.
+- **The Butterfly Effect:**
+  - An NPC faces severe starvation due to localized Spoilage, triggering `DesperationSystem` loops.
+  - Reaching > 80 desperation, they mutate into a Refugee, pathfinding to a wealthy city.
+  - This influx natively spikes the wealthy city's demographics, increasing food consumption and causing a local `LaborCrisisSystem` loop due to altered demographics.
+  - Simultaneously, if the incoming refugees carry differing `LanguageID` or `BeliefID`, their sudden geographic proximity organically triggers the `XenophobiaSystem`, generating immense Negative Hooks among the locals and potentially setting off an automatic Blood Feud.
+  - Verified 100% deterministic through `go test ./internal/systems -v -run TestRefugeeSystem_Integration`.
+
 ## Evolution: Phase 61 - The Biological Sabotage Engine
 - **Goal:** Execute the "Systemic Emergence" objective by bridging Social Hierarchy (Hooks), Economy (Storage), Biology (Diseases), and Justice. Fulfilling the Vision missing link: "poison food supplies".
 - **DOD Implementation:**
