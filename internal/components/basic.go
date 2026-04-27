@@ -601,3 +601,8 @@ type WorkbenchComponent struct {
 	X          float32
 	Y          float32
 }
+
+// Phase 64: The Physical Combat Engine
+type CombatMarker struct {
+	TargetID uint64
+}

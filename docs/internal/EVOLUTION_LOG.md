@@ -985,3 +985,23 @@ A drought hits, and a Ruler hoards food, spiking local `MarketComponent` food pr
 Driven by this systemic grudge, a peasant physically walks to the village and executes `BiologicalSabotageSystem`. The Ruler's food supply collapses, mathematically destroying their economic hoard.
 Simultaneously, a lethal `DiseaseEntity` spawns from the poisoned food, triggering the `DiseaseVector` system (Phase 10) which unleashes a plague upon the city. The peasant receives a `CrimeMarker`, organically activating the `JusticeSystem` (Phase 18) where guards will now physically hunt down the peasant. What began as macro-economic inequality natively morphs into localized biological terrorism and a city-wide manhunt, perfectly closing the loop.
 Validated perfectly deterministic via `TestBiologicalSabotageSystem_Integration`.
+
+## Evolution: Phase 64 - The Physical Combat Engine (CombatSystem)
+**Focus:** Integration (Justice + Biology)
+
+**The Problem (Vision Gap):**
+The Vision states a "Total Simulation & Boundless Possibility" where everything is mapped to physical interactions (e.g. "amputate infected limbs", real-time physical RPG elements). However, combat and murder within systems like the `BloodFeudSystem` were abstracted, simply instantly setting `Needs.Food = 0` to kill a target without actual physical confrontation or bodily damage scaling with weapons or genetics.
+
+**The Solution (Autonomous DOD Execution):**
+I created the `CombatSystem` and introduced the `CombatMarker` component.
+1. The `BloodFeudSystem` no longer sets `Food = 0`. Instead, it adds a `CombatMarker` (Intent to fight) to the killer, targeting the victim.
+2. The `CombatSystem` pre-caches victims (for O(1) distance checks) and iterates over entities with `CombatMarker`.
+3. When the attacker is in physical melee range (`distSq < 2.0`), they expend `Vitals.Stamina` to attack.
+4. Damage is calculated dynamically using the attacker's `Genome.Strength` and any equipped `EquipmentComponent.Weapon.Prestige`.
+5. Damage is applied physically as `Vitals.Pain` and negative `Vitals.Blood`.
+6. When `Blood <= 0`, the target is killed and the combat ends natively.
+
+**The Butterfly Effect:**
+A deeply embedded Grudge (Phase 23) causes an NPC to intend murder. Instead of instantly dying abstractly, the NPC initiates combat. The attacker swings, draining their own `Stamina` and draining the victim's `Blood` while spiking their `Pain`.
+If the victim survives a few hits but is left bleeding, their `Consciousness` crashes (via `MetabolismSystem`), leaving them paralyzed on the ground. A guard could potentially intervene, or the attacker might run out of `Stamina` and collapse before finishing the kill, turning a guaranteed abstract murder into a dynamic, physically simulated brawl determined by genetics and endurance.
+Validated perfectly deterministic via `TestCombatSystem_Integration`.

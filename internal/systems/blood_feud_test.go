@@ -100,8 +100,10 @@ func TestBloodFeudSystem_Integration(t *testing.T) {
 	// 9. Assertions
 
 	// Victim Should Be Starving Natively (DeathSystem Phase)
-	if vNeeds.Food != 0 {
-		t.Errorf("Victim was not murdered! Expected Needs.Food to be 0, got %f", vNeeds.Food)
+	// With Phase 64, Blood Feud no longer kills immediately, it adds a CombatMarker.
+	combatID := ecs.ComponentID[components.CombatMarker](&world)
+	if !world.Has(eKiller, combatID) {
+		t.Errorf("Expected Killer to have a CombatMarker added")
 	}
 
 	// Killer Memory Logs the Event

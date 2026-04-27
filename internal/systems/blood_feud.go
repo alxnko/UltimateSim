@@ -76,6 +76,11 @@ func (s *BloodFeudSystem) Update(world *ecs.World) {
 	}
 
 	deadEntities := make(map[uint64]bool)
+	type combatData struct {
+		killer ecs.Entity
+		victim uint64
+	}
+	var combatsToAdd []combatData
 
 	for i := 0; i < len(nodes); i++ {
 		killer := nodes[i]
@@ -117,8 +122,8 @@ func (s *BloodFeudSystem) Update(world *ecs.World) {
 					killer.mem.Head = (idx + 1) % 50
 
 					// 2. Kill victim by starving them natively
-					vNeeds := (*components.Needs)(world.Get(victim.entity, s.needsID))
-					vNeeds.Food = 0
+					// Phase 64: Enter physical combat instead of immediate abstract death
+					combatsToAdd = append(combatsToAdd, combatData{killer.entity, victim.id})
 
 					// Prevent double-kills
 					deadEntities[victim.id] = true
@@ -149,5 +154,15 @@ func (s *BloodFeudSystem) Update(world *ecs.World) {
 				}
 			}
 		}
+	}
+
+	// Apply deferred combat additions (world is not locked here)
+	combatID := ecs.ComponentID[components.CombatMarker](world)
+	for _, c := range combatsToAdd {
+		if !world.Has(c.killer, combatID) {
+			world.Add(c.killer, combatID)
+		}
+		combat := (*components.CombatMarker)(world.Get(c.killer, combatID))
+		combat.TargetID = c.victim
 	}
 }
