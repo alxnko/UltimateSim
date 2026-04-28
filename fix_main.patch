@@ -1,0 +1,12 @@
+--- cmd/game/main.go
++++ cmd/game/main.go
+@@ -141,6 +141,8 @@
+	// Phase 18: Justice
+	tickManager.AddSystem(systems.NewJusticeSystem(world, hookGraph), engine.PhaseResolution)
+
++	// Phase 23: Blood Feud & Combat
++	tickManager.AddSystem(systems.NewBloodFeudSystem(world, hookGraph), engine.PhaseResolution)
++	tickManager.AddSystem(systems.NewCombatSystem(world), engine.PhaseResolution)
++
+	// Phase 20: Social Cohesion
+	tickManager.AddSystem(systems.NewOstracizationSystem(world, hookGraph), engine.PhaseResolution)

@@ -1000,3 +1000,22 @@ A drought hits, and a Ruler hoards food, spiking local `MarketComponent` food pr
 Driven by this systemic grudge, a peasant physically walks to the village and executes `BiologicalSabotageSystem`. The Ruler's food supply collapses, mathematically destroying their economic hoard.
 Simultaneously, a lethal `DiseaseEntity` spawns from the poisoned food, triggering the `DiseaseVector` system (Phase 10) which unleashes a plague upon the city. The peasant receives a `CrimeMarker`, organically activating the `JusticeSystem` (Phase 18) where guards will now physically hunt down the peasant. What began as macro-economic inequality natively morphs into localized biological terrorism and a city-wide manhunt, perfectly closing the loop.
 Validated perfectly deterministic via `TestBiologicalSabotageSystem_Integration`.
+
+## Evolution: Phase 64 - The Physical Combat Engine (CombatSystem)
+**Focus:** Integration (Intent + Biology + Death)
+
+**The Problem (Vision Gap):**
+The Vision dictates that the engine should simulate "Total Freedom & Physical Constraints" and that actions must have physical macro-emergence. Previously, murder (Phase 23.1 Blood Feud) bypassed biology entirely: when a deep negative hook triggered, the system simply set the target's `Needs.Food = 0`, forcing the `DeathSystem` to instantly reap the entity via starvation. This was abstract, instantaneous, and left no room for biological defense, stamina drain, pain induction, or combat escape.
+
+**The Solution (Autonomous DOD Execution):**
+I created the `CombatSystem` and the `CombatMarker` component.
+1. `BloodFeudSystem` was modified so that instead of instant death, an attacker merely places a `CombatMarker` onto themselves targeting the victim.
+2. The new `CombatSystem` caches all valid target vitals and coordinates.
+3. It iterates over entities with active `CombatMarker`s. While in range (`distSq <= 4.0`), it physically deducts `Stamina` from the attacker and `Blood` from the victim, while simultaneously spiking the victim's `Pain` parameter.
+4. The system ends the combat intent loop dynamically if the target runs out of range or if the target's `Blood <= 0`.
+5. The `DeathSystem` was expanded to recognize exsanguination (`VitalsComponent.Blood <= 0`) natively alongside starvation.
+
+**The Butterfly Effect:**
+Two Clans develop deep ideological differences (`IdeologicalWarfare`). A resulting `-60` negative hook triggers the `BloodFeudSystem`. Instead of an abstract instant kill, the intent merely spawns a `CombatMarker`.
+The `CombatSystem` takes over, forcing the attacker to physically strike the victim over multiple ticks. This depletes the attacker's `Stamina` while causing the victim's `Pain` to spike. The massive influx of `Pain` can trigger the `PsychologicalStressEngine` (Phase 62), potentially sending the victim into a Berserk rage before they die. If the victim cannot escape, their `Blood` reaches 0, and the `DeathSystem` reaps them purely through biological failure, creating a systemic chain bridging Society, Biology, and Physics.
+Validated perfectly deterministic via `TestCombatSystem_Integration`.

@@ -141,6 +141,10 @@ func BuildSimulation(gridWidth, gridHeight int, seedVal byte, status *render.Loa
 	// Phase 18: Justice Engine
 	tickManager.AddSystem(systems.NewJusticeSystem(world, hookGraph), engine.PhaseResolution)
 
+	// Phase 23 & 64: Blood Feud & Physical Combat Engine
+	tickManager.AddSystem(systems.NewBloodFeudSystem(world, hookGraph), engine.PhaseResolution)
+	tickManager.AddSystem(systems.NewCombatSystem(world), engine.PhaseResolution)
+
 	// Phase 41: The Ostracization Engine
 	tickManager.AddSystem(systems.NewOstracizationSystem(world, hookGraph), engine.PhaseResolution)
 
