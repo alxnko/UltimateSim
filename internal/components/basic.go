@@ -601,3 +601,9 @@ type WorkbenchComponent struct {
 	X          float32
 	Y          float32
 }
+
+// Phase 63: The Refugee Crisis Engine
+type AsylumSeekerComponent struct {
+	TargetCityID uint32
+	_            uint32 // Padding to exactly 8 bytes
+}
