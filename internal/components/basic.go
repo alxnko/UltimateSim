@@ -607,3 +607,8 @@ type AsylumSeekerComponent struct {
 	TargetCityID uint32
 	_            uint32 // Padding to exactly 8 bytes
 }
+
+// Phase 64: The Physical Combat Engine
+type CombatMarker struct {
+	TargetID uint64
+}

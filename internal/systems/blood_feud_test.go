@@ -99,9 +99,15 @@ func TestBloodFeudSystem_Integration(t *testing.T) {
 
 	// 9. Assertions
 
-	// Victim Should Be Starving Natively (DeathSystem Phase)
-	if vNeeds.Food != 0 {
-		t.Errorf("Victim was not murdered! Expected Needs.Food to be 0, got %f", vNeeds.Food)
+	// Killer Should Have CombatMarker Targeting Victim (Phase 64)
+	combatID := ecs.ComponentID[components.CombatMarker](&world)
+	if !world.Has(eKiller, combatID) {
+		t.Errorf("Killer was not tagged with CombatMarker")
+	} else {
+		combatMarker := (*components.CombatMarker)(world.Get(eKiller, combatID))
+		if combatMarker.TargetID != vIdent.ID {
+			t.Errorf("CombatMarker target ID mismatch. Expected %d, got %d", vIdent.ID, combatMarker.TargetID)
+		}
 	}
 
 	// Killer Memory Logs the Event

@@ -78,6 +78,7 @@ func (s *DeathSystem) Update(world *ecs.World) {
 	equipID := ecs.ComponentID[components.EquipmentComponent](world)
 	loanID := ecs.ComponentID[components.LoanContractComponent](world)
 	beliefID := ecs.ComponentID[components.BeliefComponent](world)
+	vitalsID := ecs.ComponentID[components.VitalsComponent](world)
 
 	// Collect entities to remove to avoid modifying the world while iterating
 	// Reset the slice length to 0, retaining capacity to avoid GC pressure
@@ -89,8 +90,15 @@ func (s *DeathSystem) Update(world *ecs.World) {
 	query := world.Query(s.filter)
 	for query.Next() {
 		needs := (*components.Needs)(query.Get(needsID))
+		vitalsDead := false
+		if query.Has(vitalsID) {
+			vitals := (*components.VitalsComponent)(query.Get(vitalsID))
+			if vitals.Blood <= 0 {
+				vitalsDead = true
+			}
+		}
 
-		if needs.Food <= 0 {
+		if needs.Food <= 0 || vitalsDead {
 			s.toRemove = append(s.toRemove, query.Entity())
 
 			var posX, posY float32
@@ -188,7 +196,11 @@ func (s *DeathSystem) Update(world *ecs.World) {
 
 			// log root causes to standard output
 			// ecs.Entity formats safely to string via %v
-			log.Printf("Entity %v despawned due to starvation (Food <= 0)", query.Entity())
+			if vitalsDead {
+				log.Printf("Entity %v despawned due to exsanguination (Blood <= 0)", query.Entity())
+			} else {
+				log.Printf("Entity %v despawned due to starvation (Food <= 0)", query.Entity())
+			}
 		}
 	}
 

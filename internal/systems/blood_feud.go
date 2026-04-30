@@ -116,11 +116,16 @@ func (s *BloodFeudSystem) Update(world *ecs.World) {
 					}
 					killer.mem.Head = (idx + 1) % 50
 
-					// 2. Kill victim by starving them natively
-					vNeeds := (*components.Needs)(world.Get(victim.entity, s.needsID))
-					vNeeds.Food = 0
+					// 2. Add CombatMarker to attacker, targeting victim
+					combatID := ecs.ComponentID[components.CombatMarker](world)
+					if !world.Has(killer.entity, combatID) {
+						world.Add(killer.entity, combatID)
+					}
+					combatMarker := (*components.CombatMarker)(world.Get(killer.entity, combatID))
+					combatMarker.TargetID = victim.id
 
-					// Prevent double-kills
+					// Prevent multi-combat engagements this tick
+					deadEntities[killer.id] = true
 					deadEntities[victim.id] = true
 
 					// 3. Propagate the Feud across Clans (O(N) iteration over nodes)
