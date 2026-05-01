@@ -1019,3 +1019,23 @@ I created the `CombatSystem` and the `CombatMarker` component.
 Two Clans develop deep ideological differences (`IdeologicalWarfare`). A resulting `-60` negative hook triggers the `BloodFeudSystem`. Instead of an abstract instant kill, the intent merely spawns a `CombatMarker`.
 The `CombatSystem` takes over, forcing the attacker to physically strike the victim over multiple ticks. This depletes the attacker's `Stamina` while causing the victim's `Pain` to spike. The massive influx of `Pain` can trigger the `PsychologicalStressEngine` (Phase 62), potentially sending the victim into a Berserk rage before they die. If the victim cannot escape, their `Blood` reaches 0, and the `DeathSystem` reaps them purely through biological failure, creating a systemic chain bridging Society, Biology, and Physics.
 Validated perfectly deterministic via `TestCombatSystem_Integration`.
+
+## Evolution: Phase 65 - The Physical Sanitation Engine (SanitationSystem)
+**Focus:** Integration (Death + Psychology + Biology + Logistics)
+
+**The Problem (Vision Gap):**
+The Vision states that actions have physical consequences, and that systems form a closed loop of "growth, decay, psychology, and rebirth". Previously, when an NPC died of starvation or exsanguination, their entity was simply removed from the world by the `DeathSystem`. There was no physical remnant, meaning death had no lingering physical, psychological, or biological consequences on the environment.
+
+**The Solution (Autonomous DOD Execution):**
+I created the `SanitationSystem` and introduced the `CorpseComponent` (8 bytes) along with `JobGravedigger`.
+1. The `DeathSystem` was modified so that when an NPC dies of starvation or exsanguination, it dynamically spawns a physical `CorpseComponent` entity at their exact coordinates.
+2. The `SanitationSystem` pre-caches all active corpses into a flat array.
+3. It queries living NPCs with a `SanityComponent` and checks their distance to the cached corpses. If within smelling/seeing range (`distSq <= 25.0`), it physically adds `Stress` to the NPC, bridging Death into the Psychological Stress Engine.
+4. It increments the corpse's `DecayProgress`. Once it reaches `MaxDecay`, the corpse entity is destroyed, and a physical `DiseaseEntity` is spawned at its location with a random lethality, organically bridging Death into the `DiseaseVectorSystem`.
+5. It introduces a logistical counter-play where NPCs with `JobGravedigger` pathfind to corpses and destroy them to prevent the psychological and biological fallout.
+
+**The Butterfly Effect:**
+A city suffers a drought, causing food prices to spike. An impoverished NPC starves to death, triggering the `DeathSystem` and leaving a `CorpseComponent` on the street.
+An innocent bystander walking past the corpse (within 5 tiles) witnesses it. The `SanitationSystem` mathematically spikes their `Stress`. This massive trauma immediately triggers the `MentalBreakSystem` (Phase 62), sending the bystander into a `BreakBerserk` rage where they receive a severe `CrimeMarker`.
+Meanwhile, the corpse continues to rot because the city lacks a `JobGravedigger`. It reaches full decay and spontaneously spawns a `DiseaseEntity`. The `DiseaseVectorSystem` (Phase 10) takes over, evaluating the genetics of the remaining citizens and unleashing a plague across the starving city, perfectly closing the loop from macro-economics (drought) down to localized biological entropy.
+Validated perfectly deterministic via `TestSanitationSystem_Integration`.
