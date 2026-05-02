@@ -619,3 +619,10 @@ type CorpseComponent struct {
 	DecayProgress float32
 	MaxDecay      float32
 }
+
+// Phase 66: The Physical Siege Engine
+// SiegeMarker tags a village under siege, storing the attacking country ID.
+type SiegeMarker struct {
+	AttackerCountryID uint32
+	_                 uint32 // Padding to exactly 8 bytes
+}
