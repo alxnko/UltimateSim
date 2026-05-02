@@ -347,6 +347,25 @@ func (s *DeathSystem) Update(world *ecs.World) {
 		}
 	}
 
+	// Phase 65: The Physical Sanitation Engine
+	// Spawn corpses at dead positions
+	if len(s.deadPos) > 0 {
+		corpseID := ecs.ComponentID[components.CorpseComponent](world)
+		posID := ecs.ComponentID[components.Position](world)
+
+		for _, pos := range s.deadPos {
+			corpseEnt := world.NewEntity(corpseID, posID)
+
+			cPos := (*components.Position)(world.Get(corpseEnt, posID))
+			cPos.X = pos.X
+			cPos.Y = pos.Y
+
+			corpse := (*components.CorpseComponent)(world.Get(corpseEnt, corpseID))
+			corpse.DecayProgress = 0
+			corpse.MaxDecay = 100 // 100 ticks to decay
+		}
+	}
+
 	// Remove dead entities
 	for _, entity := range s.toRemove {
 		world.RemoveEntity(entity)
