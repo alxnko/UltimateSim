@@ -619,3 +619,7 @@ type CorpseComponent struct {
 	DecayProgress float32
 	MaxDecay      float32
 }
+
+// Phase 66: The Physical Siege Engine
+// Identifies Villages that are actively surrounded and outnumbered by hostile forces.
+type SiegeMarker struct{}
