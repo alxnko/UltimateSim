@@ -1,0 +1,85 @@
+<<<<<<< SEARCH
+	// 1. Pre-cache active wars from CapitalComponent entities.
+	// Map from AttackerCountryID -> TargetCountryID
+	activeWars := make(map[uint32]uint32)
+	capQuery := world.Query(filter.All(s.capitalID, s.warID, s.affilID))
+	for capQuery.Next() {
+		affil := (*components.Affiliation)(capQuery.Get(s.affilID))
+		war := (*components.WarTrackerComponent)(capQuery.Get(s.warID))
+		if war.Active {
+			activeWars[affil.CountryID] = war.TargetCountryID
+			// For a true two-way war, we also map the defender to the attacker
+			activeWars[war.TargetCountryID] = affil.CountryID
+		}
+	}
+
+	if len(activeWars) == 0 {
+		return // No active wars, no sieges possible
+	}
+=======
+	// 1. Pre-cache active wars from CapitalComponent entities.
+	// Map from CountryID -> map[TargetCountryID]bool
+	activeWars := make(map[uint32]map[uint32]bool)
+	capQuery := world.Query(filter.All(s.capitalID, s.warID, s.affilID))
+	for capQuery.Next() {
+		affil := (*components.Affiliation)(capQuery.Get(s.affilID))
+		war := (*components.WarTrackerComponent)(capQuery.Get(s.warID))
+		if war.Active {
+			if activeWars[affil.CountryID] == nil {
+				activeWars[affil.CountryID] = make(map[uint32]bool)
+			}
+			activeWars[affil.CountryID][war.TargetCountryID] = true
+
+			// For a true two-way war, we also map the defender to the attacker
+			if activeWars[war.TargetCountryID] == nil {
+				activeWars[war.TargetCountryID] = make(map[uint32]bool)
+			}
+			activeWars[war.TargetCountryID][affil.CountryID] = true
+		}
+	}
+>>>>>>> REPLACE
+<<<<<<< SEARCH
+		// Check if village's country is involved in any war
+		targetCountryID, atWar := activeWars[affil.CountryID]
+
+		hostileCount := 0
+		friendlyCount := 0
+
+		if atWar {
+			// Count nearby NPCs
+			for i := 0; i < len(npcs); i++ {
+				dx := npcs[i].x - pos.X
+				dy := npcs[i].y - pos.Y
+				distSq := dx*dx + dy*dy
+
+				if distSq <= 25.0 {
+					if npcs[i].countryID == affil.CountryID {
+						friendlyCount++
+					} else if npcs[i].countryID == targetCountryID {
+						hostileCount++
+					}
+				}
+			}
+		}
+=======
+		// Check if village's country is involved in any war
+		hostileCount := 0
+		friendlyCount := 0
+
+		if enemies, atWar := activeWars[affil.CountryID]; atWar {
+			// Count nearby NPCs
+			for i := 0; i < len(npcs); i++ {
+				dx := npcs[i].x - pos.X
+				dy := npcs[i].y - pos.Y
+				distSq := dx*dx + dy*dy
+
+				if distSq <= 25.0 {
+					if npcs[i].countryID == affil.CountryID {
+						friendlyCount++
+					} else if enemies[npcs[i].countryID] {
+						hostileCount++
+					}
+				}
+			}
+		}
+>>>>>>> REPLACE

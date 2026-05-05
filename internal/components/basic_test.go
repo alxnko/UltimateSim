@@ -348,6 +348,11 @@ func TestPossessedComponent(t *testing.T) {
 
 func TestPossessedSize(t *testing.T) {
 	// Tag component should be 0 bytes (but unsafe.Sizeof might return 0 or small depending on compiler)
+	siegeMarkerSize := unsafe.Sizeof(SiegeMarker{})
+	if siegeMarkerSize > 0 {
+		t.Errorf("SiegeMarker struct size should be exactly 0 bytes (tag component), got %d", siegeMarkerSize)
+	}
+
 	// Arche-Go handles 0-sized components efficiently.
 	size := unsafe.Sizeof(Possessed{})
 	if size > 1 {
