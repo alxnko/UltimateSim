@@ -31,6 +31,7 @@ const (
 	JobMercenary  uint8 = 11 // Phase 47: The Mercenary Engine
 	JobBuilder    uint8 = 12 // Phase 59: The Physical Construction Engine
 	JobGravedigger uint8 = 13 // Phase 65: The Physical Sanitation Engine
+	JobMiner      uint8 = 14 // Phase 67: The Subterranean Mining Engine
 )
 
 // Phase 09.5: Item Inheritance Threshold
@@ -618,4 +619,12 @@ type CombatMarker struct {
 type CorpseComponent struct {
 	DecayProgress float32
 	MaxDecay      float32
+}
+
+// Phase 67: The Subterranean Mining Engine
+type MineComponent struct {
+	EmployerID uint64
+	X          float32
+	Y          float32
+	Depth      uint32
 }
