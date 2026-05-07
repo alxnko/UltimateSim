@@ -1039,3 +1039,23 @@ A city suffers a drought, causing food prices to spike. An impoverished NPC star
 An innocent bystander walking past the corpse (within 5 tiles) witnesses it. The `SanitationSystem` mathematically spikes their `Stress`. This massive trauma immediately triggers the `MentalBreakSystem` (Phase 62), sending the bystander into a `BreakBerserk` rage where they receive a severe `CrimeMarker`.
 Meanwhile, the corpse continues to rot because the city lacks a `JobGravedigger`. It reaches full decay and spontaneously spawns a `DiseaseEntity`. The `DiseaseVectorSystem` (Phase 10) takes over, evaluating the genetics of the remaining citizens and unleashing a plague across the starving city, perfectly closing the loop from macro-economics (drought) down to localized biological entropy.
 Validated perfectly deterministic via `TestSanitationSystem_Integration`.
+
+## Evolution: Phase 66 - The Physical Siege Engine
+**Focus:** Integration (Geography + Combat + Economy)
+
+**The Problem (Vision Gap):**
+The Vision outlines a "Total Simulation" where armies can physically blockade a city: "An attacking army can encircle a city, physically blocking all CaravanEntities from entering. The simulation naturally starves the city out as their StorageComponent.Food dwindles to zero, bypassing combat entirely." Previously, `ResourceWarSystem` triggered deep negative hooks which sparked violence (Phase 23, Phase 64), but there was no systemic economic outcome of an army physically occupying a village's borders. The city would simply continue functioning until everyone was murdered.
+
+**The Solution (Autonomous DOD Execution):**
+I created the `SiegeSystem` and introduced the `SiegeMarker` component.
+1. The system pre-caches all active wars.
+2. It evaluates all `Village` entities against their proximity to hostile and defending `NPC` entities mapped by `CountryID`.
+3. If hostile NPCs mathematically outnumber defending NPCs within the radius, the system physically applies a `SiegeMarker` to the Village.
+4. As long as the `SiegeMarker` persists, the system drastically spikes the village's `MarketComponent.FoodPrice` and drains its `LoyaltyComponent`.
+
+**The Butterfly Effect:**
+A Country goes to war and dispatches its army. The army arrives at a frontier Village and outnumbers the defenders. The `SiegeSystem` detects this blockade and applies the `SiegeMarker`. The Village's `FoodPrice` artificially spikes from 5.0 to 100.0, and `Loyalty` drops.
+Because food prices spiked, poor citizens immediately starve, causing `DesperationSystem` to trigger. Desperate citizens turn to `Banditry` (Phase 26) or migrate away (`RefugeeSystem`), while the zeroing of loyalty triggers `VassalRebellionSystem`, causing the village to unilaterally secede. All of this is accomplished entirely by the physical presence of the hostile army, without a single weapon being swung.
+
+**Architecture Validation:**
+Strict Data-Oriented Design (DOD) was maintained via `arche-go`. Structural ECS modifications (adding `SiegeMarker`) are deferred to a post-iteration mapping to prevent `Query` lock panics, and NPCs are cached by `CountryID` outside the Village loop to ensure O(N) evaluation speed. Validated perfectly deterministic via `TestSiegeSystem_Integration`.

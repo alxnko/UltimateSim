@@ -619,3 +619,10 @@ type CorpseComponent struct {
 	DecayProgress float32
 	MaxDecay      float32
 }
+
+// Phase 66: The Physical Siege Engine
+// Applies a physical blockade to a village, simulating starvation and unrest.
+type SiegeMarker struct {
+	BesiegerCountryID uint32
+	_                 uint32 // Padding to exactly 8 bytes
+}
