@@ -374,3 +374,11 @@ func TestConstructionComponentsSize(t *testing.T) {
 		t.Errorf("Expected StructureComponent to be %d bytes for DOD, got %d", expectedStructure, actualStructure)
 	}
 }
+
+func TestSiegeMarkerDODAlignment(t *testing.T) {
+	// SiegeMarker: uint32 (4) + uint32 (4) = 8 bytes
+	siegeMarkerSize := unsafe.Sizeof(SiegeMarker{})
+	if siegeMarkerSize != 8 {
+		t.Errorf("SiegeMarker struct size broke DOD alignment: expected exactly 8 bytes, got %d", siegeMarkerSize)
+	}
+}
