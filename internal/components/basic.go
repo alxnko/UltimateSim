@@ -619,3 +619,9 @@ type CorpseComponent struct {
 	DecayProgress float32
 	MaxDecay      float32
 }
+
+// Phase 66: The Physical Siege Engine
+type SiegeMarker struct {
+	BesiegerCountryID uint32
+	_                 uint32
+}
