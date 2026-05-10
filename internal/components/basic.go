@@ -619,3 +619,10 @@ type CorpseComponent struct {
 	DecayProgress float32
 	MaxDecay      float32
 }
+
+// Evolution: Phase 66 - The Physical Siege Engine
+// SiegeMarker is applied to Villages that are outnumbered by hostile NPCs.
+type SiegeMarker struct {
+	BesiegerCountryID uint32
+	_                 uint32 // Padding to exactly 8 bytes
+}

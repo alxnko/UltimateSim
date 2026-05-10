@@ -1039,3 +1039,21 @@ A city suffers a drought, causing food prices to spike. An impoverished NPC star
 An innocent bystander walking past the corpse (within 5 tiles) witnesses it. The `SanitationSystem` mathematically spikes their `Stress`. This massive trauma immediately triggers the `MentalBreakSystem` (Phase 62), sending the bystander into a `BreakBerserk` rage where they receive a severe `CrimeMarker`.
 Meanwhile, the corpse continues to rot because the city lacks a `JobGravedigger`. It reaches full decay and spontaneously spawns a `DiseaseEntity`. The `DiseaseVectorSystem` (Phase 10) takes over, evaluating the genetics of the remaining citizens and unleashing a plague across the starving city, perfectly closing the loop from macro-economics (drought) down to localized biological entropy.
 Validated perfectly deterministic via `TestSanitationSystem_Integration`.
+
+## Evolution: Phase 66 - The Physical Siege Engine (SiegeSystem)
+**Focus:** Integration (Geography + Combat + Economics)
+
+**The Problem (Vision Gap):**
+The Vision states "starve out a city via a protracted siege." Previously, conflicts via `ResourceWarSystem` abstractly placed hooks or declared wars, but there was no mechanic representing physical macro-warfare constraints. If an invading army occupied a city, there were no systemic consequences—the defending city's economy and social structure continued as normal.
+
+**The Solution (Autonomous DOD Execution):**
+I created the `SiegeSystem` and introduced the `SiegeMarker` (8 bytes) component.
+1. The system pre-caches active wars mapping hostile relations.
+2. It aggregates NPC forces geographically around `Village` entities.
+3. If an invading hostile force outnumbers the local defending force within a specific radius, it physically affixes the `SiegeMarker` to the village.
+4. While besieged, the system applies continuous negative pressure: heavily driving up the local `MarketComponent.FoodPrice` to simulate cut supply lines and starvation, and draining the `LoyaltyComponent.Value` to simulate breaking morale.
+
+**The Butterfly Effect:**
+A wealthy empire is invaded by starving forces (`ResourceWarSystem`). The invading NPCs march into the defending territory. The `SiegeSystem` detects they outnumber the defenders and applies a `SiegeMarker`.
+The marker spikes `FoodPrice`. This triggers massive inflation in the city. The starving peasant NPCs, unable to afford the 120% marked-up food, experience a rapid spike in `Desperation`. This triggers `BanditrySystem` or `MentalBreakSystem`, tearing the city apart from within before the invaders even attack. Simultaneously, the `LoyaltyComponent` drains to 0, which natively interacts with the `VassalRebellionSystem` or `PoliticalCoupSystem`, causing the defending capital to collapse under its own sociological weight.
+Validated perfectly deterministic via `TestSiegeSystem_Integration`.
