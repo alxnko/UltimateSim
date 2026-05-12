@@ -1039,3 +1039,21 @@ A city suffers a drought, causing food prices to spike. An impoverished NPC star
 An innocent bystander walking past the corpse (within 5 tiles) witnesses it. The `SanitationSystem` mathematically spikes their `Stress`. This massive trauma immediately triggers the `MentalBreakSystem` (Phase 62), sending the bystander into a `BreakBerserk` rage where they receive a severe `CrimeMarker`.
 Meanwhile, the corpse continues to rot because the city lacks a `JobGravedigger`. It reaches full decay and spontaneously spawns a `DiseaseEntity`. The `DiseaseVectorSystem` (Phase 10) takes over, evaluating the genetics of the remaining citizens and unleashing a plague across the starving city, perfectly closing the loop from macro-economics (drought) down to localized biological entropy.
 Validated perfectly deterministic via `TestSanitationSystem_Integration`.
+
+## Evolution: Phase 67 - The Subterranean Mining Engine (MiningSystem)
+**Focus:** Integration (Geography + Biology + Economy + Entropy)
+
+**The Problem (Vision Gap):**
+The Vision explicitly outlines "Subterranean Layers & Deep Mining" noting that we must "go underground" and "transition the MapGrid" for "Mining & Excavation". While the MapGrid has `ResourceDepot` values for Iron and Stone, there was no physical mechanism for NPCs to extract these resources directly from the earth into the economic layer.
+
+**The Solution (Autonomous DOD Execution):**
+I created the `MiningSystem` and introduced `JobMiner`.
+1. The `MiningSystem` iterates over NPCs with `JobMiner` and `VitalsComponent`.
+2. It evaluates the `ResourceDepot` at the miner's current `MapGrid` coordinates.
+3. If Iron or Stone is present, the miner extracts it, deducting the `MapGrid` resource and reducing their physical `Stamina`.
+4. The extracted resource is placed directly into the Employer's `StorageComponent`.
+5. The sudden influx of supply causes the Employer's `MarketComponent` prices for Iron and Stone to dynamically decrease.
+
+**The Butterfly Effect:**
+A wealthy city hires a `JobMiner`. The miner physically walks to a high-yield coordinate and drains their `Stamina` to extract Iron. This biological cost means they must eventually stop to recover or eat. The extracted Iron fills the city's `StorageComponent`, dynamically lowering `IronPrice` in the local `MarketComponent`. Because Iron is now cheap and abundant, `JobArtisan` NPCs are incentivized to mass-produce swords at the `WorkbenchComponent`, arming the city for cheaper and potentially shifting global power balances or inciting a `ResourceWar`.
+Validated perfectly deterministic via `TestMiningSystem_Integration`.
