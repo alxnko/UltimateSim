@@ -374,3 +374,12 @@ func TestConstructionComponentsSize(t *testing.T) {
 		t.Errorf("Expected StructureComponent to be %d bytes for DOD, got %d", expectedStructure, actualStructure)
 	}
 }
+
+func TestSiegeMarkerSize(t *testing.T) {
+	// Phase 66: The Physical Siege Engine
+	expected := uintptr(8)
+	actual := unsafe.Sizeof(SiegeMarker{})
+	if actual != expected {
+		t.Errorf("Expected SiegeMarker to be %d bytes for DOD, got %d", expected, actual)
+	}
+}

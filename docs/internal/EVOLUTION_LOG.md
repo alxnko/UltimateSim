@@ -1039,3 +1039,13 @@ A city suffers a drought, causing food prices to spike. An impoverished NPC star
 An innocent bystander walking past the corpse (within 5 tiles) witnesses it. The `SanitationSystem` mathematically spikes their `Stress`. This massive trauma immediately triggers the `MentalBreakSystem` (Phase 62), sending the bystander into a `BreakBerserk` rage where they receive a severe `CrimeMarker`.
 Meanwhile, the corpse continues to rot because the city lacks a `JobGravedigger`. It reaches full decay and spontaneously spawns a `DiseaseEntity`. The `DiseaseVectorSystem` (Phase 10) takes over, evaluating the genetics of the remaining citizens and unleashing a plague across the starving city, perfectly closing the loop from macro-economics (drought) down to localized biological entropy.
 Validated perfectly deterministic via `TestSanitationSystem_Integration`.
+
+## Phase 66: The Physical Siege Engine
+**Goal:** Bridge the abstract geopolitical war state with granular physical logistics to simulate starvation and rebellion.
+**System:** `SiegeSystem`
+**Mechanic:**
+- The engine pre-caches active war states and the physical coordinates of all active NPCs.
+- It iterates over all Villages aligned with defending countries. It organically counts hostile vs defending NPCs within a squared radius of 25.0 (5 tiles).
+- If attackers outnumber defenders, an 8-byte `SiegeMarker` is dynamically tagged onto the Village entity.
+- The Butterfly Effect immediately kicks in: the siege physically blocks logistics, represented by `MarketComponent.FoodPrice` exponentially skyrocketing. Correspondingly, `LoyaltyComponent` drains linearly.
+- If the attackers are killed or move away, the engine naturally detects the ratio shift and pops the `SiegeMarker`, restoring equilibrium.
