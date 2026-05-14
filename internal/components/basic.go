@@ -619,3 +619,10 @@ type CorpseComponent struct {
 	DecayProgress float32
 	MaxDecay      float32
 }
+
+// Phase 66: The Physical Siege Engine
+// SiegeMarker tracks the application of military pressure to starve out a village.
+type SiegeMarker struct {
+	BesiegerCountryID uint32
+	_                 uint32 // Padding for 8-byte alignment
+}
