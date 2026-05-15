@@ -232,6 +232,11 @@ func TestComponentSizes(t *testing.T) {
 		t.Errorf("WarTrackerComponent struct size should be exactly 8 bytes, got %d", warTrackerSize)
 	}
 
+	siegeMarkerSize := unsafe.Sizeof(SiegeMarker{})
+	if siegeMarkerSize != 8 {
+		t.Errorf("SiegeMarker struct size should be exactly 8 bytes, got %d", siegeMarkerSize)
+	}
+
 	// Phase 10.2: Bureaucratic Delay Components
 	orderEntitySize := unsafe.Sizeof(OrderEntity{})
 	if orderEntitySize > 0 {
