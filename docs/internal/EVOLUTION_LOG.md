@@ -1039,3 +1039,22 @@ A city suffers a drought, causing food prices to spike. An impoverished NPC star
 An innocent bystander walking past the corpse (within 5 tiles) witnesses it. The `SanitationSystem` mathematically spikes their `Stress`. This massive trauma immediately triggers the `MentalBreakSystem` (Phase 62), sending the bystander into a `BreakBerserk` rage where they receive a severe `CrimeMarker`.
 Meanwhile, the corpse continues to rot because the city lacks a `JobGravedigger`. It reaches full decay and spontaneously spawns a `DiseaseEntity`. The `DiseaseVectorSystem` (Phase 10) takes over, evaluating the genetics of the remaining citizens and unleashing a plague across the starving city, perfectly closing the loop from macro-economics (drought) down to localized biological entropy.
 Validated perfectly deterministic via `TestSanitationSystem_Integration`.
+
+## Evolution: Phase 67 - The Subterranean Mining Engine (MiningSystem)
+**Focus:** Integration (Geography + Biology + Economy)
+
+**The Problem (Vision Gap):**
+The Vision explicitly outlines a "Total Simulation" where resources have physical supply chains: "If a sword exists, someone mined the iron...". It also mentions "subterranean mining colonies". Previously, the world simulated farmers (`AgricultureSystem`), lumberjacks (`DeforestationSystem`), and artisans (`CraftingSystem`), but `Iron` and `Stone` were entirely abstracted. There was no physical extraction mechanism for these crucial subterranean resources.
+
+**The Solution (Autonomous DOD Execution):**
+I created the `MiningSystem` and introduced the `JobMiner` component tag.
+1. The system pre-caches active employers (`Village` / `BusinessComponent`) and their `StorageComponent` in an O(1) map.
+2. It evaluates `NPC`s possessing `JobMiner` and a valid `VitalsComponent`.
+3. The miner checks the `MapGrid.Resources` at their exact physical X,Y coordinate.
+4. If `StoneValue` or `IronValue` > 0, the miner physically extracts the resources, deducting from the map and appending to the employer's storage.
+5. The grueling labor drains the miner's `Stamina`, linking extraction directly to the biological engine.
+
+**The Butterfly Effect:**
+A village settles near a mountain tile rich in Iron. An NPC takes the `JobMiner` role. They physically walk to the mountain and mine the iron, depositing it into the village storage. The grueling work drains their `Stamina`, requiring them to sleep or eat more.
+Simultaneously, the massive influx of `Iron` into the village storage mathematically crashes the local `MarketComponent` Iron prices via the `PriceDiscoverySystem`. This cheap iron allows `JobArtisan` NPCs to produce swords and tools at a massive discount, organically transforming the mountain settlement into an industrial powerhouse, perfectly closing the loop from geographical extraction to macro-economics.
+Validated perfectly deterministic via `TestMiningSystem_Integration`.
