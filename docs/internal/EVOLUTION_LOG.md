@@ -1039,3 +1039,22 @@ A city suffers a drought, causing food prices to spike. An impoverished NPC star
 An innocent bystander walking past the corpse (within 5 tiles) witnesses it. The `SanitationSystem` mathematically spikes their `Stress`. This massive trauma immediately triggers the `MentalBreakSystem` (Phase 62), sending the bystander into a `BreakBerserk` rage where they receive a severe `CrimeMarker`.
 Meanwhile, the corpse continues to rot because the city lacks a `JobGravedigger`. It reaches full decay and spontaneously spawns a `DiseaseEntity`. The `DiseaseVectorSystem` (Phase 10) takes over, evaluating the genetics of the remaining citizens and unleashing a plague across the starving city, perfectly closing the loop from macro-economics (drought) down to localized biological entropy.
 Validated perfectly deterministic via `TestSanitationSystem_Integration`.
+
+## Evolution: Phase 68 - The Physical Medical Engine (MedicalSystem)
+**Focus:** Integration (Biology + Economy + Psychology + Justice)
+
+**The Problem (Vision Gap):**
+The Vision states "Advanced Medicine, Surgery & Mutilation" and emphasizes physical consequences. Previously, combat damage lowered `Blood` and spiked `Pain` (potentially causing a mental break), but there was no systemic method for an NPC to recover. Entities either survived with massive pain indefinitely or bled to death.
+
+**The Solution (Autonomous DOD Execution):**
+I created the `MedicalSystem` and the new `JobDoctor`.
+1. The system pre-caches all injured NPCs (`Blood < 50` or `Pain > 20`) in an O(1) DOD slice.
+2. It iterates over NPCs with `JobDoctor`, finding the nearest injured patient and physically pathfinding to them.
+3. Upon physical adjacency (`distSq < 2.0`), the doctor performs a "healing action" by restoring `Blood` and zeroing `Pain`.
+4. The system demands a flat medical fee from the patient's `Needs.Wealth`. If the patient is too poor to pay in full, the doctor drains their remaining wealth and applies a severe negative hook (`-50`) against the patient via the `SparseHookGraph`, representing medical debt resentment.
+
+**The Butterfly Effect:**
+A Clan member is severely injured in a Blood Feud, plummeting their `Blood` and spiking `Pain`. If left untreated, the `SanityComponent` triggers a Berserk mental break.
+A `JobDoctor` intercepts the NPC, healing their wounds and saving them from psychological collapse. However, the patient cannot afford the 100-coin fee. The doctor drains their last 50 coins and generates a deep negative hook.
+Now completely destitute, the healed patient cannot afford local food prices. This triggers the `DesperationSystem` (Phase 21.1), forcing the NPC to physically steal from the village `StorageComponent` to survive, organically alerting the `JusticeSystem` (Phase 18). What started as a biological necessity morphs into an economic debt, and finally cascades into a localized crime wave.
+Validated perfectly deterministic via `TestMedicalSystem_Integration`.
