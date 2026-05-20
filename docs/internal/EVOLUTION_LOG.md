@@ -1039,3 +1039,21 @@ A city suffers a drought, causing food prices to spike. An impoverished NPC star
 An innocent bystander walking past the corpse (within 5 tiles) witnesses it. The `SanitationSystem` mathematically spikes their `Stress`. This massive trauma immediately triggers the `MentalBreakSystem` (Phase 62), sending the bystander into a `BreakBerserk` rage where they receive a severe `CrimeMarker`.
 Meanwhile, the corpse continues to rot because the city lacks a `JobGravedigger`. It reaches full decay and spontaneously spawns a `DiseaseEntity`. The `DiseaseVectorSystem` (Phase 10) takes over, evaluating the genetics of the remaining citizens and unleashing a plague across the starving city, perfectly closing the loop from macro-economics (drought) down to localized biological entropy.
 Validated perfectly deterministic via `TestSanitationSystem_Integration`.
+
+## Evolution: Phase 68 - The Physical Medical Engine (MedicalSystem)
+**Focus:** Integration (Biology + Economy + Justice/Social Hierarchy)
+
+**The Problem (Vision Gap):**
+The Vision states that systems should physically manifest interactions rather than relying on abstract formulas, creating an integrated "Total Simulation." Previously, we had physical combat (Phase 64) that depleted Blood and induced Pain, and a Mental Break engine (Phase 62) triggered by Pain. However, there was no physical "Economy of Healing." Injured NPCs lacked a structural recourse to recover from trauma, leaving a massive gap where Biology, Economy, and Justice failed to interact constructively.
+
+**The Solution (Autonomous DOD Execution):**
+I created the `MedicalSystem` and introduced `JobDoctor` (uint8 = 14).
+1. `MedicalSystem` pre-caches all potential patients (entities with `VitalsComponent` where `Blood < 50` or `Pain > 20`) and their coordinates, vitals, wealth, and identity.
+2. It iterates over NPCs holding `JobDoctor` and pathfinds them to the nearest patient (`distSq <= 2.0`).
+3. Upon arrival, the Doctor physically heals the patient, restoring `Blood` to 100.0 and removing `Pain`.
+4. The Doctor charges a medical fee (e.g., 50.0 `Wealth`). If the patient lacks sufficient wealth, the Doctor drains what remains and generates a massive negative hook (-20) against the patient in the `SparseHookGraph` for the unpaid medical debt.
+
+**The Butterfly Effect:**
+A guard gets into a physical altercation (`CombatSystem`) and survives with 20 Blood and 80 Pain. Instead of slowly dying or triggering a Berserk mental break, a `JobDoctor` NPC detects the injury, pathfinds to the guard, and heals them.
+However, the guard only has 10 Wealth, while the medical fee is 50. The Doctor drains the guard's 10 Wealth and immediately generates a negative hook against the guard for the unpaid debt. Over time, as this medical debt resentment builds across multiple unpayable treatments, the Doctor could harbor enough negative hooks to trigger a Blood Feud against the guard, seamlessly bridging life-saving Biology back into Economic inequality and eventually Justice/Violence.
+Validated perfectly deterministic via `TestMedicalSystem_Integration`.
