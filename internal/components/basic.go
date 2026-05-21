@@ -614,6 +614,12 @@ type CombatMarker struct {
 	TargetID uint64
 }
 
+// Phase 66: The Physical Siege Engine
+type SiegeMarker struct {
+	BesiegerCountryID uint32
+	_                 uint32 // Padding to exactly 8 bytes
+}
+
 // Phase 65: The Physical Sanitation Engine
 type CorpseComponent struct {
 	DecayProgress float32

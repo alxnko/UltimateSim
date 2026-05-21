@@ -1,3 +1,16 @@
+## Evolution: Phase 66 - The Physical Siege Engine
+- **Goal:** Execute the "Systemic Emergence" objective by bridging Geography, Combat, and Economics. Fulfilling the Vision missing link: "starve out a city via a protracted siege."
+- **DOD Implementation:**
+  - Implemented `SiegeSystem` strictly adhering to Data-Oriented Design constraints.
+  - New `SiegeMarker` component with exactly 8 bytes of aligned data.
+  - Pre-extracts `NPC` data into a flat slice, iterates `Village` entities, and runs O(N) spatial distance checks without map iterations or nested Arche-Go queries.
+- **The Butterfly Effect:**
+  - During an active war, enemy NPCs physically surround a wealthy, loyal `Village`.
+  - The `SiegeSystem` dynamically tags the village with a `SiegeMarker`.
+  - The siege physically chokes the supply line, depleting `StorageComponent.Food` to 0 and forcing `MarketComponent.FoodPrice` to artificially spike (causing starvation/hoarding).
+  - The starvation drains the `LoyaltyComponent.Value`. Once hitting 0, the village capitulates, organically flipping its `Affiliation.CountryID` to the besiegers, which naturally lifts the siege.
+  - Verified 100% deterministic through `go test ./internal/systems -v -run TestSiegeSystem_Integration`.
+
 ## Evolution: Phase 63 - The Refugee Crisis Engine
 - **Goal:** Execute the "Systemic Emergence" objective by bridging Macroeconomics (Wealth), Geography (Distance), Entropy (Desperation), and Culture (Xenophobia).
 - **DOD Implementation:**
