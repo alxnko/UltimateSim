@@ -1039,3 +1039,22 @@ A city suffers a drought, causing food prices to spike. An impoverished NPC star
 An innocent bystander walking past the corpse (within 5 tiles) witnesses it. The `SanitationSystem` mathematically spikes their `Stress`. This massive trauma immediately triggers the `MentalBreakSystem` (Phase 62), sending the bystander into a `BreakBerserk` rage where they receive a severe `CrimeMarker`.
 Meanwhile, the corpse continues to rot because the city lacks a `JobGravedigger`. It reaches full decay and spontaneously spawns a `DiseaseEntity`. The `DiseaseVectorSystem` (Phase 10) takes over, evaluating the genetics of the remaining citizens and unleashing a plague across the starving city, perfectly closing the loop from macro-economics (drought) down to localized biological entropy.
 Validated perfectly deterministic via `TestSanitationSystem_Integration`.
+
+## Evolution: Phase 66 - The Physical Siege Engine
+**Focus:** Integration (Geography + Combat + Economics)
+
+**The Problem (Vision Gap):**
+The Vision states that the engine should simulate "Total Simulation & Boundless Possibility" and "starve out a city via a protracted siege." Previously, wars (Phase 29.1) existed and negative hooks generated individual combat encounters (Phase 64), but the economic system of a city would continue functioning perfectly even if it was surrounded by hostile armies. This violated the Rule of Parity and Physical Constraints.
+
+**The Solution (Autonomous DOD Execution):**
+I created the `SiegeSystem` and introduced the 8-byte DOD `SiegeMarker` component.
+1. The `SiegeSystem` caches all NPC positions and affiliations and checks them against active `WarTrackerComponent` state.
+2. It queries all `Village` entities and calculates a spatial headcount of defending NPCs vs hostile NPCs within a 5-tile radius (`distSq <= 25.0`).
+3. If hostile NPCs outnumber defenders, a `SiegeMarker` is organically placed onto the village entity.
+4. The presence of a `SiegeMarker` dynamically spikes the village's `MarketComponent.FoodPrice` and progressively drains the `LoyaltyComponent.Value` every tick the siege continues.
+
+**The Butterfly Effect:**
+A starving country declares a `ResourceWar` on a wealthy neighbor. The macro-state spawns the war, and hostile soldiers pathfind into the enemy territory.
+When the hostile soldiers surround the target city, outnumbering the local guards, the `SiegeSystem` mathematically detects the blockade and places a `SiegeMarker`.
+The local `FoodPrice` immediately spikes, simulating the physical choking of supply lines. As the siege continues, food prices hit the maximum threshold, instantly pricing out the local peasantry. The peasants' `DesperationComponent` spikes (Phase 21.1), driving them to crime, while the city's `LoyaltyComponent` drains, eventually triggering a `PoliticalCoup` (Phase 43) or `VassalRebellion` (Phase 48). What began as a geopolitical unit movement naturally cascades into economic starvation, internal crime, and a localized coup, perfectly closing the loop.
+Validated perfectly deterministic via `TestSiegeSystem_Integration`.
