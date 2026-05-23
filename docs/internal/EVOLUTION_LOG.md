@@ -1039,3 +1039,23 @@ A city suffers a drought, causing food prices to spike. An impoverished NPC star
 An innocent bystander walking past the corpse (within 5 tiles) witnesses it. The `SanitationSystem` mathematically spikes their `Stress`. This massive trauma immediately triggers the `MentalBreakSystem` (Phase 62), sending the bystander into a `BreakBerserk` rage where they receive a severe `CrimeMarker`.
 Meanwhile, the corpse continues to rot because the city lacks a `JobGravedigger`. It reaches full decay and spontaneously spawns a `DiseaseEntity`. The `DiseaseVectorSystem` (Phase 10) takes over, evaluating the genetics of the remaining citizens and unleashing a plague across the starving city, perfectly closing the loop from macro-economics (drought) down to localized biological entropy.
 Validated perfectly deterministic via `TestSanitationSystem_Integration`.
+
+## Evolution: Phase 68 - The Physical Medical Engine (MedicalSystem)
+**Focus:** Integration (Biology + Economy + Justice)
+
+**The Problem (Vision Gap):**
+The Vision outlines a "Total Simulation" where actions have physical consequences and systems form a closed loop. The engine currently features a `CombatSystem` (Phase 64) that physically drains `Blood` and spikes `Pain`, and a `DiseaseVector` system that spreads plagues. However, the simulation was "flat" regarding recovery—there was no systemic way for NPCs to heal, creating a one-way entropy loop where combat and disease inevitably led to death and `SanitationSystem` cascades.
+
+**The Solution (Autonomous DOD Execution):**
+I created the `MedicalSystem` and introduced `JobDoctor` (uint8 = 14).
+1. The system pre-caches all injured patients (NPCs with `Blood < 50` or `Pain > 20`) in a flat array, mapping their Entity IDs and vital coordinates.
+2. It evaluates `NPC`s possessing `JobDoctor`, iterating over them and finding the closest patient.
+3. If the doctor is adjacent (`distSq <= 4.0`), they physically heal the patient (restoring Blood to 100 and Pain to 0).
+4. In exchange, the doctor charges a wealth fee from the patient's `TreasuryComponent`.
+5. If the patient lacks the wealth to pay, the system dynamically calculates the unpaid debt and records it as a negative hook from the doctor against the patient via the `SparseHookGraph`.
+
+**The Butterfly Effect:**
+Two Clans engage in a violent `BloodFeud`. An NPC is critically wounded by the `CombatSystem`, losing blood and spiking pain, destined to die and leave a corpse that would trigger the `SanitationSystem` and spread trauma/disease.
+However, an autonomous `JobDoctor` detects the injury, pathfinds to the patient, and performs life-saving triage, physically resetting the biological trajectory.
+Because the patient's wealth was drained in the war economy, they cannot pay the doctor's 50-wealth fee. The `MedicalSystem` algorithmically converts this biological salvation into social debt, registering a `-50` negative hook against the patient. Later, this deep medical debt can organically trigger the `JusticeSystem` (contract violations) or the `ClassWarfareSystem`, seamlessly looping Biological entropy back into Social Hierarchy and Economic conflict without a single hardcoded script.
+Validated perfectly deterministic via `TestMedicalSystem_Integration`.
