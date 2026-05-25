@@ -373,4 +373,10 @@ func TestConstructionComponentsSize(t *testing.T) {
 	if actualStructure != expectedStructure {
 		t.Errorf("Expected StructureComponent to be %d bytes for DOD, got %d", expectedStructure, actualStructure)
 	}
+
+	// SiegeMarker: 2 * uint32 (4) = 8 bytes
+	siegeSize := unsafe.Sizeof(SiegeMarker{})
+	if siegeSize != 8 {
+		t.Errorf("SiegeMarker struct size should be exactly 8 bytes, got %d", siegeSize)
+	}
 }
