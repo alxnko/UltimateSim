@@ -1,3 +1,6 @@
+## Phase 68: The Physical Medical Engine
+- **Phase 68.1 - The Medical Engine**: Bridges Biology (Healing), Economy (Wealth Transfer), and Justice (Debt Resentment). Implemented `MedicalSystem` utilizing `JobDoctor` NPCs. Doctors actively pathfind to injured citizens (Blood < 50 or Pain > 20) and physically heal them. Treatment deducts wealth from the patient; if the patient is destitute, the Doctor heals them but mathematically generates a deep negative hook (-50) against the patient via `engine.SparseHookGraph`, seamlessly bridging the medical economy into violent `BloodFeudSystem` resentments.
+
 ## Phase 51: UI State Machine Rewrite
 - **State Machine Architecture**: Added `internal/ui` package with a complete `GameState` interface and `StateManager`. Enables robust routing between game loops without polluting the ECS.
 - **Main Menu**: Boot into `StateMainMenu` offering a clean interface that transitions into the live simulation upon pressing Enter.
