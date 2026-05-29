@@ -1,3 +1,17 @@
+## Evolution: Phase 66 - The Physical Siege Engine
+- **Goal:** Execute the "Systemic Emergence" objective by bridging Geopolitics (Wars), Physical Geography (Positions), and Economy (Starvation). Fulfilling the Vision missing link: "starve out a city via a protracted siege".
+- **DOD Implementation:**
+  - Implemented `SiegeSystem` (`internal/systems/siege.go`) tightly adhering to Data-Oriented Design by pre-caching all active hostile war bonds mapping attackers to defenders.
+  - Extracted active spatial positioning of `NPC` entities into a flat `[]siegeNpcData` slice to execute O(N) spatial queries against defending Villages without nested ECS locks.
+  - Dynamically calculates the physical strength of defenders vs attackers within `RadiusSquared = 25.0`. If outnumbered by active enemies, the system assigns a cache-friendly 8-byte `SiegeMarker` structural component to the village.
+- **The Butterfly Effect:**
+  - Natively connects Phase 29 (Resource Wars) and Phase 64 (Combat) into Phase 13 (Economy).
+  - A war begins, causing a horde of hostile NPCs to cross the map and surround a village to attack it.
+  - The `SiegeSystem` evaluates the physical presence of these troops and declares the village besieged, applying the `SiegeMarker`.
+  - The siege mathematically forces local `MarketComponent.FoodPrice` to skyrocket by artificially removing market supply, and it begins rapidly draining `LoyaltyComponent`.
+  - The local population experiences extreme famine, skyrocketing their desperation and triggering `DesperationSystem` to mutate them into Bandits or Refugees, or `VassalRebellionSystem` causing the village to secede—all because hostile sprites physically blockaded the city.
+  - Verified 100% deterministic through E2E `TestSiegeSystem_Integration`.
+
 ## Evolution: Phase 63 - The Refugee Crisis Engine
 - **Goal:** Execute the "Systemic Emergence" objective by bridging Macroeconomics (Wealth), Geography (Distance), Entropy (Desperation), and Culture (Xenophobia).
 - **DOD Implementation:**

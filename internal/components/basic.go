@@ -414,6 +414,12 @@ type WarTrackerComponent struct {
 	_               uint16
 }
 
+// Phase 66: Physical Siege Engine
+type SiegeMarker struct {
+	BesiegerCountryID uint32
+	_                 uint32 // Padding to maintain 8-byte alignment
+}
+
 // Phase 16.2: Strategic Unions & Pacts
 
 // UnionType constants
