@@ -71,6 +71,23 @@
 
 # Evolution Log
 
+## Evolution: Phase 66 - The Physical Siege Engine
+- **Goal:** Execute the "Systemic Emergence" objective by implementing a missing mechanic from the Vision ("starve out a city via a protracted siege") bridging Geography, Combat, and Economics.
+- **DOD Implementation:**
+  - Added the `SiegeMarker` structural component strictly adhering to 8-byte bounds.
+  - Implemented `SiegeSystem` (`internal/systems/siege.go`) operating on offset 100-ticks.
+  - Pre-cached all valid country NPC coordinates into a flat `[]siegeNpcData` array.
+  - Evaluates distance metrics using O(N) array checks avoiding any nested `arche-go` structural locks.
+  - Applies structural state (`SiegeMarker`) outside the iterator loop using a local structural tracker to ensure 100% determinism.
+- **The Butterfly Effect:**
+  - Connects Phase 29 (Wars) directly to Phase 13 (Economics) and Phase 28 (Secession).
+  - A War is declared. Hostile NPCs surround a village, outnumbering friendly troops.
+  - The `SiegeSystem` detects the geometric blockade and applies a `SiegeMarker`.
+  - The blockade physically spikes the village's local `MarketComponent.FoodPrice` directly causing rapid starvation without hardcoded "Siege Event" windows.
+  - This immediately drains the local `LoyaltyComponent`. Once it reaches 0, the village natively secedes due to Phase 28 `VassalRebellionSystem`.
+  - The seceding village's desperately starving citizens natively spawn massive `-100` grudge hooks against their former ruler via the `SparseHookGraph`, triggering frontier `BloodFeuds` born purely out of a failed supply chain defense.
+  - Verified 100% deterministic via E2E `TestSiegeSystem_Integration`.
+
 ## Evolution: Phase 07.4 - The Linguistic Engine: Misunderstandings
 - **Goal:** Execute the "Systemic Emergence" objective by implementing a missing link from the Vision document: "Information shared via gossip has a _Translation Penalty_ between languages, causing Misunderstandings leading to accidental wars."
 - **DOD Implementation:**

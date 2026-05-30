@@ -373,4 +373,10 @@ func TestConstructionComponentsSize(t *testing.T) {
 	if actualStructure != expectedStructure {
 		t.Errorf("Expected StructureComponent to be %d bytes for DOD, got %d", expectedStructure, actualStructure)
 	}
+
+	expectedSiege := uintptr(8)
+	actualSiege := unsafe.Sizeof(SiegeMarker{})
+	if actualSiege != expectedSiege {
+		t.Errorf("Expected SiegeMarker to be %d bytes for DOD, got %d", expectedSiege, actualSiege)
+	}
 }
