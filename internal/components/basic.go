@@ -406,6 +406,12 @@ type CountryComponent struct {
 	Debasement         float32
 }
 
+// Phase 66: The Physical Siege Engine
+type SiegeMarker struct {
+	BesiegerCountryID uint32
+	_                 uint32 // Padding to exactly 8 bytes
+}
+
 // Phase 29.1: Geopolitical Resource Wars
 type WarTrackerComponent struct {
 	TargetCountryID uint32
