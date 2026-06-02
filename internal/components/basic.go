@@ -29,8 +29,9 @@ const (
 	JobCaptain    uint8 = 9  // Phase 17.1: Maritime Labor Market
 	JobPenalLabor uint8 = 10 // Phase 45: The Penal Labor Engine
 	JobMercenary  uint8 = 11 // Phase 47: The Mercenary Engine
-	JobBuilder    uint8 = 12 // Phase 59: The Physical Construction Engine
+	JobBuilder     uint8 = 12 // Phase 59: The Physical Construction Engine
 	JobGravedigger uint8 = 13 // Phase 65: The Physical Sanitation Engine
+	JobDoctor      uint8 = 14 // Phase 68: The Physical Medical Engine
 )
 
 // Phase 09.5: Item Inheritance Threshold
