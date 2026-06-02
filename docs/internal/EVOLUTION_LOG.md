@@ -1,3 +1,21 @@
+## Evolution: Phase 68 - The Physical Medical Engine (MedicalSystem)
+**Focus:** Integration (Biology + Logistics + Economy + Social Hierarchy)
+
+**The Problem (Vision Gap):**
+The Vision requires physical parity for systems, and `Phase 33` roadmap specifies advanced medicine. Previously, `CombatSystem` and `MetabolismSystem` caused physical biological damage (`Blood` loss, `Pain` increase), but the simulation lacked an integrated mechanism for healing. Entities simply died or healed abstractly. There was no physical medical service bridging to the macro-economy.
+
+**The Solution (Autonomous DOD Execution):**
+I created the `MedicalSystem` and introduced `JobDoctor`.
+1. The system pre-caches injured patients (`Blood < 50` or `Pain > 20`) in an O(1) array.
+2. NPCs with `JobDoctor` iterate over the injured patients, dynamically pathfinding to them via `PathRequestQueue`.
+3. Upon physical contact (`distSq <= 2.0`), the doctor executes treatment, directly altering `VitalsComponent`.
+4. The system executes an economic transaction, deducting the medical fee from the patient and giving it to the doctor.
+5. If the patient is bankrupt, it generates a negative hook (Debt/Resentment) via `SparseHookGraph`.
+
+**The Butterfly Effect:**
+An NPC is severely wounded by the `CombatSystem` (Phase 64). Their blood drops critically. A doctor detects the injury, pathfinds to the victim, and heals them, bridging `Biology` and `Logistics`. However, the victim is bankrupt. The doctor saves their life but generates a deep negative social hook. This hook triggers the `JusticeSystem` or `BloodFeudSystem`, resulting in the doctor hiring mercenaries or enacting revenge for unpaid medical debts. This perfectly closes the loop from physical violence, to biological healing, to economic destitution, back to social violence.
+Validated perfectly deterministic via `TestMedicalSystem_Integration`.
+
 ## Evolution: Phase 63 - The Refugee Crisis Engine
 - **Goal:** Execute the "Systemic Emergence" objective by bridging Macroeconomics (Wealth), Geography (Distance), Entropy (Desperation), and Culture (Xenophobia).
 - **DOD Implementation:**
