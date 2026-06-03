@@ -1057,3 +1057,23 @@ A city suffers a drought, causing food prices to spike. An impoverished NPC star
 An innocent bystander walking past the corpse (within 5 tiles) witnesses it. The `SanitationSystem` mathematically spikes their `Stress`. This massive trauma immediately triggers the `MentalBreakSystem` (Phase 62), sending the bystander into a `BreakBerserk` rage where they receive a severe `CrimeMarker`.
 Meanwhile, the corpse continues to rot because the city lacks a `JobGravedigger`. It reaches full decay and spontaneously spawns a `DiseaseEntity`. The `DiseaseVectorSystem` (Phase 10) takes over, evaluating the genetics of the remaining citizens and unleashing a plague across the starving city, perfectly closing the loop from macro-economics (drought) down to localized biological entropy.
 Validated perfectly deterministic via `TestSanitationSystem_Integration`.
+
+## Evolution: Phase 67 - The Subterranean Mining Engine (MiningSystem)
+**Focus:** Integration (Geography + Biology + Economy + Entropy)
+
+**The Problem (Vision Gap):**
+The Vision states "Total Freedom & Physical Constraints" and that items are derived from raw resources ("someone mined the iron"). However, prior to this phase, Iron and Stone were statically spawned or acquired via abstract non-physical generation. There was no physical labor loop where NPCs actually dug resources out of the terrain, drained biological stamina, or altered the physical geography (Elevation).
+
+**The Solution (Autonomous DOD Execution):**
+I created the `MiningSystem` and introduced the `JobMiner` (ID=15).
+1. The system pre-caches all active Employers (`Village`, `BusinessComponent`) and their `StorageComponent`/`MarketComponent` in an O(1) map.
+2. It filters for active `NPC`s with `JobMiner` and `VitalsComponent`. It checks if their `Stamina` >= 5.0.
+3. If they have sufficient stamina, the miner extracts `Iron` and `Stone` directly from their current physical `MapGrid` tile's `ResourceDepot`.
+4. The resources are deposited into the Employer's storage, and the miner's Stamina is biologically drained (-2.0 per loop).
+5. The systemic loop closes by mathematically lowering the Employer's `MarketComponent` prices for Iron and Stone due to the localized influx of supply, and by permanently dropping the `MapGrid` tile's `Elevation` to simulate actual physical excavation.
+
+**The Butterfly Effect:**
+A city hires an NPC as a Miner. The Miner walks to a mountain and begins to dig. Over multiple ticks, their `Stamina` biologically drains (triggering needs like food/rest), but they extract massive amounts of `Iron`.
+The influx of `Iron` drops the local `IronPrice` in the market. The `CareerChangeSystem` (Phase 13.2) detects this ultra-cheap iron and algorithmically upgrades poor farmers into `JobArtisan`s because crafting is now highly profitable. The artisans use the `CraftingSystem` (Phase 60) to physically hammer the cheap iron into high-wealth items, which spikes the city's wealth, triggering the `ConstructionSystem` (Phase 59) to build houses, which spikes population and triggers the `LaborCrisisSystem` (Phase 47).
+Concurrently, the mountain's `Elevation` physically drops to 0, permanently altering the oceanic pathfinding and Biome algorithms (Phase 02). Geography morphs into biological labor, which drives localized macro-economics and city-building, perfectly closing the loop.
+Validated perfectly deterministic via `TestMiningSystem_Integration`.

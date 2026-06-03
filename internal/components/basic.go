@@ -32,6 +32,7 @@ const (
 	JobBuilder    uint8 = 12 // Phase 59: The Physical Construction Engine
 	JobGravedigger uint8 = 13 // Phase 65: The Physical Sanitation Engine
 	JobDoctor      uint8 = 14 // Phase 68: The Physical Medical Engine
+	JobMiner       uint8 = 15 // Phase 67: The Subterranean Mining Engine
 )
 
 // Phase 09.5: Item Inheritance Threshold
