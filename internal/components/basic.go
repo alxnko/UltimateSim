@@ -620,3 +620,6 @@ type CorpseComponent struct {
 	DecayProgress float32
 	MaxDecay      float32
 }
+
+// Phase 69: The Parasitic Symbiosis Engine
+type ParasiteComponent struct{}

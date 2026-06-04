@@ -1057,3 +1057,24 @@ A city suffers a drought, causing food prices to spike. An impoverished NPC star
 An innocent bystander walking past the corpse (within 5 tiles) witnesses it. The `SanitationSystem` mathematically spikes their `Stress`. This massive trauma immediately triggers the `MentalBreakSystem` (Phase 62), sending the bystander into a `BreakBerserk` rage where they receive a severe `CrimeMarker`.
 Meanwhile, the corpse continues to rot because the city lacks a `JobGravedigger`. It reaches full decay and spontaneously spawns a `DiseaseEntity`. The `DiseaseVectorSystem` (Phase 10) takes over, evaluating the genetics of the remaining citizens and unleashing a plague across the starving city, perfectly closing the loop from macro-economics (drought) down to localized biological entropy.
 Validated perfectly deterministic via `TestSanitationSystem_Integration`.
+
+## Evolution: Phase 69 - The Parasitic Symbiosis Engine (ParasiteSystem)
+**Focus:** Integration (Biology + Justice + Psychology)
+
+**The Problem (Vision Gap):**
+The Vision requires a "Total Simulation" including "Symbiotic & Parasitic Entities (Vampirism)" where diseases alter metabolism (e.g., needing blood). Previously, all NPCs subsisted entirely on the agrarian economy (Agriculture -> Storage -> Needs.Food). There was no mechanism for entities to bypass the macro-economy by preying on the biological layer (Vitals) of the population itself.
+
+**The Solution (Autonomous DOD Execution):**
+I created the `ParasiteSystem` and introduced the `ParasiteComponent`.
+1. The system pre-caches healthy victims (`VitalsComponent.Blood > 50`) and their coordinates.
+2. It filters for hungry `ParasiteComponent` entities (`Needs.Food < 30`).
+3. Parasites pathfind to the nearest healthy victim. Once within range (`distSq <= 2.0`), they drain the victim's blood (`VitalsComponent.Blood -= 40`) and cause a massive pain spike (`VitalsComponent.Pain += 40`).
+4. This parasitic feeding restores the parasite's food (`Needs.Food += 50`), entirely bypassing the standard economic loops.
+5. The attack generates a severe `-100` grudge hook against the parasite and flags the parasite with the `TraitEsoteric` bitmask.
+
+**The Butterfly Effect:**
+A Parasite gets hungry and drains `Blood` from a wealthy Artisan. The Artisan's `Blood` drops and `Pain` spikes.
+This sudden biological failure triggers the `MedicalSystem` (Phase 68). A Doctor pathfinds to the Artisan, heals the blood loss, and drains the Artisan's `Wealth` as payment.
+The `ParasiteSystem` simultaneously generated a `-100` hook, which organically triggers the `BloodFeudSystem` (Phase 23) causing the Artisan's Clan to hunt the Parasite.
+Furthermore, the `TraitEsoteric` bitmask was applied to the parasite. During times of high societal trauma, the `ScapegoatSystem` (Phase 36) maps this trait and triggers the `WitchHuntEngine` (Phase 49), unleashing state guards (`JusticeSystem`) to violently execute the parasite. A purely biological feeding act seamlessly orchestrates a localized medical crisis, a generational blood feud, and a state-sponsored witch hunt.
+Validated perfectly deterministic via `TestParasiteSystem_Integration`.
