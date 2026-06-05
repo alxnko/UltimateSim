@@ -50,6 +50,7 @@ const (
 	InteractionTheft    uint8 = 4 // Phase 18.1: Law Definitions
 	InteractionMurder   uint8 = 5 // Phase 23.1: The Blood Feud Engine
 	InteractionEsoteric uint8 = 6 // Phase 49: The Witch Hunt Engine
+	InteractionParasite uint8 = 7 // Phase 69: Parasitic Entities
 )
 
 const (
@@ -619,4 +620,11 @@ type CombatMarker struct {
 type CorpseComponent struct {
 	DecayProgress float32
 	MaxDecay      float32
+}
+
+// Phase 69: The Parasitic Symbiosis Engine
+type ParasiteComponent struct {
+	BloodSatiety float32
+	IsHidden     bool
+	_            [3]byte // Pad to exactly 8 bytes
 }

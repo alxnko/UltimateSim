@@ -1057,3 +1057,23 @@ A city suffers a drought, causing food prices to spike. An impoverished NPC star
 An innocent bystander walking past the corpse (within 5 tiles) witnesses it. The `SanitationSystem` mathematically spikes their `Stress`. This massive trauma immediately triggers the `MentalBreakSystem` (Phase 62), sending the bystander into a `BreakBerserk` rage where they receive a severe `CrimeMarker`.
 Meanwhile, the corpse continues to rot because the city lacks a `JobGravedigger`. It reaches full decay and spontaneously spawns a `DiseaseEntity`. The `DiseaseVectorSystem` (Phase 10) takes over, evaluating the genetics of the remaining citizens and unleashing a plague across the starving city, perfectly closing the loop from macro-economics (drought) down to localized biological entropy.
 Validated perfectly deterministic via `TestSanitationSystem_Integration`.
+
+## Evolution: Phase 69 - The Parasitic Symbiosis Engine
+**Focus:** Integration (Biology + Justice + Epistemology)
+
+**The Problem (Vision Gap):**
+The Vision document under "Future Expansion Slots" mentions "Symbiotic & Parasitic Entities (Vampirism)" where diseases evolve into complex transformative entities hiding within society. Previously, plagues were simple binary forces of death (`DiseaseEntity`). There was no mechanic for a biological need (blood) driving an NPC to systematically prey on others while hiding their true nature, severing potential connections to the Justice and Epistemology layers.
+
+**The Solution (Autonomous DOD Execution):**
+I created the **Parasitic Symbiosis Engine** via `ParasiteSystem`.
+1. **Component Addition:** Introduced `ParasiteComponent` (exactly 8 bytes to adhere to DOD) to track `BloodSatiety` and `IsHidden` state. Added `InteractionParasite` constant.
+2. **The Drain Mechanic:** The system evaluates hungry Parasites (`Needs.Food <= 50`). They actively pathfind to healthy victims (`VitalsComponent.Blood >= 30.0`). The parasite drains blood to restore their own food satiety, avoiding the agrarian economy entirely.
+3. **Epistemological Exposure:** When a parasite feeds, they are structurally forced to drop their `IsHidden` status. Natively, the system tags their `Identity.BaseTraits` with the `TraitEsoteric` bitmask.
+4. **Social & Memory Hooks:** The attack forces a massive `-50` relationship hook from the victim to the parasite via `SparseHookGraph` and directly writes an `InteractionParasite` event into the victim's `Memory` buffer.
+
+**The Butterfly Effect:**
+A wealthy NPC becomes infected with a Parasite. They grow hungry and attack a peasant, draining their blood. The peasant survives but is traumatized. The attack generates a `-50` Blood Feud grudge against the wealthy NPC (Phase 23). Concurrently, the attack marks the wealthy NPC with `TraitEsoteric`.
+Because of localized famines, the city's `Trauma` spikes. The `ScapegoatSystem` (Phase 36/49) evaluates the city, detects the newly tagged Esoteric parasite, and targets them. The `JusticeSystem` assigns a massive `CrimeMarker` to the parasite. Guards now hunt the wealthy NPC. The parasite attempts to use their massive wealth to bribe the guards (Phase 22 Corruption), but because of their biological needs, they must continue feeding, creating an endless cycle of crime and corruption entirely driven by physical biological needs.
+
+**Architecture Validation:**
+Strict Data-Oriented Design (DOD) maintained. We pre-cache potential victims into a flat `[]parasiteVictimData` array to entirely avoid nested `arche-go` ECS lock panics during the O(N^2) distance calculations. `ParasiteComponent` size validated via `unsafe.Sizeof` tests. E2E determinism proven via `TestParasiteSystem_Integration`.
