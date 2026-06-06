@@ -373,4 +373,9 @@ func TestConstructionComponentsSize(t *testing.T) {
 	if actualStructure != expectedStructure {
 		t.Errorf("Expected StructureComponent to be %d bytes for DOD, got %d", expectedStructure, actualStructure)
 	}
+
+	actualParasite := unsafe.Sizeof(ParasiteComponent{})
+	if actualParasite != 8 {
+		t.Errorf("ParasiteComponent is %d bytes, expected exactly 8 bytes for DOD bounds", actualParasite)
+	}
 }
