@@ -1077,3 +1077,19 @@ Because of localized famines, the city's `Trauma` spikes. The `ScapegoatSystem` 
 
 **Architecture Validation:**
 Strict Data-Oriented Design (DOD) maintained. We pre-cache potential victims into a flat `[]parasiteVictimData` array to entirely avoid nested `arche-go` ECS lock panics during the O(N^2) distance calculations. `ParasiteComponent` size validated via `unsafe.Sizeof` tests. E2E determinism proven via `TestParasiteSystem_Integration`.
+
+## Evolution: Phase 67 - The Subterranean Mining Engine
+**Focus:** Integration (Geography + Economy + Biology + Entropy)
+
+**The Problem (Vision Gap):**
+The Vision document dictates "dig deep subterranean mining colonies". Previously, `JobMiner` did not exist, and there was no bridge connecting the physical MapGrid resource values (`IronValue`, `StoneValue`) to the active, physical labor of an NPC. Map resources were static or depleted abstractly via deforestation, but subterranean labor and topological degradation (Elevation) did not exist.
+
+**The Solution (Autonomous DOD Execution):**
+I created the **Subterranean Mining Engine** (`MiningSystem`).
+1. **Component Addition:** Added `JobMiner` (uint8 = 15).
+2. **Execution Map:** The system parses active `JobMiner` NPCs. They actively deplete `Stamina` (Biology) to hollow out the map grid, depleting `IronValue` and `StoneValue` (Geography) while decreasing the `Elevation` metric to simulate underground tunneling.
+3. **Macroeconomic Bridge:** The mined resources are safely deposited into their Employer's `StorageComponent` while algorithmically decreasing the `MarketComponent` prices (IronPrice, StonePrice) due to the supply influx.
+
+**The Butterfly Effect:**
+A Village hires a `JobMiner`. The miner successfully extracts iron and stone. This increases the Village's `StorageComponent.Iron` while lowering `MarketComponent.IronPrice` (Phase 13). The lower Iron Price allows local `JobArtisan` NPCs to produce goods cheaper (Phase 60). However, the massive tunneling drains the `MapGrid.Tiles[idx].Elevation`. The lowered elevation can eventually alter the map's terrain topology (e.g., flooding or structural collapse), generating physical consequences for unchecked economic extraction.
+Validated 100% deterministic via E2E `TestMiningSystem_Integration`.
