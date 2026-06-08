@@ -1077,3 +1077,24 @@ Because of localized famines, the city's `Trauma` spikes. The `ScapegoatSystem` 
 
 **Architecture Validation:**
 Strict Data-Oriented Design (DOD) maintained. We pre-cache potential victims into a flat `[]parasiteVictimData` array to entirely avoid nested `arche-go` ECS lock panics during the O(N^2) distance calculations. `ParasiteComponent` size validated via `unsafe.Sizeof` tests. E2E determinism proven via `TestParasiteSystem_Integration`.
+
+## Evolution: Phase 67 - The Subterranean Mining Engine (MiningSystem)
+**Focus:** Integration (Geography + Biology + Economy + Entropy)
+
+**The Problem (Vision Gap):**
+The Vision requires physical labor and micro-interactions for macroeconomic realities ("Total Freedom & Physical Constraints"). Before Phase 67, resource extraction only covered basic organic harvesting (e.g. food via AgricultureSystem, wood via DeforestationSystem). Harder resources like Iron and Stone were statically spawned or decoupled from the physical labor constraints. The physical and ecological consequences of depleting the earth were missing.
+
+**The Solution (Autonomous DOD Execution):**
+I created the `MiningSystem` and introduced the `JobMiner` (uint8 = 15).
+1. `MiningSystem` iterates over entities assigned `JobMiner`.
+2. It enforces a physical, biological cost by draining `Stamina` from the miner's `VitalsComponent`. Exhausted miners physically cannot work.
+3. The system interfaces directly with the `engine.MapGrid`, extracting `IronValue` and `StoneValue` from the `ResourceDepot` at the exact coordinates of the miner.
+4. The extracted resources are immediately, physically transferred to the `StorageComponent` of the miner's `EmployerID` (e.g., a Business or Village).
+5. **Entropy:** The act of extracting stone and iron physically lowers the `Elevation` of the terrain over time, bridging resource extraction with planetary geometry changes. This dynamically recalculates the local Biome, enforcing ecological consequences for mass industry.
+
+**The Butterfly Effect:**
+A wealthy Clan establishes a `BusinessEntity` and hires local peasants as `JobMiner`s. The miners physically travel to a mountain tile and extract massive amounts of Iron. As they mine, they deplete their `Stamina` (connecting to `Biology`) and physically lower the tile's `Elevation` (connecting to `Geography`).
+The influx of Iron enters the Clan's `StorageComponent`. The `PriceDiscoverySystem` processes the massive local supply, driving Iron prices to the floor. The dirt-cheap iron empowers `JobArtisan` Blacksmiths to mass-produce cheap armor and weapons (Phase 59: Crafting). These weapons are bought up by rival Clans, leading to heavily armed combatants clashing under the `CombatSystem` (Phase 64). What began as a geographic alteration ends as bloody gang warfare driven by an oversupply of cheap steel.
+
+**Architecture Validation:**
+The `MiningSystem` strictly adheres to Data-Oriented Design (DOD). Employer storages are pre-cached each tick in a flat, O(1) map. ECS structural locks are avoided, and `filter.All()` filters are cached during initialization. E2E determinism proven via `TestMiningSystem_Integration`.
