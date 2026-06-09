@@ -1077,3 +1077,25 @@ Because of localized famines, the city's `Trauma` spikes. The `ScapegoatSystem` 
 
 **Architecture Validation:**
 Strict Data-Oriented Design (DOD) maintained. We pre-cache potential victims into a flat `[]parasiteVictimData` array to entirely avoid nested `arche-go` ECS lock panics during the O(N^2) distance calculations. `ParasiteComponent` size validated via `unsafe.Sizeof` tests. E2E determinism proven via `TestParasiteSystem_Integration`.
+
+## Evolution: Phase 67 - The Subterranean Mining Engine (MiningSystem)
+**Focus:** Integration (Geography + Biology + Economy + Entropy)
+
+**The Problem (Vision Gap):**
+The Vision states "Micro-Foundations for Macro-Emergence" where resource depletion has systemic ecological consequences. Previously, resource extraction for Iron and Stone was entirely abstracted; markets magically spawned these resources based on abstract modifiers. There was no physical labor draining biological stamina to extract finite resources from the physical map, severing the link between map ecology and macroeconomics.
+
+**The Solution (Autonomous DOD Execution):**
+I created the `MiningSystem` and introduced `JobMiner`.
+1. The system pre-caches active employer data (`StorageComponent` and `MarketComponent`) in an O(1) DOD map.
+2. It queries active NPCs with `JobMiner` who have `Stamina > 0`.
+3. It maps their physical coordinates to the `engine.MapGrid` tile (`y * Width + x`).
+4. If the tile has `Iron` or `Stone` in `MapGrid.Resources`, the miner physically drains their `Stamina`.
+5. The resource is extracted from the map and deposited directly into the employer`s `StorageComponent`.
+6. This physical influx mathematically lowers the employer`s local `MarketComponent.IronPrice` or `StonePrice` to represent supply saturation.
+7. Over time, the repeated extraction reduces the map tile`s `Elevation`, permanently scarring the physical world (entropy).
+
+**The Butterfly Effect:**
+A wealthy city suffers an iron shortage. A citizen creates a Business and posts a `JobMiner` contract. Unemployed peasants take the job to earn wages (Phase 15).
+The miners physically descend on a high-elevation mountain tile. They begin mining, draining their `Stamina` (Biology), which forces them to consume more `Food` from the local economy. The extracted Iron floods the `MarketComponent`, crashing the price of Iron (Economy). The blacksmiths (JobArtisan) detect the cheap iron and begin rapidly crafting weapons (Phase 60).
+However, the continuous mining strips the tile of its `Elevation` (Geography). The tile eventually drops to sea level, turning a mountain barrier into a flat plain. This alters the `NavMesh` (Phase 17). Trade caravans suddenly reroute through the newly flattened path, dramatically increasing the city`s wealth but exposing it to `JobBandit` ambushes (Phase 26) that previously couldn`t cross the mountains. What started as an abstract resource need organically terraformed the environment and triggered a geopolitical vulnerability.
+Validated perfectly deterministic via `TestMiningSystem_Integration`.
