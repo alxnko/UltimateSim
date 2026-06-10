@@ -1077,3 +1077,22 @@ Because of localized famines, the city's `Trauma` spikes. The `ScapegoatSystem` 
 
 **Architecture Validation:**
 Strict Data-Oriented Design (DOD) maintained. We pre-cache potential victims into a flat `[]parasiteVictimData` array to entirely avoid nested `arche-go` ECS lock panics during the O(N^2) distance calculations. `ParasiteComponent` size validated via `unsafe.Sizeof` tests. E2E determinism proven via `TestParasiteSystem_Integration`.
+
+## Evolution: Phase 67 - The Subterranean Mining Engine
+**Focus:** Integration (Geography + Biology + Economics + Entropy)
+
+**The Problem (Vision Gap):**
+The Vision document under "Physical Infrastructure & World Scarring" states that resource depletion must have physical macro-emergence. Previously, extracting `Iron` or `Stone` from the `MapGrid` had no granular biological cost or systemic entropy. Economic growth (market resource influx) was isolated from physical fatigue or the scarring of the map's geography over time.
+
+**The Solution (Autonomous DOD Execution):**
+I created the `MiningSystem` and introduced the `JobMiner` (uint8 = 15) role.
+1. The `MiningSystem` iterates over NPCs with `JobMiner` and a valid employer.
+2. It physically depletes the NPC's `Stamina` to extract `IronValue` or `StoneValue` from the `engine.MapGrid` at their exact coordinates.
+3. The resources are transferred into the Employer's `StorageComponent`, dynamically shifting the `MarketComponent` prices downwards.
+4. As resources are successfully mined, the underlying tile's `Elevation` parameter decays, physically scarring the world.
+
+**The Butterfly Effect:**
+A Clan employs a vast array of `JobMiner` NPCs to amass wealth. The miners rapidly exhaust their `Stamina` (connecting to `Biology`), forcing them to consume more `Food` via the `MetabolismSystem`. Their continuous mining floods the city's `StorageComponent` with `Iron`, driving the `MarketComponent.IronPrice` into the ground. Simultaneously, the relentless mining structurally lowers the `Elevation` of the terrain. If continued over decades, a once mountainous region collapses into a flattened crater, permanently altering future pathfinding via `hpa.AbstractGrid` and leaving a physical scar of their economic ambition.
+
+**Architecture Validation:**
+Maintained 100% Data-Oriented Design (DOD). Employer entities (Villages and Businesses) are cached in an O(1) map per tick to avoid nested ECS queries. Validated perfectly deterministic via `TestMiningSystem_Integration`.
