@@ -54,7 +54,12 @@ const (
 )
 
 const (
-	StructureHouse uint8 = 1
+	StructureHouse      uint8 = 1
+	StructureWorkshop   uint8 = 2 // Shell: spawns a Workbench when completed
+	StructureStorehouse uint8 = 3 // Shell: raises village PeakPopulation (logistics capacity)
+	StructureShrine     uint8 = 4 // Shell: spreads DataA BeliefID to nearby NPCs
+	StructureFarm       uint8 = 5 // Shell: generates Food into nearest village storage
+	StructureTavern     uint8 = 6 // Shell: rest aura + gossip hub
 )
 
 // Identity component
@@ -591,11 +596,15 @@ type ConstructionSiteComponent struct {
 	Progress      uint32
 	MaxProgress   uint32
 	BuilderID     uint64 // The NPC ID assigned to this site
+	SiteType      uint32 // Shell: target StructureType when completed (defaults to StructureHouse)
+	_             uint32 // Padding to 8-byte bound
 }
 
 type StructureComponent struct {
 	StructureType uint32
 	Integrity     float32
+	DataA         uint32 // Shell: type-specific payload (Shrine: BeliefID; others: 0)
+	OwnerID       uint32 // Shell: builder identity low bits (0 = village-built)
 }
 
 // Phase 60: The Physical Crafting Engine
@@ -627,4 +636,59 @@ type ParasiteComponent struct {
 	BloodSatiety float32
 	IsHidden     bool
 	_            [3]byte // Pad to exactly 8 bytes
+}
+
+// ---------------------------------------------------------------------------
+// Shell Phase (Playable Game Shell): player-facing components.
+// Spec: docs/superpowers/specs/2026-06-11-playable-game-design.md
+
+// Player order types issued by a ruling player to subordinate NPCs.
+const (
+	OrderMove      uint8 = 1
+	OrderAssignJob uint8 = 2
+	OrderAttack    uint8 = 3
+	OrderBuildAt   uint8 = 4
+	OrderFollow    uint8 = 5
+)
+
+// PlayerOrderComponent binds a subordinate NPC to a direct command from a ruler.
+// Obedience is resolved by PlayerOrderSystem against Legitimacy vs Loyalty/hooks.
+type PlayerOrderComponent struct {
+	TargetID  uint64  // Entity Identity.ID for OrderAttack
+	IssuerID  uint64  // Identity.ID of the ruler issuing the order
+	X         float32 // Destination for OrderMove / OrderBuildAt
+	Y         float32
+	OrderType uint8
+	JobID     uint8 // For OrderAssignJob
+	_         uint16
+	_         uint32 // Padding to 32 bytes
+}
+
+// Ambition types for the sandbox goal engine.
+const (
+	AmbitionRuler   uint8 = 1 // Become ruler of city TargetID
+	AmbitionWealth  uint8 = 2 // Reach Goal wealth
+	AmbitionBuilder uint8 = 3 // Personally fund Goal completed structures
+	AmbitionHeir    uint8 = 4 // Family gains a new member after acceptance
+	AmbitionFeud    uint8 = 5 // Outlive/defeat rival NPC TargetID
+)
+
+// Ambition is one sandbox goal tracked for the player. Flat 24-byte struct.
+type Ambition struct {
+	TargetID uint64 // NPC Identity.ID or CityID depending on Type
+	Goal     uint32 // Numeric target (wealth amount, structure count...)
+	Progress uint32
+	Type     uint8
+	Accepted bool
+	Done     bool
+	_        uint8 // Padding
+	_        uint32
+}
+
+// AmbitionsComponent holds offered and accepted ambitions for the possessed entity.
+type AmbitionsComponent struct {
+	Ambitions []Ambition // Accepted / completed
+	Offers    []Ambition // Pending offers (max 3)
+	BuiltCount uint32    // Lifetime player-funded completed structures
+	FamilyBase uint32    // Family size snapshot when an AmbitionHeir was accepted
 }
