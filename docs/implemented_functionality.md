@@ -1,3 +1,6 @@
+## Phase 70: The Deed Forgery Engine
+- **Phase 70.1 - The Deed Forgery Engine**: Bridges Economy, Justice, and Genetics. Implemented `ForgerySystem`. Desperate NPCs (`Desperation.Level >= 50`) with high intelligence (`Intellect >= 120`) physically visit businesses and attempt to forge deeds. If the forger's intellect exceeds the current owner's intellect, ownership (`OwnerID`) is transferred structurally. The original owner generates a massive `-100` hook against the forger natively via `SparseHookGraph`, and the forgery is logged as an `InteractionTheft` in the forger's memory. This bridges systemic white-collar crime into the existing `BloodFeudSystem` and `JusticeSystem` engines purely through biological/genetic disparities.
+
 ## Phase 51: UI State Machine Rewrite
 - **State Machine Architecture**: Added `internal/ui` package with a complete `GameState` interface and `StateManager`. Enables robust routing between game loops without polluting the ECS.
 - **Main Menu**: Boot into `StateMainMenu` offering a clean interface that transitions into the live simulation upon pressing Enter.

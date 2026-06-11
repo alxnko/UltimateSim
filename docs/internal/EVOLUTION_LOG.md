@@ -1,3 +1,27 @@
+## Evolution: Phase 70 - The Deed Forgery Engine (ForgerySystem)
+**Focus:** Integration (Economy + Demographics + Justice)
+
+**The Problem (Vision Gap):**
+The Vision document under "Inherited Legacy" mandates: "You can forge deeds...". Previously, `BusinessComponent` entities had a strict, unchangeable `OwnerID`. Ownership was static, and the massive `TreasuryComponent` wealth accumulated by a business was completely immune to theft. Starving NPCs could steal physical food (`DesperationSystem`), but there was no systemic avenue to forcefully seize the *means of production* (businesses) via intelligence or cunning.
+
+**The Solution (Autonomous DOD Execution):**
+I created the **Deed Forgery Engine**.
+1. **The System:** Implemented `ForgerySystem` running on offset ticks to limit ECS load.
+2. **Evaluation:** It parses desperate NPCs (`DesperationComponent >= 50`) who possess high `GenomeComponent.Intellect` (`>= 120`).
+3. **Execution:** If the smart, desperate NPC is physically adjacent (`distSq <= 4.0`) to a `BusinessEntity`, the system compares their `Intellect` to the current `OwnerID`'s intellect.
+4. **The Forgery:** If the forger is smarter, the forgery succeeds. The system structurally overwrites the `BusinessComponent.OwnerID` to the forger's ID, legally handing them the entire business treasury. It simultaneously logs an `InteractionTheft` in the forger's `Memory` buffer and injects a massive `-100` relationship hook from the victim to the forger via `SparseHookGraph`.
+
+**The Butterfly Effect:**
+A desperate, starving peasant with high `Intellect` (perhaps a disgraced Artisan) physically walks to a wealthy `Business` owned by a less intelligent Noble. The peasant executes a forgery, seizing the `OwnerID`.
+The peasant immediately becomes incredibly wealthy, escaping starvation.
+The Noble, suddenly losing their income source, generates a `-100` grudge against the peasant.
+The Noble drops into poverty, becoming desperate, and potentially hires a Mercenary (Phase 47) to assassinate the peasant, or initiates a `BloodFeud` (Phase 23).
+Furthermore, if the peasant is caught by the `JusticeSystem` (via the logged `InteractionTheft`), the Guards will attempt to banish them and seize their new wealth.
+This closes a loop, enabling white-collar crime driven entirely by biological/genetic inequality without scripted narrative events.
+
+**Architecture Validation:**
+Strict Data-Oriented Design (DOD) was maintained via `arche-go`. We pre-cache all `BusinessComponent` parameters and the Intellect map of current owners into flat O(N) structures, preventing any nested ECS `Query` locks. Verified 100% deterministic through `TestForgerySystem_Integration`.
+
 ## Evolution: Phase 68 - The Physical Medical Engine (MedicalSystem)
 **Focus:** Integration (Biology + Logistics + Economy + Social Hierarchy)
 
