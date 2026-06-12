@@ -1077,3 +1077,26 @@ Because of localized famines, the city's `Trauma` spikes. The `ScapegoatSystem` 
 
 **Architecture Validation:**
 Strict Data-Oriented Design (DOD) maintained. We pre-cache potential victims into a flat `[]parasiteVictimData` array to entirely avoid nested `arche-go` ECS lock panics during the O(N^2) distance calculations. `ParasiteComponent` size validated via `unsafe.Sizeof` tests. E2E determinism proven via `TestParasiteSystem_Integration`.
+
+## Evolution: Phase 70 - The Deed Forgery Engine (ForgerySystem)
+**Focus:** Integration (Economy + Genetics + Justice)
+
+**The Problem (Vision Gap):**
+The Vision states that there are no artificial limits on interaction and that if a system exists, it can be manipulated, explicitly citing "forge deeds" as an example. Previously, `BusinessComponent` ownership was static unless a noble inherited it or purchased it legally. Desperate NPCs could steal food via `DesperationSystem`, but a highly intelligent, impoverished NPC had no structural avenue to execute a high-level white-collar crime to lift themselves out of poverty by usurping the economy's ownership layer.
+
+**The Solution (Autonomous DOD Execution):**
+I created the `ForgerySystem`.
+1. It pre-caches all active businesses (`BusinessComponent`) and maps their current owners' IDs to their Intellect.
+2. It evaluates desperate NPCs (`Desperation.Level > 50`) who are highly intelligent (`Genetics.Intellect > 70`).
+3. If the desperate genius finds a business owned by someone with lower intellect, they successfully forge the deed:
+    - The `BusinessComponent.OwnerID` is swapped to the forger.
+    - A massive `-100` relationship hook is organically generated via `SparseHookGraph` against the forger.
+    - An `InteractionTheft` is logged in the forger's `Memory` buffer.
+    - The forger's `Desperation.Level` is reset to 0, representing their new economic status.
+
+**The Butterfly Effect:**
+A city suffers an economic downturn. An uneducated patrician hoards a massive business empire, while a high-intellect, landless genius starves. The genius reaches a desperation breakpoint and algorithmically executes the `ForgerySystem`, stealing the business.
+This white-collar crime generates a massive `-100` hook. This immediately triggers the `BloodFeudSystem` (Phase 23.1). The patrician, having lost everything to forgery, develops a murderous intent and spawns a `CombatMarker`. The `CombatSystem` (Phase 64) takes over, forcing the patrician to physically hunt down and attack the genius, converting economic friction and genetic disparity into visceral physical violence, closing the loop perfectly.
+
+**Architecture Validation:**
+Strict Data-Oriented Design (DOD) maintained. We pre-cache all businesses and owner intellects into flat data structures to entirely avoid nested ECS query lock panics. E2E determinism proven via `TestForgerySystem_Integration`.
