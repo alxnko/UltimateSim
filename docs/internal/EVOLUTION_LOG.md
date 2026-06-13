@@ -1,3 +1,20 @@
+## Evolution: Phase 70 - The Deed Forgery Engine (ForgerySystem)
+**Focus:** Integration (Economy + Genetics + Justice)
+
+**The Problem (Vision Gap):**
+The Vision requires "Total Simulation & Boundless Possibility" where "You can forge deeds". Previously, BusinessComponent ownership was completely static and locked to the original creator. There was no mechanism for a high-intellect, desperate NPC to use their intelligence to steal economic capital through white-collar crime, leaving a major gap in the simulated justice and economic systems.
+
+**The Solution (Autonomous DOD Execution):**
+I created the `ForgerySystem`.
+1. It pre-caches `BusinessComponent` entities and queries their owner's `GenomeComponent.Intellect`.
+2. It iterates over desperate NPCs (`DesperationComponent.Level >= 50`) with high intellect (`GenomeComponent.Intellect >= 100`).
+3. If the forger's intellect exceeds the original owner's, the forger mathematically steals the `BusinessComponent.OwnerID`.
+4. It natively injects a massive `-100` hook from the original owner against the forger in the `SparseHookGraph`, bridging to Phase 23 (Blood Feuds).
+5. It logs an `InteractionTheft` in the forger's `Memory` component, bridging to Phase 18 (Justice) where guards can subsequently arrest them.
+
+**The Butterfly Effect:**
+A wealthy but low-intellect NPC owns a powerful `BusinessComponent`. A local drought causes famine, driving a high-intellect peasant into extreme desperation. The peasant uses `ForgerySystem` to steal the business, instantly acquiring vast wealth to survive the famine. The theft generates a `-100` grudge. The original owner, now impoverished and enraged, triggers the `BloodFeudSystem` and hires mercenaries to physically assassinate the forger, bridging economic crime natively into frontier violence without hardcoded narrative events. E2E verified via `TestForgerySystem_Integration`.
+
 ## Evolution: Phase 68 - The Physical Medical Engine (MedicalSystem)
 **Focus:** Integration (Biology + Logistics + Economy + Social Hierarchy)
 
