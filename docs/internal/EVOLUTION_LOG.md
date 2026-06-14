@@ -1077,3 +1077,24 @@ Because of localized famines, the city's `Trauma` spikes. The `ScapegoatSystem` 
 
 **Architecture Validation:**
 Strict Data-Oriented Design (DOD) maintained. We pre-cache potential victims into a flat `[]parasiteVictimData` array to entirely avoid nested `arche-go` ECS lock panics during the O(N^2) distance calculations. `ParasiteComponent` size validated via `unsafe.Sizeof` tests. E2E determinism proven via `TestParasiteSystem_Integration`.
+
+## Evolution: Phase 70 - The Deed Forgery Engine (ForgerySystem)
+**Date:** 2026-04-15
+**Focus:** Integration (Economy + Genetics + Justice)
+
+**The Problem (Vision Gap):**
+The Vision states "Total Simulation & Boundless Possibility: If a system exists, it can be manipulated. You can forge deeds...". Previously, `BusinessComponent` ownership was static unless transferred via inheritance (`DeathSystem`) or debt default (`DebtDefaultSystem`). There was no agency for an intelligent, starving NPC to physically manipulate documents to usurp wealthy owners without resorting to physical banditry, breaking the "forge deeds" promise.
+
+**The Solution (Autonomous DOD Execution):**
+I created the **Deed Forgery Engine**.
+1. **System Loop:** `ForgerySystem` iterates `BusinessEntity` tags with `WorkplaceComponent` and caches owners. It also caches owner `Intellect` mapped by ID.
+2. **The Crime:** It finds desperate NPCs (`DesperationComponent >= 50`) with high Intellect (`> 100`). If they are physically adjacent to the business (`distSq <= 4.0`), it checks if the forger's intellect exceeds the owner's by 20 points.
+3. **Execution:** The forger structurally changes the `BusinessComponent.OwnerID` to themselves, immediately usurping the business's wealth generation logic.
+4. **The Fallout:** The system natively injects an `InteractionTheft` struct into the forger's `Memory` buffer and adds a massive `-100` grudge from the old owner to the new owner in the `SparseHookGraph`.
+
+**The Butterfly Effect:**
+A wealthy `BusinessComponent` owner has low Intellect (`GenomeComponent`). A famine forces local food prices up, pushing a high-intellect Scholar (`Needs.Wealth < 50`) into extreme desperation. The Scholar walks to the business, successfully forges the deeds, and takes ownership.
+The Scholar is no longer desperate and gains immense economic power, avoiding Banditry. However, the old owner now hates them (`-100` Hook). The old owner's Clan uses the `BloodFeudSystem` (Phase 23) to assassinate the Scholar to get their business back, or the `JusticeSystem` discovers the memory of the theft (`InteractionTheft`) and sends Guards to hunt the Scholar, perfectly tying intellectual crime into the Physical/Justice simulation layers.
+
+**Architecture Validation:**
+Strict Data-Oriented Design (DOD) was maintained via `arche-go`. The system builds `intellectMap` and `businesses` flat arrays to dodge O(N^2) nested ECS locks during the distance loops. Modification is done safely via `world.Get`. Tested and verified 100% deterministic through E2E `TestForgerySystem_Integration`.
