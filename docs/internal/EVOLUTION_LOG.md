@@ -1077,3 +1077,22 @@ Because of localized famines, the city's `Trauma` spikes. The `ScapegoatSystem` 
 
 **Architecture Validation:**
 Strict Data-Oriented Design (DOD) maintained. We pre-cache potential victims into a flat `[]parasiteVictimData` array to entirely avoid nested `arche-go` ECS lock panics during the O(N^2) distance calculations. `ParasiteComponent` size validated via `unsafe.Sizeof` tests. E2E determinism proven via `TestParasiteSystem_Integration`.
+
+## Evolution: Phase 70 - The Deed Forgery Engine (ForgerySystem)
+**Focus:** Integration (Economy + Genetics + Justice)
+
+**The Problem (Vision Gap):**
+The Vision states that actions must be physical and that there is boundless possibility for subversion, like forging deeds, under "Total Freedom & Boundless Possibility." Previously, an NPC's ownership of a Business (Phase 15.1) was static unless they sold it or died. A desperate, highly intelligent NPC with `DesperationComponent.Level > 50` had no systemic way to utilize their high Intellect (Phase 19.1 Genetics) to usurp economic power from a lower-intellect business owner.
+
+**The Solution (Autonomous DOD Execution):**
+I created the **Deed Forgery Engine** via `ForgerySystem`.
+1. **Component Integration:** The system evaluates NPCs possessing both high desperation (`DesperationComponent.Level > 50`) and high intellect (`GenomeComponent.Intellect > 70`).
+2. **The Forgery Mechanic:** The system caches all NPCs' intellects, then checks all `BusinessComponent` entities. If an active forger's intellect strictly exceeds the business owner's intellect, the forger successfully falsifies the deed, directly seizing the `OwnerID`.
+3. **Social & Epistemological Hooks:** The theft forces a massive `-100` relationship hook from the usurped owner to the forger via `SparseHookGraph` and directly writes an `InteractionTheft` event into the forger's `Memory` ring buffer.
+
+**The Butterfly Effect:**
+A drought hits, causing food prices to spike and driving a highly intelligent but impoverished scholar into deep desperation (Phase 21). Their `DesperationComponent.Level` exceeds 50. Meanwhile, a wealthy but low-intellect noble owns a massive lumber business.
+The scholar uses their intellect to falsify the business deeds (`ForgerySystem`), instantly stripping the noble of their primary income stream. The noble develops a `-100` Blood Feud grudge against the scholar. This extreme negative hook triggers the `BloodFeudSystem` (Phase 23.1) and potentially the `CombatSystem` (Phase 64), causing the noble to physically hunt down and attack the scholar in the streets. If the scholar's memory of the `InteractionTheft` is later leaked via the `GossipSystem` (Phase 06.1), the `JusticeSystem` (Phase 18) will assign a massive `CrimeMarker` to the scholar, turning the local guards against the newly minted business owner. The entire sequence natively links starvation to white-collar crime and subsequent physical violence.
+
+**Architecture Validation:**
+Strict Data-Oriented Design (DOD) maintained. We use an initial O(N) pass to gather forgers into a deterministic `[]forgerData` slice and cache NPC intellects. We avoid structural ECS map modifications inside query blocks to prevent `arche-go` swap-and-pop pointer invalidation. `Memory` writes explicitly use the ring buffer pattern. E2E determinism proven via `TestForgerySystem_Integration`.
