@@ -1,3 +1,23 @@
+## Evolution: Phase 70 - The Deed Forgery Engine (ForgerySystem)
+**Focus:** Integration (Economy + Genetics + Justice)
+
+**The Problem (Vision Gap):**
+The Vision document explicitly states: "Total Simulation & Boundless Possibility: There is no hardcoded 'End Game' and no artificial limits on interaction. If a system exists, it can be manipulated. You can forge deeds..." Previously, `BusinessComponent` ownership was static unless transferred via state execution (`DebtDefaultSystem`). There was no systemic mechanism for an individual to exploit the system autonomously to steal business ownership.
+
+**The Solution (Autonomous DOD Execution):**
+I created the `ForgerySystem`.
+1. Evaluates all desperate NPCs (`DesperationComponent.Level >= 50`) who are highly intelligent (`GenomeComponent.Intellect >= 120`).
+2. Iterates over existing `BusinessComponent` entities and caches the original owner's `Intellect`.
+3. If the forger's intellect surpasses the owner's by a significant margin (> 40), the system structurally executes the forgery:
+    - The `BusinessComponent.OwnerID` is overwritten with the Forger's ID.
+    - An `InteractionTheft` is recorded in the Forger's `Memory` ring buffer.
+    - A massive `-100` relationship hook is generated via the `SparseHookGraph`, bridging directly into the `BloodFeudSystem`.
+
+**The Butterfly Effect:**
+A wealthy Business owner is low-intellect (inherited wealth). A starving, brilliant Scholar (`JobNone`) is desperate. The Scholar logically identifies the vulnerability and executes `ForgerySystem`, stealing the business.
+The Scholar instantly gains the business's `TreasuryComponent` wealth, saving them from starvation. However, the original owner receives a massive `-100` grudge hook against the Scholar. The `BloodFeudSystem` activates. The former owner attempts to murder the Scholar to reclaim their stolen legacy. This murder triggers the `JusticeSystem`, sending Guards after the former owner, plunging the socio-economic hierarchy into chaos entirely driven by genetic inequality.
+Validated perfectly deterministic via `TestForgerySystem_Integration`.
+
 ## Evolution: Phase 68 - The Physical Medical Engine (MedicalSystem)
 **Focus:** Integration (Biology + Logistics + Economy + Social Hierarchy)
 
