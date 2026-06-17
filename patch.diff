@@ -1,0 +1,126 @@
+<<<<<<< SEARCH
+type ForgerySystem struct {
+	forgerFilter ecs.Filter
+	bizFilter    ecs.Filter
+	npcFilter    ecs.Filter
+	hooks        *engine.SparseHookGraph
+	changes      []forgeryChange
+}
+
+func NewForgerySystem(world *ecs.World, hooks *engine.SparseHookGraph) *ForgerySystem {
+=======
+type bizData struct {
+	Entity  ecs.Entity
+	OwnerID uint64
+}
+
+type ForgerySystem struct {
+	forgerFilter ecs.Filter
+	bizFilter    ecs.Filter
+	npcFilter    ecs.Filter
+	hooks        *engine.SparseHookGraph
+	changes      []forgeryChange
+	businesses   []bizData
+	intellectMap map[uint64]uint8
+}
+
+func NewForgerySystem(world *ecs.World, hooks *engine.SparseHookGraph) *ForgerySystem {
+>>>>>>> REPLACE
+<<<<<<< SEARCH
+	return &ForgerySystem{
+		forgerFilter: &f1,
+		bizFilter:    &f2,
+		npcFilter:    &f3,
+		hooks:        hooks,
+		changes:      make([]forgeryChange, 0, 100),
+	}
+}
+
+func (s *ForgerySystem) Update(world *ecs.World) {
+	// Step 1: Cache NPC intellects
+	idID := ecs.ComponentID[components.Identity](world)
+	genomeID := ecs.ComponentID[components.GenomeComponent](world)
+
+	npcQuery := world.Query(s.npcFilter)
+	intellectMap := make(map[uint64]uint8)
+	for npcQuery.Next() {
+		id := (*components.Identity)(npcQuery.Get(idID))
+		genome := (*components.GenomeComponent)(npcQuery.Get(genomeID))
+		intellectMap[id.ID] = genome.Intellect
+	}
+
+	// Step 2: Cache target businesses
+	bizID := ecs.ComponentID[components.BusinessComponent](world)
+	bizQuery := world.Query(s.bizFilter)
+
+	type bizData struct {
+		Entity  ecs.Entity
+		OwnerID uint64
+	}
+	businesses := make([]bizData, 0, 100)
+
+	for bizQuery.Next() {
+		biz := (*components.BusinessComponent)(bizQuery.Get(bizID))
+		businesses = append(businesses, bizData{
+			Entity:  bizQuery.Entity(),
+			OwnerID: biz.OwnerID,
+		})
+	}
+=======
+	return &ForgerySystem{
+		forgerFilter: &f1,
+		bizFilter:    &f2,
+		npcFilter:    &f3,
+		hooks:        hooks,
+		changes:      make([]forgeryChange, 0, 100),
+		businesses:   make([]bizData, 0, 100),
+		intellectMap: make(map[uint64]uint8),
+	}
+}
+
+func (s *ForgerySystem) Update(world *ecs.World) {
+	// Step 1: Cache NPC intellects
+	idID := ecs.ComponentID[components.Identity](world)
+	genomeID := ecs.ComponentID[components.GenomeComponent](world)
+
+	npcQuery := world.Query(s.npcFilter)
+	clear(s.intellectMap) // reuse the map
+	for npcQuery.Next() {
+		id := (*components.Identity)(npcQuery.Get(idID))
+		genome := (*components.GenomeComponent)(npcQuery.Get(genomeID))
+		s.intellectMap[id.ID] = genome.Intellect
+	}
+
+	// Step 2: Cache target businesses
+	bizID := ecs.ComponentID[components.BusinessComponent](world)
+	bizQuery := world.Query(s.bizFilter)
+
+	s.businesses = s.businesses[:0]
+
+	for bizQuery.Next() {
+		biz := (*components.BusinessComponent)(bizQuery.Get(bizID))
+		s.businesses = append(s.businesses, bizData{
+			Entity:  bizQuery.Entity(),
+			OwnerID: biz.OwnerID,
+		})
+	}
+>>>>>>> REPLACE
+<<<<<<< SEARCH
+		// Try to find a target business
+		for _, b := range businesses {
+			// Skip if already owns it
+			if b.OwnerID == id.ID {
+				continue
+			}
+
+			ownerIntellect, ok := intellectMap[b.OwnerID]
+=======
+		// Try to find a target business
+		for _, b := range s.businesses {
+			// Skip if already owns it
+			if b.OwnerID == id.ID {
+				continue
+			}
+
+			ownerIntellect, ok := s.intellectMap[b.OwnerID]
+>>>>>>> REPLACE

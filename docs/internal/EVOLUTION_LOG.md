@@ -1077,3 +1077,21 @@ Because of localized famines, the city's `Trauma` spikes. The `ScapegoatSystem` 
 
 **Architecture Validation:**
 Strict Data-Oriented Design (DOD) maintained. We pre-cache potential victims into a flat `[]parasiteVictimData` array to entirely avoid nested `arche-go` ECS lock panics during the O(N^2) distance calculations. `ParasiteComponent` size validated via `unsafe.Sizeof` tests. E2E determinism proven via `TestParasiteSystem_Integration`.
+
+## Evolution: Phase 70 - The Deed Forgery Engine
+**Focus:** Integration (Economy + Genetics + Justice)
+
+**The Problem (Vision Gap):**
+The Vision states that "actions have physical consequences, and that systems form a closed loop of 'growth, decay, psychology, and rebirth' generated entirely by the physical actions, labor, memories, and needs of the NPCs." However, there was a gap where desperate NPCs with high intelligence could not leverage their intellect to subvert the economic constraints. A starving but highly intelligent NPC had no mechanism to forge ownership documents to take over a business, leaving the justice and economy disconnected at the top levels of ownership.
+
+**The Solution (Autonomous DOD Execution):**
+I created the `ForgerySystem` adhering to DOD.
+1. It queries NPCs with a `DesperationComponent` and evaluates their `GenomeComponent.Intellect` against existing `BusinessComponent` owners.
+2. If the desperate NPC's intellect is strictly greater than the current owner's intellect, they successfully forge the deed and steal ownership.
+3. The system executes this structurally by updating the `OwnerID` of the `BusinessComponent`.
+4. It connects to the Justice Engine by immediately injecting a massive `-100` penalty into the `SparseHookGraph` from the victim to the forger.
+5. It logs an `InteractionTheft` inside the forger's `Memory` ring buffer, perfectly tracking the crime for future consequences.
+
+**The Butterfly Effect:**
+A city enters an economic downturn, spiking starvation and desperation among the lower classes. A highly intelligent but poor NPC reaches desperation. They observe a wealthy, low-intellect merchant who owns a lucrative business. The intelligent NPC successfully forges the deed to the business. The merchant loses everything and instantly develops a massive blood feud (`-100` hook) against the forger. The crime is recorded as an `InteractionTheft` in the forger's memory. When guards (Justice System) or ostracization checks read this memory, the forger may be targeted for penal labor, while the newly impoverished former owner might now be driven to their own acts of desperation, perfectly closing the loop between the intellect-driven genetics, economy, and justice layers.
+Validated perfectly deterministic via `TestForgerySystem_Integration`.
