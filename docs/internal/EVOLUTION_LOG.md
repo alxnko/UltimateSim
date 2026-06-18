@@ -1077,3 +1077,19 @@ Because of localized famines, the city's `Trauma` spikes. The `ScapegoatSystem` 
 
 **Architecture Validation:**
 Strict Data-Oriented Design (DOD) maintained. We pre-cache potential victims into a flat `[]parasiteVictimData` array to entirely avoid nested `arche-go` ECS lock panics during the O(N^2) distance calculations. `ParasiteComponent` size validated via `unsafe.Sizeof` tests. E2E determinism proven via `TestParasiteSystem_Integration`.
+
+## Evolution: Phase 70 - The Deed Forgery Engine (ForgerySystem)
+**Focus:** Integration (Economy + Genetics + Justice)
+
+**The Problem (Vision Gap):**
+The Vision (`docs/vision.md`) demands "Total Simulation & Boundless Possibility," specifically mentioning the ability to "forge deeds." Prior to Phase 70, `BusinessComponent.OwnerID` was mostly static after establishment. There was no systemic mechanism allowing low-wealth, high-intellect NPCs to aggressively seize property, missing an entire vector of white-collar crime and economic displacement.
+
+**The Solution (Autonomous DOD Execution):**
+I created the `ForgerySystem` to bridge this gap:
+1. The system pre-caches business ownership data and owner intellects into a flat slice `businesses []forgeryBusinessData` for DOD O(1) iteration speed.
+2. It queries for desperate NPCs (`DesperationComponent.Level > 0`) possessing higher `GenomeComponent.Intellect` than a targeted business owner.
+3. Once identified, the system structurally transfers ownership (`BusinessComponent.OwnerID`), logs the crime (`InteractionTheft`) in the forger's `Memory` ring buffer, and injects a massive `-100` hook from the victim to the forger into the `SparseHookGraph`.
+
+**The Butterfly Effect:**
+A highly intelligent but starving NPC (`DesperationComponent.Level > 50`) steals the deed to a local bakery from a low-intellect owner. The transfer saves the forger from starvation but leaves the victim destitute and furious. The `-100` hook bridges directly into the `BloodFeudSystem` (Phase 23), triggering the victim to bypass the formal Justice system entirely and execute an `InteractionMurder` against the forger in broad daylight.
+Validated perfectly deterministic via `TestForgerySystem_Integration`.
