@@ -1077,3 +1077,23 @@ Because of localized famines, the city's `Trauma` spikes. The `ScapegoatSystem` 
 
 **Architecture Validation:**
 Strict Data-Oriented Design (DOD) maintained. We pre-cache potential victims into a flat `[]parasiteVictimData` array to entirely avoid nested `arche-go` ECS lock panics during the O(N^2) distance calculations. `ParasiteComponent` size validated via `unsafe.Sizeof` tests. E2E determinism proven via `TestParasiteSystem_Integration`.
+
+## Evolution: Phase 70 - The Deed Forgery Engine (ForgerySystem)
+**Focus:** Integration (Economy + Genetics + Justice)
+
+**The Problem (Vision Gap):**
+The Vision document mentions "forge deeds" and stealing property, allowing the ultimate form of player freedom. Previously, business ownership was static—once an NPC or player gained ownership of a `BusinessComponent`, they held it safely forever, with crime limited strictly to stealing physical `ContrabandComponent` items or assassinating individuals. There was no mechanism for a systemic, white-collar crime driven by high intellect.
+
+**The Solution (Autonomous DOD Execution):**
+I created the **Deed Forgery Engine** via `ForgerySystem`.
+1. **The Forgery Mechanic:** The system maps the ownership of all active `BusinessComponent`s. It queries NPCs with a `DesperationComponent.Level > 0` (hungry or impoverished).
+2. **Intellectual Warfare:** Desperate NPCs actively hunt for business owners whose `GenomeComponent.Intellect` is strictly lower than their own. If an intellectual mismatch is found, the desperate NPC systemically forged the deed, bypassing the physical world entirely.
+3. **Property Transfer:** Ownership of the `BusinessComponent` is transferred permanently and structurally to the forger.
+4. **Social & Memory Hooks:** The original owner discovers the forgery. A massive `-100` relationship hook is generated from the victim to the forger via `SparseHookGraph`, and an `InteractionTheft` (4) is permanently written into the forger's `Memory` ring buffer.
+
+**The Butterfly Effect:**
+A drought causes inflation, impoverishing a highly intelligent, low-status NPC (Desperation spikes). The NPC targets a slow-witted noble who owns a lucrative business. The NPC forges the deed and steals the business, saving themselves from starvation.
+The original noble discovers the theft, receiving a `-100` hook. Because of this hook, the `BloodFeudSystem` activates. The noble hires a mercenary (Phase 47) or personally attempts to execute the forger (Phase 64 Physical Combat Engine). The intellectual white-collar crime spirals seamlessly into an alleyway bloodbath, perfectly bridging Economy, Genetics, and the Justice engine.
+
+**Architecture Validation:**
+Strict Data-Oriented Design (DOD) maintained. We pre-cache all desperate NPCs into a flat array (`npcCache`) and map current owner intellect to avoid `O(N*M)` nested ECS query iteration locks. Structural changes (`BusinessComponent` modifications and hook insertions) are strictly deferred to arrays until after query loops. E2E determinism proven via `TestForgerySystem_Determinism`.
