@@ -1077,3 +1077,22 @@ Because of localized famines, the city's `Trauma` spikes. The `ScapegoatSystem` 
 
 **Architecture Validation:**
 Strict Data-Oriented Design (DOD) maintained. We pre-cache potential victims into a flat `[]parasiteVictimData` array to entirely avoid nested `arche-go` ECS lock panics during the O(N^2) distance calculations. `ParasiteComponent` size validated via `unsafe.Sizeof` tests. E2E determinism proven via `TestParasiteSystem_Integration`.
+
+## Evolution: Phase 70 - The Deed Forgery Engine (ForgerySystem)
+**Focus:** Integration (Economy + Genetics + Justice)
+
+**The Problem (Vision Gap):**
+The Vision states "If a system exists, it can be manipulated. You can forge deeds...". Previously, business ownership (Phase 15.1) was static and bound to the initial purchaser via `BusinessComponent.OwnerID`. While desperate NPCs could steal physical food (Phase 21.1 Desperation), they lacked any systemic mechanism to organically usurp the means of production or manipulate property rights. This left an ideological gap where massive wealth inequality could not be addressed through systemic white-collar crime.
+
+**The Solution (Autonomous DOD Execution):**
+I created the **Deed Forgery Engine** via `ForgerySystem`.
+1. It pre-caches the `Intellect` parameter from `GenomeComponent` for all active NPCs in an O(1) map.
+2. It filters all NPCs currently tagged with a `DesperationComponent`.
+3. It iterates over existing `BusinessComponent` entities. If a desperate NPC possesses a significantly higher `Intellect` than the current business owner, the NPC mathematically executes a forgery, seizing the `OwnerID`.
+4. It structurally integrates with Phase 23 (Blood Feud) by injecting a massive `-100` hook from the usurped owner to the forger into the `SparseHookGraph`.
+5. It structurally integrates with Phase 04.4 (Individual Memory) by logging a direct `InteractionTheft` in the forger's `Memory` ring buffer.
+
+**The Butterfly Effect:**
+A wealthy, low-intellect noble inherits a massive mercantile `BusinessComponent` (Phase 25.1 Succession). Due to a local famine, a high-intellect Scholar NPC is starving and triggers the `DesperationSystem` (Phase 21.1), tagging them as desperate.
+During the next tick, the `ForgerySystem` evaluates the Scholar. Leveraging their superior `Intellect`, the Scholar successfully forges a deed and steals the noble's business.
+The theft generates a massive `-100` relationship hook. In the subsequent tick, the `BloodFeudSystem` (Phase 23.1) evaluates this hook, immediately spawning a `CombatMarker` on the noble targeting the Scholar. The noble attempts to physically murder the Scholar in the streets, transitioning a white-collar economic crime directly into the physical Action-RPG combat layer, perfectly closing the loop. E2E determinism proven via `TestForgerySystem_Integration`.

@@ -1,0 +1,85 @@
+<<<<<<< SEARCH
+	// Collect desperate NPCs in a slice, sorted by ID for determinism
+	type desperateNPC struct {
+		id        uint64
+		intellect uint8
+		entity    ecs.Entity
+		memory    *components.Memory
+	}
+	var desperates []desperateNPC
+
+	for dQuery.Next() {
+		ident := (*components.Identity)(dQuery.Get(s.identID))
+		genome := (*components.GenomeComponent)(dQuery.Get(s.genomeID))
+		mem := (*components.Memory)(dQuery.Get(s.memID))
+		desperates = append(desperates, desperateNPC{
+			id:        ident.ID,
+			intellect: genome.Intellect,
+			entity:    dQuery.Entity(),
+			memory:    mem,
+		})
+	}
+
+	sort.Slice(desperates, func(i, j int) bool {
+		return desperates[i].id < desperates[j].id
+	})
+
+	// Iterate over businesses
+	bQuery := world.Query(s.businessFilter)
+	type businessData struct {
+		entity  ecs.Entity
+		ownerID uint64
+		comp    *components.BusinessComponent
+	}
+	var businesses []businessData
+	for bQuery.Next() {
+		bus := (*components.BusinessComponent)(bQuery.Get(s.busID))
+		businesses = append(businesses, businessData{
+			entity:  bQuery.Entity(),
+			ownerID: bus.OwnerID,
+			comp:    bus,
+		})
+	}
+
+	sort.Slice(businesses, func(i, j int) bool {
+		return businesses[i].entity.ID() < businesses[j].entity.ID()
+	})
+=======
+	// Collect desperate NPCs in a slice
+	type desperateNPC struct {
+		id        uint64
+		intellect uint8
+		entity    ecs.Entity
+		memory    *components.Memory
+	}
+	var desperates []desperateNPC
+
+	for dQuery.Next() {
+		ident := (*components.Identity)(dQuery.Get(s.identID))
+		genome := (*components.GenomeComponent)(dQuery.Get(s.genomeID))
+		mem := (*components.Memory)(dQuery.Get(s.memID))
+		desperates = append(desperates, desperateNPC{
+			id:        ident.ID,
+			intellect: genome.Intellect,
+			entity:    dQuery.Entity(),
+			memory:    mem,
+		})
+	}
+
+	// Iterate over businesses
+	bQuery := world.Query(s.businessFilter)
+	type businessData struct {
+		entity  ecs.Entity
+		ownerID uint64
+		comp    *components.BusinessComponent
+	}
+	var businesses []businessData
+	for bQuery.Next() {
+		bus := (*components.BusinessComponent)(bQuery.Get(s.busID))
+		businesses = append(businesses, businessData{
+			entity:  bQuery.Entity(),
+			ownerID: bus.OwnerID,
+			comp:    bus,
+		})
+	}
+>>>>>>> REPLACE
