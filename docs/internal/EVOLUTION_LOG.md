@@ -1077,3 +1077,20 @@ Because of localized famines, the city's `Trauma` spikes. The `ScapegoatSystem` 
 
 **Architecture Validation:**
 Strict Data-Oriented Design (DOD) maintained. We pre-cache potential victims into a flat `[]parasiteVictimData` array to entirely avoid nested `arche-go` ECS lock panics during the O(N^2) distance calculations. `ParasiteComponent` size validated via `unsafe.Sizeof` tests. E2E determinism proven via `TestParasiteSystem_Integration`.
+
+## Evolution: Phase 70 - The Deed Forgery Engine
+**Focus:** Integration (Economy + Genetics + Justice)
+
+**The Problem (Vision Gap):**
+The Vision requires "Total Simulation" where any system can be interacted with. Previously, property and business ownership (`BusinessComponent`) were static unless formally inherited or sold. There was no mechanism for an NPC to forcefully seize property from another through non-violent intellectual means, artificially isolating the Economic layer from Genetics (Intellect) and Justice (Theft).
+
+**The Solution (Autonomous DOD Execution):**
+I created the `ForgerySystem`.
+1. It pre-caches `BusinessComponent`s and queries desperate NPCs (`DesperationComponent`).
+2. If a desperate NPC has a higher `GenomeComponent.Intellect` than the current business owner, they mathematically steal the ownership deed.
+3. The act of theft dynamically spawns a `-100` negative hook against the forger in the `SparseHookGraph` and physically logs an `InteractionTheft` event into their `Memory` buffer.
+
+**The Butterfly Effect:**
+An economic crash forces a highly intelligent but poor scholar into desperation. They decide to use their intellect to forge the deed of a prominent Blacksmith's workshop. The ownership physically transfers, granting the scholar all future profits.
+However, the original Blacksmith, furious at being duped, immediately gains a `-100` Blood Feud grudge against the scholar. Concurrently, the scholar's `Memory` records the theft. If the scholar is ever detained by a Guard, or if Gossip spreads their secret, the `JusticeSystem` will detect the `InteractionTheft`, flag the scholar with a `CrimeMarker`, and direct Guards to arrest or execute them. What began as an intellectual property grab dynamically explodes into a deadly inter-clan rivalry and systemic criminal manhunt.
+Validated perfectly deterministic via `TestForgerySystem_Integration`.
