@@ -1112,3 +1112,20 @@ I created the `ForgerySystem`.
 An economic crash forces a highly intelligent but poor scholar into desperation. They decide to use their intellect to forge the deed of a prominent Blacksmith's workshop. The ownership physically transfers, granting the scholar all future profits.
 However, the original Blacksmith, furious at being duped, immediately gains a `-100` Blood Feud grudge against the scholar. Concurrently, the scholar's `Memory` records the theft. If the scholar is ever detained by a Guard, or if Gossip spreads their secret, the `JusticeSystem` will detect the `InteractionTheft`, flag the scholar with a `CrimeMarker`, and direct Guards to arrest or execute them. What began as an intellectual property grab dynamically explodes into a deadly inter-clan rivalry and systemic criminal manhunt.
 Validated perfectly deterministic via `TestForgerySystem_Integration`.
+
+## Evolution: Phase 36 - The Sapper & Undermining Engine
+**Focus:** Integration (Warfare + Geography + Construction)
+
+**The Problem (Vision Gap):**
+In warfare, physical fortifications (`StructureComponent` walls) currently only take abstract damage or are bypassed entirely by simple paths. Phase 36 explicitly requires "Sappers & Undermining" during sieges, where `JobMiner` units dig under walls to collapse them, bridging the Mining System (Phase 67) with Siege Warfare and Construction (Phase 59).
+
+**The Solution (Autonomous DOD Execution):**
+I created the `UnderminingSystem` and a 16-byte aligned `TunnelComponent`.
+1. **Component Addition:** Introduced `TunnelComponent` (TargetID uint64, Progress float32, _ uint32 padding) to physically track underground tunnel integrity.
+2. **The Dig Mechanic:** During an active siege (`WarTrackerComponent.Active`), the system evaluates `JobMiner` NPCs near `StructureComponent` targets. Instead of directly attacking, miners generate a physical `TunnelComponent` under the wall.
+3. **Structural Collapse:** As miners spend ticks progressing the tunnel, the system mathematically deducts `Integrity` from the target `StructureComponent`.
+4. **Breach Execution:** When `Integrity <= 0`, the structure is physically destroyed, dynamically opening a physical path through the walls for the attacking army.
+
+**The Butterfly Effect:**
+An attacking army cannot breach a massive castle wall, halting their infantry assault. The commander deploys `JobMiner` NPCs. The miners dig `TunnelComponent` entities under the walls. The `StructureComponent` collapses physically. This destruction removes the barrier, allowing the attacking infantry's `Path` components to route into the city. The sudden influx of hostile troops triggers the `SiegeSystem` to spike starvation, leading to local `Desperation` and a complete economic collapse of the defending city.
+Validated perfectly deterministic via `TestUnderminingSystem_Integration` ensuring no multi-threading ECS locks during structural execution loops.
