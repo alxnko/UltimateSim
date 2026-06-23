@@ -1,3 +1,21 @@
+## Evolution: Phase 67 - The Subterranean Mining Engine (MiningSystem)
+**Focus:** Integration (Geography + Biology + Economy + Entropy)
+
+**The Problem (Vision Gap):**
+The Vision requires physical parity for systems. Resource extraction was previously not fully modeled as physical labor impacting the ecosystem over time. Iron and stone need a proper extraction mechanism by individual entities that directly ties into market fluctuations and environmental degradation (Entropy).
+
+**The Solution (Autonomous DOD Execution):**
+I created the `MiningSystem` and introduced `JobMiner` (`uint8 = 15`).
+1. The system pre-caches active `StorageComponent` and `MarketComponent` maps for Employer entities to ensure fast O(1) lookups during execution.
+2. NPCs with `JobMiner` iterate, physically drawing `Stamina` (5.0 per extraction) to pull `Iron` or `Stone` from the `MapGrid` `ResourceDepot` at their tile.
+3. Extracted materials are directly added to the Employer's `StorageComponent`.
+4. Market prices for these resources mathematically lower over time (`-0.01` per extraction) based on supply influx.
+5. Repeated extraction triggers an entropy effect, permanently reducing the tile's `Elevation` and recalibrating its `BiomeID`.
+
+**The Butterfly Effect:**
+An NPC, lacking wealth, takes on a mining job (JobMiner). They physically drain their stamina over multiple ticks extracting iron ore. This action increases their employer's storage while slightly dropping the local market price of iron. Over weeks, the intense mining lowers the physical elevation of the map tile, potentially creating a valley or altering the biome, while the worker requires increased food consumption due to stamina loss, plugging into the `AgricultureSystem` and `MetabolismSystem`. Validated perfectly deterministic via `TestMiningSystem_Integration`.
+
+
 ## Evolution: Phase 68 - The Physical Medical Engine (MedicalSystem)
 **Focus:** Integration (Biology + Logistics + Economy + Social Hierarchy)
 
