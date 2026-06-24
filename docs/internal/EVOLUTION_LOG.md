@@ -1112,3 +1112,27 @@ I created the `ForgerySystem`.
 An economic crash forces a highly intelligent but poor scholar into desperation. They decide to use their intellect to forge the deed of a prominent Blacksmith's workshop. The ownership physically transfers, granting the scholar all future profits.
 However, the original Blacksmith, furious at being duped, immediately gains a `-100` Blood Feud grudge against the scholar. Concurrently, the scholar's `Memory` records the theft. If the scholar is ever detained by a Guard, or if Gossip spreads their secret, the `JusticeSystem` will detect the `InteractionTheft`, flag the scholar with a `CrimeMarker`, and direct Guards to arrest or execute them. What began as an intellectual property grab dynamically explodes into a deadly inter-clan rivalry and systemic criminal manhunt.
 Validated perfectly deterministic via `TestForgerySystem_Integration`.
+
+## Evolution: Phase 71 - The Macabre Survival Engine (CannibalismSystem)
+**Focus:** Integration (Biology + Economy + Sanitation + Psychology + Parasitic Symbiosis)
+
+**The Problem (Vision Gap):**
+The Vision requires "Total Freedom & Physical Constraints" and that all mechanics bridge into macro-emergence. Previously, starvation and death (`SanitationSystem`) generated corpses, but starving NPCs lacked any mechanism to violate social taboos to survive when food dropped to zero. This isolated the Sanitation system from deep biological desperation and prevented emergent origin stories for the `Parasitic Symbiosis Engine` (Phase 69).
+
+**The Solution (Autonomous DOD Execution):**
+I created the `CannibalismSystem`.
+1. It pre-caches `CorpseComponent` entities.
+2. It queries highly desperate, starving NPCs (`Needs.Food < 30.0` and `Desperation.Level >= 50`).
+3. These NPCs pathfind to the nearest physical corpse.
+4. Upon consumption (`distSq <= 2.0`), the system:
+   - Restores the NPC's `Needs.Food`.
+   - Physically destroys the corpse (intercepting the biological decay/plague vector).
+   - Induces massive psychological trauma (`Sanity.Stress += 50.0`).
+   - Forces a 100% deterministic contraction of the `ParasiteComponent` (organically triggering Phase 69).
+   - Natively tags the NPC with the `TraitEsoteric` identity mask and logs an `InteractionEsoteric` event into their `Memory` buffer.
+
+**The Butterfly Effect:**
+A harsh winter hits, spiking food prices. A poor lumberjack begins to starve, causing his `Desperation.Level` to max out. Nearby, another peasant dies from cold exposure, leaving a `CorpseComponent`.
+Driven by sheer biological necessity, the lumberjack consumes the corpse. He survives, but the massive `Stress` pushes him towards a `MentalBreak` (Phase 62). Simultaneously, the act infects him with the `ParasiteComponent`. He is now driven by a new biological need for Blood.
+Because the act logged an `InteractionEsoteric` event in his `Memory`, if a city Guard ever detains him or gossip leaks his secret, the `JusticeSystem` will assign him a `CrimeMarker`. What began as a pure economic-biological failure (starvation) has systemically mutated an NPC into an esoteric, parasitic serial killer now hunted by the Justice layer—all without a single hardcoded narrative script.
+Validated perfectly deterministic via `TestCannibalismSystem_Integration`.
