@@ -378,4 +378,9 @@ func TestConstructionComponentsSize(t *testing.T) {
 	if actualParasite != 8 {
 		t.Errorf("ParasiteComponent is %d bytes, expected exactly 8 bytes for DOD bounds", actualParasite)
 	}
+
+	actualTunnel := unsafe.Sizeof(TunnelComponent{})
+	if actualTunnel != 16 {
+		t.Errorf("TunnelComponent is %d bytes, expected exactly 16 bytes for DOD bounds", actualTunnel)
+	}
 }
