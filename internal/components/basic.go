@@ -629,3 +629,10 @@ type ParasiteComponent struct {
 	IsHidden     bool
 	_            [3]byte // Pad to exactly 8 bytes
 }
+
+// Phase 36: Siege Warfare (Sappers & Undermining)
+type TunnelComponent struct {
+	TargetID uint64
+	Progress float32
+	_        uint32 // Padding to exactly 16 bytes
+}
