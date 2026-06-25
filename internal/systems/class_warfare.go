@@ -17,7 +17,7 @@ type ClassWarfareSystem struct {
 	tickCounter uint64
 
 	// Pre-cached filters to satisfy DOD iteration speeds
-	npcFilter   ecs.Filter
+	npcFilter ecs.Filter
 }
 
 func NewClassWarfareSystem(world *ecs.World, hooks *engine.SparseHookGraph) *ClassWarfareSystem {
@@ -81,7 +81,6 @@ func (s *ClassWarfareSystem) Update(world *ecs.World) {
 	villageID := ecs.ComponentID[components.Village](world)
 	marketID := ecs.ComponentID[components.MarketComponent](world)
 	storID := ecs.ComponentID[components.StorageComponent](world)
-
 
 	villageQuery := world.Query(ecs.All(villageID, affID, marketID, storID))
 	for villageQuery.Next() {

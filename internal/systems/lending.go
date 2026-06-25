@@ -187,7 +187,7 @@ func (s *LendingSystem) Update(world *ecs.World) {
 
 			loan := (*components.LoanContractComponent)(world.Get(issuance.DebtorEntity, s.loanID))
 			loan.CreditorID = issuance.CreditorID
-			loan.AssetID = issuance.AssetID // The Creditor's GuildID
+			loan.AssetID = issuance.AssetID     // The Creditor's GuildID
 			loan.DueTick = s.tickCounter + 1000 // Loan comes due in 1000 ticks
 		}
 	}

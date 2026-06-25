@@ -12,7 +12,7 @@ import (
 // it unilaterally withdraws from the Country to save on tax costs.
 
 const (
-	AdministrativeFractureTickRate = 1000 // Perform analysis every 1000 ticks
+	AdministrativeFractureTickRate = 1000  // Perform analysis every 1000 ticks
 	MaxAdministrativeRange         = 150.0 // Maximum allowed distance from capital
 )
 

@@ -104,10 +104,10 @@ func (s *LedgerDiscoverySystem) Update(world *ecs.World) {
 					// If the NPC doesn't know it, they learn it as a viral rumor
 					if !alreadyKnown {
 						secrets.Secrets = append(secrets.Secrets, components.Secret{
-							OriginID: ident.ID,   // They act as the origin of their new knowledge
+							OriginID: ident.ID, // They act as the origin of their new knowledge
 							SecretID: secretID,
-							Virality: 255,        // Highly contagious when rediscovered
-							BeliefID: 0,          // Can be expanded later for religious texts
+							Virality: 255, // Highly contagious when rediscovered
+							BeliefID: 0,   // Can be expanded later for religious texts
 						})
 					}
 				}

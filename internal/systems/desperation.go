@@ -108,7 +108,9 @@ func (s *DesperationSystem) Update(world *ecs.World) {
 
 			for i := 0; i < len(s.villages); i++ {
 				v := &s.villages[i]
-				if v.Storage.Food <= 0 { continue }
+				if v.Storage.Food <= 0 {
+					continue
+				}
 
 				dx := pos.X - v.X
 				dy := pos.Y - v.Y

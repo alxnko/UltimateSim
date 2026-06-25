@@ -1,10 +1,10 @@
 package systems
 
 import (
-	"testing"
-	"github.com/mlange-42/arche/ecs"
 	"github.com/ALXNKO/UltimateSim/internal/components"
 	"github.com/ALXNKO/UltimateSim/internal/engine"
+	"github.com/mlange-42/arche/ecs"
+	"testing"
 )
 
 // Phase 07.4: Misunderstandings Test

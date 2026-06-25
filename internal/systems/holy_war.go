@@ -12,25 +12,25 @@ type HolyWarSystem struct {
 	tickCounter uint64
 
 	// Component IDs
-	identID      ecs.ID
-	posID        ecs.ID
-	velID        ecs.ID
-	villageID    ecs.ID
-	beliefID     ecs.ID
-	storageID    ecs.ID
-	crusaderID   ecs.ID
+	identID       ecs.ID
+	posID         ecs.ID
+	velID         ecs.ID
+	villageID     ecs.ID
+	beliefID      ecs.ID
+	storageID     ecs.ID
+	crusaderID    ecs.ID
 	crusadeCompID ecs.ID
 }
 
 func NewHolyWarSystem(world *ecs.World) *HolyWarSystem {
 	return &HolyWarSystem{
-		identID:      ecs.ComponentID[components.Identity](world),
-		posID:        ecs.ComponentID[components.Position](world),
-		velID:        ecs.ComponentID[components.Velocity](world),
-		villageID:    ecs.ComponentID[components.Village](world),
-		beliefID:     ecs.ComponentID[components.BeliefComponent](world),
-		storageID:    ecs.ComponentID[components.StorageComponent](world),
-		crusaderID:   ecs.ComponentID[components.CrusaderEntity](world),
+		identID:       ecs.ComponentID[components.Identity](world),
+		posID:         ecs.ComponentID[components.Position](world),
+		velID:         ecs.ComponentID[components.Velocity](world),
+		villageID:     ecs.ComponentID[components.Village](world),
+		beliefID:      ecs.ComponentID[components.BeliefComponent](world),
+		storageID:     ecs.ComponentID[components.StorageComponent](world),
+		crusaderID:    ecs.ComponentID[components.CrusaderEntity](world),
 		crusadeCompID: ecs.ComponentID[components.CrusadeComponent](world),
 	}
 }

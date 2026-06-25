@@ -22,15 +22,15 @@ type MiningSystem struct {
 	filter ecs.Filter
 
 	// Component IDs
-	npcID       ecs.ID
-	jobID       ecs.ID
-	posID       ecs.ID
-	vitalsID    ecs.ID
-	storageID   ecs.ID
-	marketID    ecs.ID
-	idID        ecs.ID
-	businessID  ecs.ID
-	villageID   ecs.ID
+	npcID      ecs.ID
+	jobID      ecs.ID
+	posID      ecs.ID
+	vitalsID   ecs.ID
+	storageID  ecs.ID
+	marketID   ecs.ID
+	idID       ecs.ID
+	businessID ecs.ID
+	villageID  ecs.ID
 
 	// Active employer cache
 	activeStorages map[uint64]*components.StorageComponent
@@ -162,7 +162,7 @@ func (s *MiningSystem) Update(world *ecs.World) {
 				// Lower Elevation Over Time (Entropy)
 				// For simulation simplicity, we decrease it slightly when mining occurs
 				// We'll decrement elevation every 10 ticks a miner extracts resources
-				if s.tickCounter % 10 == 0 {
+				if s.tickCounter%10 == 0 {
 					if tile.Elevation > 0 {
 						tile.Elevation--
 						// Update Biome ID

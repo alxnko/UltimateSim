@@ -10,10 +10,10 @@ import (
 // Bridges Phase 13/21 (Desperation/Wealth) directly to Phase 17 (Naval Logistics).
 
 type shipNodeData struct {
-	Entity ecs.Entity
-	OwnerID uint64
-	X float32
-	Y float32
+	Entity        ecs.Entity
+	OwnerID       uint64
+	X             float32
+	Y             float32
 	PassengerComp *components.PassengerComponent
 }
 
@@ -68,10 +68,10 @@ func (s *MaritimeMigrationSystem) Update(world *ecs.World) {
 		}
 
 		s.ships = append(s.ships, shipNodeData{
-			Entity: shipQuery.Entity(),
-			OwnerID: ownerID,
-			X: pos.X,
-			Y: pos.Y,
+			Entity:        shipQuery.Entity(),
+			OwnerID:       ownerID,
+			X:             pos.X,
+			Y:             pos.Y,
 			PassengerComp: passComp,
 		})
 	}

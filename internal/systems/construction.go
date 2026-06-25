@@ -159,7 +159,14 @@ func (s *ConstructionSystem) processBuilders() {
 
 	// Collect all sites
 	qSite := s.world.Query(s.siteFilter)
-	var completedSites []ecs.Entity
+	// Shell Phase: capture site type + position so completion can branch per
+	// structure type (and spawn co-located workbenches for workshops).
+	type completedSite struct {
+		ent      ecs.Entity
+		siteType uint32
+		x, y     float32
+	}
+	var completedSites []completedSite
 
 	for qSite.Next() {
 		site := (*components.ConstructionSiteComponent)(qSite.Get(siteID))
@@ -167,7 +174,7 @@ func (s *ConstructionSystem) processBuilders() {
 		aff := (*components.Affiliation)(qSite.Get(aID))
 
 		if site.Progress >= site.MaxProgress {
-			completedSites = append(completedSites, qSite.Entity())
+			completedSites = append(completedSites, completedSite{qSite.Entity(), site.SiteType, pos.X, pos.Y})
 			continue
 		}
 
@@ -238,13 +245,23 @@ func (s *ConstructionSystem) processBuilders() {
 					}
 				} else {
 					// Fallback simple movement if pathing is unavailable
-					if dx > 0 { pos.X -= 0.5 } else if dx < 0 { pos.X += 0.5 }
-					if dy > 0 { pos.Y -= 0.5 } else if dy < 0 { pos.Y += 0.5 }
+					if dx > 0 {
+						pos.X -= 0.5
+					} else if dx < 0 {
+						pos.X += 0.5
+					}
+					if dy > 0 {
+						pos.Y -= 0.5
+					} else if dy < 0 {
+						pos.Y += 0.5
+					}
 				}
 			} else {
 				// At site, build!
 				vData, vExists := s.villageCache[aff.CityID]
-				if !vExists { continue }
+				if !vExists {
+					continue
+				}
 
 				// Drain resources
 				if mySite.Site.WoodGathered < mySite.Site.WoodRequired && vData.Storage.Wood > 0 {
@@ -262,20 +279,41 @@ func (s *ConstructionSystem) processBuilders() {
 	}
 
 	// Transform completed sites
-	for _, ent := range completedSites {
+	wbID := ecs.ComponentID[components.WorkbenchComponent](s.world)
+	for _, cs := range completedSites {
+		ent := cs.ent
 		s.world.Remove(ent, siteID)
 		s.world.Add(ent, structID)
 
+		stype := cs.siteType
+		if stype == 0 {
+			stype = uint32(components.StructureHouse)
+		}
 		str := (*components.StructureComponent)(s.world.Get(ent, structID))
-		str.StructureType = uint32(components.StructureHouse)
+		str.StructureType = stype
 		str.Integrity = 100.0
 
-		// Boost demographics
-		if s.world.Has(ent, aID) {
+		// Per-type effects.
+		popBonus := uint32(0)
+		switch uint8(stype) {
+		case components.StructureHouse:
+			popBonus = 50
+		case components.StructureStorehouse:
+			popBonus = 100
+		case components.StructureWorkshop:
+			// Spawn a co-located workbench for artisans.
+			wbEnt := s.world.NewEntity(wbID, pID)
+			wb := (*components.WorkbenchComponent)(s.world.Get(wbEnt, wbID))
+			wb.EmployerID = 0
+			wb.X, wb.Y = cs.x, cs.y
+			wbPos := (*components.Position)(s.world.Get(wbEnt, pID))
+			wbPos.X, wbPos.Y = cs.x, cs.y
+		}
+
+		if popBonus > 0 && s.world.Has(ent, aID) {
 			aff := (*components.Affiliation)(s.world.Get(ent, aID))
 			if vData, exists := s.villageCache[aff.CityID]; exists {
-				// Each new house increases peak population
-				vData.Demo.PeakPopulation += 50
+				vData.Demo.PeakPopulation += popBonus
 			}
 		}
 	}

@@ -31,7 +31,7 @@ func TestMentalBreakSystem_Deterministic(t *testing.T) {
 
 		sanity := (*components.SanityComponent)(world.Get(npc, sID))
 		sanity.MaxStress = 100 // Max stress
-		sanity.Stress = 95 // Close to breaking
+		sanity.Stress = 95     // Close to breaking
 
 		// We need the RNG to roll < 50 for Berserk.
 		// Since we just seeded it, let's fast forward to trigger it.

@@ -126,8 +126,6 @@ func TestConstructionSystem_Integration(t *testing.T) {
 	demo = (*components.DemographicsComponent)(world.Get(vEnt, dID))
 	pop = (*components.PopulationComponent)(world.Get(vEnt, popID))
 
-
-
 	// We might need an identity to avoid crash when laborCrisisSystem iterates NPCs
 	ident := (*components.Identity)(world.Get(vEnt, ecs.ComponentID[components.Identity](&world)))
 	if ident == nil {
@@ -136,9 +134,10 @@ func TestConstructionSystem_Integration(t *testing.T) {
 		pop = (*components.PopulationComponent)(world.Get(vEnt, popID))
 
 	}
-	for i := 0; i < 110; i++ { laborCrisisSystem.Update(&world) }
- // Run it once
-
+	for i := 0; i < 110; i++ {
+		laborCrisisSystem.Update(&world)
+	}
+	// Run it once
 
 	if !demo.LaborCrisisActive {
 		t.Logf("Pop count: %d, Peak: %d", pop.Count, demo.PeakPopulation)

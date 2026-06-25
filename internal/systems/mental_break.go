@@ -14,11 +14,11 @@ type MentalBreakSystem struct {
 	filter      ecs.Filter
 	tickCounter uint64
 
-	vitalsID  ecs.ID
-	sanityID  ecs.ID
-	crimeID   ecs.ID
-	velID     ecs.ID
-	pathID    ecs.ID
+	vitalsID ecs.ID
+	sanityID ecs.ID
+	crimeID  ecs.ID
+	velID    ecs.ID
+	pathID   ecs.ID
 }
 
 // IsExpensive returns true to throttle this system during fast-forward.
@@ -95,7 +95,7 @@ func (s *MentalBreakSystem) Update(world *ecs.World) {
 
 			sanity.BreakState = breakState
 			sanity.BreakCooldown = 100 // Break lasts 100 * 10 ticks = 1000 ticks
-			sanity.Stress = 0 // Reset stress after break
+			sanity.Stress = 0          // Reset stress after break
 
 			breaks = append(breaks, breakData{
 				Entity: query.Entity(),

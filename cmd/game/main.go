@@ -57,6 +57,10 @@ func BuildSimulation(gridWidth, gridHeight int, seedVal byte, status *render.Loa
 	tickManager := engine.NewTickManager(60)
 	world := tickManager.World
 
+	// Shell Phase: cross-tick player bridges shared with the UI layer.
+	bridge := &systems.InputBridge{}
+	playerEvents := &engine.PlayerEvents{}
+
 	// Phase 13.4: The Seasonal Pulse
 	calendar := engine.NewCalendar()
 	tickManager.AddSystem(systems.NewCalendarSystem(calendar), engine.PhaseInput)
@@ -154,8 +158,54 @@ func BuildSimulation(gridWidth, gridHeight int, seedVal byte, status *render.Loa
 	// Phase 24.1: The Labor Union Engine
 	tickManager.AddSystem(systems.NewLaborUnionSystem(world, hookGraph), engine.PhaseResolution)
 
+	// --- Previously-dormant simulation systems (woken for full depth) ---
+	tickManager.AddSystem(systems.NewAgricultureSystem(world, grid), engine.PhaseResolution)
+	tickManager.AddSystem(systems.NewSanitationSystem(world), engine.PhaseResolution)
+	tickManager.AddSystem(systems.NewMedicalSystem(world, pathQueue, hookGraph), engine.PhaseResolution)
+	tickManager.AddSystem(systems.NewMentalBreakSystem(world), engine.PhaseResolution)
+	tickManager.AddSystem(systems.NewParasiteSystem(world, hookGraph), engine.PhaseResolution)
+	tickManager.AddSystem(systems.NewWorkplaceSystem(pathQueue), engine.PhaseResolution)
+	tickManager.AddSystem(systems.NewBlackMarketSystem(world), engine.PhaseResolution)
+	tickManager.AddSystem(systems.NewWarEconomySystem(world), engine.PhaseResolution)
+	tickManager.AddSystem(systems.NewAdministrationSystem(world, hookGraph), engine.PhaseResolution)
+	tickManager.AddSystem(systems.NewLegitimacySystem(world, hookGraph), engine.PhaseResolution)
+	tickManager.AddSystem(systems.NewPoliticalCoupSystem(hookGraph), engine.PhaseResolution)
+	tickManager.AddSystem(systems.NewClassWarfareSystem(world, hookGraph), engine.PhaseResolution)
+	tickManager.AddSystem(systems.NewXenophobiaSystem(world, hookGraph), engine.PhaseResolution)
+	tickManager.AddSystem(systems.NewScapegoatSystem(), engine.PhaseResolution)
+	tickManager.AddSystem(systems.NewPropagandaSystem(world), engine.PhaseResolution)
+	tickManager.AddSystem(systems.NewTraumaticTraditionsSystem(world), engine.PhaseResolution)
+	tickManager.AddSystem(systems.NewPreacherSystem(world), engine.PhaseResolution)
+	tickManager.AddSystem(systems.NewHolyWarSystem(world), engine.PhaseResolution)
+	tickManager.AddSystem(systems.NewEchoChamberSystem(grid), engine.PhaseResolution)
+	tickManager.AddSystem(systems.NewJealousyVulnerabilitySystem(), engine.PhaseResolution)
+	tickManager.AddSystem(systems.NewConscriptionSystem(), engine.PhaseResolution)
+	tickManager.AddSystem(systems.NewMercenarySystem(world, hookGraph), engine.PhaseResolution)
+	tickManager.AddSystem(systems.NewMaritimeLaborSystem(), engine.PhaseResolution)
+	tickManager.AddSystem(systems.NewMaritimeMigrationSystem(world), engine.PhaseResolution)
+	tickManager.AddSystem(systems.NewNavalSpawningSystem(), engine.PhaseResolution)
+	tickManager.AddSystem(systems.NewPenalLaborSystem(world, hookGraph), engine.PhaseResolution)
+	tickManager.AddSystem(systems.NewLaborCrisisSystem(world, hookGraph), engine.PhaseResolution)
+	tickManager.AddSystem(systems.NewCastingSystem(world, grid), engine.PhaseResolution)
+	tickManager.AddSystem(systems.NewRuinResettlementSystem(world), engine.PhaseResolution)
+	tickManager.AddSystem(systems.NewRefugeeSystem(world, pathQueue), engine.PhaseResolution)
+	// New evolution engines merged from main.
+	tickManager.AddSystem(systems.NewMiningSystem(world, grid), engine.PhaseResolution)
+	tickManager.AddSystem(systems.NewUnderminingSystem(world), engine.PhaseResolution)
+	tickManager.AddSystem(systems.NewCannibalismSystem(world, pathQueue), engine.PhaseResolution)
+	tickManager.AddSystem(systems.NewForgerySystem(world, hookGraph), engine.PhaseResolution)
+
+	// --- Shell Phase: physical construction, crafting and player systems ---
+	tickManager.AddSystem(systems.NewConstructionSystem(world, pathQueue), engine.PhaseResolution)
+	tickManager.AddSystem(systems.NewCraftingSystem(world, pathQueue), engine.PhaseResolution)
+	tickManager.AddSystem(systems.NewStructureEffectSystem(), engine.PhaseResolution)
+	tickManager.AddSystem(systems.NewAmbitionSystem(hookGraph), engine.PhaseResolution)
+	tickManager.AddSystem(systems.NewPlayerOrderSystem(hookGraph, bridge), engine.PhaseAI)
+
 	// --- PHASE: CLEANUP ---
-	tickManager.AddSystem(systems.NewDeathSystem(world, hookGraph), engine.PhaseCleanup)
+	deathSys := systems.NewDeathSystem(world, hookGraph)
+	deathSys.SetPlayerEvents(playerEvents) // Shell Phase: surface possessed death
+	tickManager.AddSystem(deathSys, engine.PhaseCleanup)
 	tickManager.AddSystem(systems.NewAgingSystem(world, tickManager), engine.PhaseResolution)
 
 	// Phase 03.2: Genesis Spawner (Runs once at tick 0)
@@ -167,6 +217,9 @@ func BuildSimulation(gridWidth, gridHeight int, seedVal byte, status *render.Loa
 	status.TM = tickManager
 	status.Grid = grid
 	status.HookGraph = hookGraph
+	status.Bridge = bridge
+	status.Events = playerEvents
+	status.Seed = seedVal
 	status.Done = true
 	status.Mutex.Unlock()
 }
@@ -176,6 +229,9 @@ type Game struct {
 }
 
 func (g *Game) Update() error {
+	if ui.QuitRequested() {
+		return ebiten.Termination
+	}
 	return g.sm.Update()
 }
 
@@ -184,7 +240,7 @@ func (g *Game) Draw(screen *ebiten.Image) {
 }
 
 func (g *Game) Layout(outsideWidth, outsideHeight int) (int, int) {
-	return 800, 600
+	return 1280, 720
 }
 
 func main() {
@@ -205,8 +261,8 @@ func main() {
 		}()
 	}
 
-	ebiten.SetWindowSize(800, 600)
-	ebiten.SetWindowTitle("Boundless Sovereigns - Action RPG")
+	ebiten.SetWindowSize(1280, 720)
+	ebiten.SetWindowTitle("Boundless Sovereigns")
 	ebiten.SetWindowResizingMode(ebiten.WindowResizingModeEnabled)
 
 	sm := ui.NewStateManager()
@@ -225,12 +281,12 @@ func main() {
 	// Start the async engine build
 	go func() {
 		BuildSimulation(1024, 1024, 42, status)
-		// Register Input System manually here after it's built
+		// Register the player input system once the world + bridge exist.
 		status.Mutex.Lock()
-		inputSys := &systems.PlayerInputSystem{}
+		inputSys := systems.NewPlayerInputSystem(status.Bridge)
 		inputSys.Initialize(status.TM.World)
 		status.TM.AddSystem(inputSys, engine.PhaseInput)
-		
+
 		directorSys := systems.NewPlayerDirectorSystem(status.HookGraph)
 		directorSys.Initialize(status.TM.World)
 		status.TM.AddSystem(directorSys, engine.PhaseResolution)

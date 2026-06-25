@@ -109,4 +109,3 @@ func DrawHurtVignette(screen *ebiten.Image, frames int) {
 	ebitenutil.DrawRect(screen, 0, 0, 8, float64(sh), clr)
 	ebitenutil.DrawRect(screen, float64(sw-8), 0, 8, float64(sh), clr)
 }
-

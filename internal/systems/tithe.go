@@ -10,10 +10,10 @@ import (
 // It bridges the Memetic Engine (Phase 07/20) with the Economic Engine (Phase 13/15).
 
 type preacherData struct {
-	entity            ecs.Entity
-	x                 float32
-	y                 float32
-	dominantBeliefID  uint32
+	entity           ecs.Entity
+	x                float32
+	y                float32
+	dominantBeliefID uint32
 }
 
 type TitheSystem struct {

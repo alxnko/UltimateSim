@@ -140,10 +140,18 @@ func (pq *PathRequestQueue) WorkerProcessSync(req PathRequest, mapGrid *MapGrid)
 				gridY := int(nodeY)
 
 				// Clamp to array sizes to prevent index panics
-				if gridX < 0 { gridX = 0 }
-				if gridY < 0 { gridY = 0 }
-				if gridX >= mapGrid.Width { gridX = mapGrid.Width - 1 }
-				if gridY >= mapGrid.Height { gridY = mapGrid.Height - 1 }
+				if gridX < 0 {
+					gridX = 0
+				}
+				if gridY < 0 {
+					gridY = 0
+				}
+				if gridX >= mapGrid.Width {
+					gridX = mapGrid.Width - 1
+				}
+				if gridY >= mapGrid.Height {
+					gridY = mapGrid.Height - 1
+				}
 
 				idx := gridY*mapGrid.Width + gridX
 

@@ -31,10 +31,12 @@ func NewWanderSystem(world *ecs.World, mapGrid *engine.MapGrid, pathQueue *engin
 	pathID := ecs.ComponentID[components.Path](world)
 
 	possessedID := ecs.ComponentID[components.Possessed](world)
+	orderID := ecs.ComponentID[components.PlayerOrderComponent](world)
 
 	// Phase 11.2: Override the standard WanderSystem AI state-processor for the Possessed target
-	// We skip entities that are Possessed so input cleanly controls movement
-	mask := ecs.All(posID, idID, needsID, pathID).Without(possessedID)
+	// We skip entities that are Possessed so input cleanly controls movement.
+	// Shell Phase: also skip NPCs under a direct PlayerOrder so order steering wins.
+	mask := ecs.All(posID, idID, needsID, pathID).Without(possessedID, orderID)
 
 	return &WanderSystem{
 		mapGrid:     mapGrid,
@@ -97,7 +99,7 @@ DrainLoop:
 
 		// Phase 31.1: Throttle AI evaluations
 		// Only evaluate a fraction of entities each tick to maintain 60 TPS during heavy simulation.
-		if (s.tickCounter + uint64(npcIndex)) % 30 != 0 {
+		if (s.tickCounter+uint64(npcIndex))%30 != 0 {
 			continue
 		}
 

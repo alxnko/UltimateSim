@@ -174,8 +174,16 @@ func (s *CraftingSystem) processArtisans() {
 					// Fallback simple movement
 					dx := pos.X - bestWb.X
 					dy := pos.Y - bestWb.Y
-					if dx > 0 { pos.X -= 0.5 } else if dx < 0 { pos.X += 0.5 }
-					if dy > 0 { pos.Y -= 0.5 } else if dy < 0 { pos.Y += 0.5 }
+					if dx > 0 {
+						pos.X -= 0.5
+					} else if dx < 0 {
+						pos.X += 0.5
+					}
+					if dy > 0 {
+						pos.Y -= 0.5
+					} else if dy < 0 {
+						pos.Y += 0.5
+					}
 				}
 			} else {
 				// At workbench, craft!

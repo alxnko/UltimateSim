@@ -17,15 +17,15 @@ type BiologicalSabotageSystem struct {
 
 	npcFilter ecs.Filter
 
-	npcID     ecs.ID
-	posID     ecs.ID
-	affID     ecs.ID
-	idID      ecs.ID
-	villID    ecs.ID
-	storID    ecs.ID
-	adminID   ecs.ID
-	crimeID   ecs.ID
-	disID     ecs.ID
+	npcID   ecs.ID
+	posID   ecs.ID
+	affID   ecs.ID
+	idID    ecs.ID
+	villID  ecs.ID
+	storID  ecs.ID
+	adminID ecs.ID
+	crimeID ecs.ID
+	disID   ecs.ID
 }
 
 func NewBiologicalSabotageSystem(world *ecs.World, hooks *engine.SparseHookGraph) *BiologicalSabotageSystem {
@@ -160,7 +160,7 @@ func (s *BiologicalSabotageSystem) Update(world *ecs.World) {
 			dPos.Y = sData.Y
 
 			dis := (*components.DiseaseEntity)(world.Get(diseaseEnt, s.disID))
-			dis.ID = 999 // Arbitrary Plague ID for poisoned food
+			dis.ID = 999       // Arbitrary Plague ID for poisoned food
 			dis.Lethality = 80 // Extremely lethal
 		}
 	}

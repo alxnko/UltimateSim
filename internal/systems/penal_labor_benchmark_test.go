@@ -21,8 +21,8 @@ func BenchmarkPenalLaborSystem_Update(b *testing.B) {
 	penalID := ecs.ComponentID[components.PenalLaborComponent](&world)
 	jobID := ecs.ComponentID[components.JobComponent](&world)
 	needsID := ecs.ComponentID[components.Needs](&world)
-    _ = jobID
-    _ = needsID
+	_ = jobID
+	_ = needsID
 
 	// Create City
 	cityEnt := world.NewEntity()
@@ -61,8 +61,8 @@ func BenchmarkPenalLaborSystem_Update(b *testing.B) {
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		sys.Update(&world)
-        // Reset tickCounter to ensure laborEvents are generated in each iteration if needed,
-        // though we want to measure the backlash loop which depends on laborEvents.
-        sys.tickCounter = 9
+		// Reset tickCounter to ensure laborEvents are generated in each iteration if needed,
+		// though we want to measure the backlash loop which depends on laborEvents.
+		sys.tickCounter = 9
 	}
 }

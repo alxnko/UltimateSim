@@ -120,7 +120,10 @@ func (s *StatePlaying) drawEntities(screen *ebiten.Image) {
 
 	siteID := ecs.ComponentID[components.ConstructionSiteComponent](world)
 	q = world.Query(ecs.All(siteID, posID))
-	type siteBar struct{ x, y float64; frac float32 }
+	type siteBar struct {
+		x, y float64
+		frac float32
+	}
 	var siteBars []siteBar
 	for q.Next() {
 		pos := (*components.Position)(q.Get(posID))
@@ -161,7 +164,8 @@ func (s *StatePlaying) drawEntities(screen *ebiten.Image) {
 	}
 
 	// Standalone ruins (former settlements stripped of Village tag).
-	q = world.Query(ecs.All(ruinID, posID).Without(villageID))
+	ruinFilter := ecs.All(ruinID, posID).Without(villageID)
+	q = world.Query(&ruinFilter)
 	for q.Next() {
 		pos := (*components.Position)(q.Get(posID))
 		s.drawSpriteAt(screen, sp.Static("ruin"), pos.X, pos.Y, sw, sh)
@@ -187,7 +191,8 @@ func (s *StatePlaying) drawEntities(screen *ebiten.Image) {
 
 	itemID := ecs.ComponentID[components.ItemEntity](world)
 	coinID := ecs.ComponentID[components.CoinEntity](world)
-	q = world.Query(ecs.All(itemID, posID).Without(coinID))
+	itemFilter := ecs.All(itemID, posID).Without(coinID)
+	q = world.Query(&itemFilter)
 	for q.Next() {
 		pos := (*components.Position)(q.Get(posID))
 		s.drawSpriteAt(screen, sp.Static("item"), pos.X, pos.Y, sw, sh)

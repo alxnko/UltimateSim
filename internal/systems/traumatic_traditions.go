@@ -14,18 +14,18 @@ type TraumaticTraditionsSystem struct {
 	tickCounter uint64
 
 	// Component IDs
-	jurID   ecs.ID
-	posID   ecs.ID
-	affID   ecs.ID
-	belID   ecs.ID
+	jurID ecs.ID
+	posID ecs.ID
+	affID ecs.ID
+	belID ecs.ID
 }
 
 func NewTraumaticTraditionsSystem(world *ecs.World) *TraumaticTraditionsSystem {
 	return &TraumaticTraditionsSystem{
-		jurID:   ecs.ComponentID[components.JurisdictionComponent](world),
-		posID:   ecs.ComponentID[components.Position](world),
-		affID:   ecs.ComponentID[components.Affiliation](world),
-		belID:   ecs.ComponentID[components.BeliefComponent](world),
+		jurID: ecs.ComponentID[components.JurisdictionComponent](world),
+		posID: ecs.ComponentID[components.Position](world),
+		affID: ecs.ComponentID[components.Affiliation](world),
+		belID: ecs.ComponentID[components.BeliefComponent](world),
 	}
 }
 

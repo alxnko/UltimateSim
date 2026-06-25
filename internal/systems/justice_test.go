@@ -1,10 +1,10 @@
 package systems
 
 import (
-	"testing"
 	"github.com/ALXNKO/UltimateSim/internal/components"
 	"github.com/ALXNKO/UltimateSim/internal/engine"
 	"github.com/mlange-42/arche/ecs"
+	"testing"
 )
 
 func TestJusticeSystem_DetectionAndContraband(t *testing.T) {
@@ -28,7 +28,7 @@ func TestJusticeSystem_DetectionAndContraband(t *testing.T) {
 	capAff.CityID = 1
 
 	capJur := (*components.JurisdictionComponent)(world.Get(capEnt, jurID))
-	capJur.RadiusSquared = 100.0 // Radius 10
+	capJur.RadiusSquared = 100.0                                 // Radius 10
 	capJur.IllegalActionIDs = 1 << components.InteractionAssault // Assault is illegal
 
 	capContra := (*components.ContrabandComponent)(world.Get(capEnt, contraID))

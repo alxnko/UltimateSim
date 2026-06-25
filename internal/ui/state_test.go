@@ -1,9 +1,9 @@
 package ui_test
 
 import (
-	"testing"
 	"github.com/ALXNKO/UltimateSim/internal/ui"
 	"github.com/hajimehoshi/ebiten/v2"
+	"testing"
 )
 
 type mockState struct {

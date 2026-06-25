@@ -13,9 +13,9 @@ import (
 // without explicitly processing deterministic distant AI movement.
 
 type ClientPredictionSystem struct {
-	filter        ecs.Filter
+	filter         ecs.Filter
 	incomingDeltas []network.PositionDelta
-	deltaMap      map[uint64]network.PositionDelta
+	deltaMap       map[uint64]network.PositionDelta
 }
 
 func NewClientPredictionSystem(world *ecs.World) *ClientPredictionSystem {

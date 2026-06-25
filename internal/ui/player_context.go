@@ -88,6 +88,7 @@ type PlayerContext struct {
 	Initialized bool
 	lastBlood   float32 // damage vignette detection
 	HurtFlash   int     // frames remaining of red vignette
+	deathCause  uint8   // surfaced cause for the heir/game-over screens
 }
 
 // AnyModal reports whether a window that owns the keyboard is open.

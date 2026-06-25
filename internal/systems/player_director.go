@@ -53,8 +53,8 @@ func (s *PlayerDirectorSystem) Update(world *ecs.World) {
 		// 2. Scan for nearby Grudges (Opportunities for Mercenary Work)
 		// This logic would ideally use the hook graph to find nearby NPCs with high negative hooks.
 		// For now, we'll just print a generic message based on the tick count.
-		if s.tickCounter % 1000 == 0 {
-			fmt.Printf("[DIRECTOR] TIP: The local Clan ID %d is harboring grudges. Check the tavern for contracts.\n", id.ID % 10)
+		if s.tickCounter%1000 == 0 {
+			fmt.Printf("[DIRECTOR] TIP: The local Clan ID %d is harboring grudges. Check the tavern for contracts.\n", id.ID%10)
 		}
 	}
 }

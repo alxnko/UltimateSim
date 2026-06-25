@@ -97,8 +97,8 @@ func (s *PenalLaborSystem) Update(world *ecs.World) {
 
 	// We cache positions for Abolitionist hook generation
 	type laborEvent struct {
-		X float32
-		Y float32
+		X       float32
+		Y       float32
 		RulerID uint64
 	}
 	var laborEvents []laborEvent
@@ -122,11 +122,11 @@ func (s *PenalLaborSystem) Update(world *ecs.World) {
 				cd.Storage.Stone += 1.0 // Forced quarrying
 
 				// Record event for social backlash
-				if s.tickCounter % 10 == 0 && cd.RulerID != 0 {
+				if s.tickCounter%10 == 0 && cd.RulerID != 0 {
 					pos := (*components.Position)(penalQuery.Get(posID))
 					laborEvents = append(laborEvents, laborEvent{
-						X: pos.X,
-						Y: pos.Y,
+						X:       pos.X,
+						Y:       pos.Y,
 						RulerID: cd.RulerID,
 					})
 				}
@@ -156,7 +156,7 @@ func (s *PenalLaborSystem) Update(world *ecs.World) {
 		for abolitionistQuery.Next() {
 			ident := (*components.Identity)(abolitionistQuery.Get(idID))
 
-			if ident.BaseTraits & components.TraitAbolitionist != 0 {
+			if ident.BaseTraits&components.TraitAbolitionist != 0 {
 				pos := (*components.Position)(abolitionistQuery.Get(posID))
 
 				// Check distance to any labor event
