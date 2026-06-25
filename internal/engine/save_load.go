@@ -132,6 +132,113 @@ func InitDB(path string) (*sql.DB, error) {
 		grid_height INTEGER,
 		seed_val INTEGER
 	);
+
+	CREATE TABLE IF NOT EXISTS equipment (
+		uid INTEGER PRIMARY KEY,
+		weapon_nameid INTEGER,
+		weapon_prestige INTEGER,
+		weapon_history_json TEXT,
+		equipped BOOLEAN
+	);
+
+	CREATE TABLE IF NOT EXISTS sanity (
+		uid INTEGER PRIMARY KEY,
+		stress REAL,
+		max_stress REAL,
+		break_state INTEGER,
+		break_cooldown INTEGER
+	);
+
+	CREATE TABLE IF NOT EXISTS treasury (
+		uid INTEGER PRIMARY KEY,
+		wealth REAL
+	);
+
+	CREATE TABLE IF NOT EXISTS market (
+		uid INTEGER PRIMARY KEY,
+		wood_price REAL,
+		stone_price REAL,
+		iron_price REAL,
+		food_price REAL,
+		wage_rate REAL
+	);
+
+	CREATE TABLE IF NOT EXISTS legitimacy (
+		uid INTEGER PRIMARY KEY,
+		score INTEGER
+	);
+
+	CREATE TABLE IF NOT EXISTS loyalty (
+		uid INTEGER PRIMARY KEY,
+		value INTEGER
+	);
+
+	CREATE TABLE IF NOT EXISTS jurisdiction (
+		uid INTEGER PRIMARY KEY,
+		radius_sq REAL,
+		illegal_action_ids INTEGER,
+		corruption INTEGER,
+		banned_secret_id INTEGER,
+		trauma INTEGER
+	);
+
+	CREATE TABLE IF NOT EXISTS structure (
+		uid INTEGER PRIMARY KEY,
+		structure_type INTEGER,
+		integrity REAL,
+		data_a INTEGER,
+		owner_id INTEGER
+	);
+
+	CREATE TABLE IF NOT EXISTS construction_site (
+		uid INTEGER PRIMARY KEY,
+		wood_req INTEGER,
+		wood_gathered INTEGER,
+		stone_req INTEGER,
+		stone_gathered INTEGER,
+		progress INTEGER,
+		max_progress INTEGER,
+		builder_id INTEGER,
+		site_type INTEGER
+	);
+
+	CREATE TABLE IF NOT EXISTS ambitions (
+		uid INTEGER PRIMARY KEY,
+		ambitions_json TEXT,
+		offers_json TEXT,
+		built_count INTEGER,
+		family_base INTEGER
+	);
+
+	CREATE TABLE IF NOT EXISTS demographics (
+		uid INTEGER PRIMARY KEY,
+		peak_population INTEGER,
+		labor_crisis BOOLEAN
+	);
+
+	CREATE TABLE IF NOT EXISTS workbench (
+		uid INTEGER PRIMARY KEY,
+		employer_id INTEGER,
+		x REAL,
+		y REAL
+	);
+
+	CREATE TABLE IF NOT EXISTS culture (
+		uid INTEGER PRIMARY KEY,
+		dialect_tick INTEGER,
+		foreign_ticks INTEGER,
+		language_id INTEGER,
+		foreign_language_id INTEGER
+	);
+
+	CREATE TABLE IF NOT EXISTS extra_tags (
+		uid INTEGER PRIMARY KEY,
+		is_capital BOOLEAN,
+		is_country BOOLEAN,
+		is_admin BOOLEAN,
+		country_currency_id INTEGER,
+		country_debasement REAL
+	);
 	`
 
 	_, err = db.Exec(schema)
@@ -143,22 +250,36 @@ func InitDB(path string) (*sql.DB, error) {
 }
 
 var tableDeleteQueries = map[string]string{
-	"entities":    "DELETE FROM entities",
-	"identity":    "DELETE FROM identity",
-	"position":    "DELETE FROM position",
-	"needs":       "DELETE FROM needs",
-	"affiliation": "DELETE FROM affiliation",
-	"tags":        "DELETE FROM tags",
-	"storage":     "DELETE FROM storage",
-	"velocity":    "DELETE FROM velocity",
-	"job":         "DELETE FROM job",
-	"memory":      "DELETE FROM memory",
-	"beliefs":     "DELETE FROM beliefs",
-	"genome":      "DELETE FROM genome",
-	"vitals":      "DELETE FROM vitals",
-	"population":  "DELETE FROM population",
-	"desperation": "DELETE FROM desperation",
-	"secrets":     "DELETE FROM secrets",
+	"entities":          "DELETE FROM entities",
+	"identity":          "DELETE FROM identity",
+	"position":          "DELETE FROM position",
+	"needs":             "DELETE FROM needs",
+	"affiliation":       "DELETE FROM affiliation",
+	"tags":              "DELETE FROM tags",
+	"storage":           "DELETE FROM storage",
+	"velocity":          "DELETE FROM velocity",
+	"job":               "DELETE FROM job",
+	"memory":            "DELETE FROM memory",
+	"beliefs":           "DELETE FROM beliefs",
+	"genome":            "DELETE FROM genome",
+	"vitals":            "DELETE FROM vitals",
+	"population":        "DELETE FROM population",
+	"desperation":       "DELETE FROM desperation",
+	"secrets":           "DELETE FROM secrets",
+	"equipment":         "DELETE FROM equipment",
+	"sanity":            "DELETE FROM sanity",
+	"treasury":          "DELETE FROM treasury",
+	"market":            "DELETE FROM market",
+	"legitimacy":        "DELETE FROM legitimacy",
+	"loyalty":           "DELETE FROM loyalty",
+	"jurisdiction":      "DELETE FROM jurisdiction",
+	"structure":         "DELETE FROM structure",
+	"construction_site": "DELETE FROM construction_site",
+	"demographics":      "DELETE FROM demographics",
+	"workbench":         "DELETE FROM workbench",
+	"culture":           "DELETE FROM culture",
+	"extra_tags":        "DELETE FROM extra_tags",
+	"ambitions":         "DELETE FROM ambitions",
 }
 
 // SaveWorld serializes the core ECS state into SQLite.
@@ -183,7 +304,7 @@ func SaveWorld(tm *TickManager, mapGrid *MapGrid, seedVal byte, db *sql.DB) erro
 	}
 
 	// Clear out old entity rows to prevent resurrecting dead entities
-	tables := []string{"entities", "identity", "position", "needs", "affiliation", "tags", "storage", "velocity", "job", "memory", "beliefs", "genome", "vitals", "population", "desperation", "secrets"}
+	tables := []string{"entities", "identity", "position", "needs", "affiliation", "tags", "storage", "velocity", "job", "memory", "beliefs", "genome", "vitals", "population", "desperation", "secrets", "equipment", "sanity", "treasury", "market", "legitimacy", "loyalty", "jurisdiction", "structure", "construction_site", "demographics", "workbench", "culture", "extra_tags", "ambitions"}
 	for _, table := range tables {
 		query, ok := tableDeleteQueries[table]
 		if !ok {
@@ -275,8 +396,79 @@ func SaveWorld(tm *TickManager, mapGrid *MapGrid, seedVal byte, db *sql.DB) erro
 		return err
 	}
 	defer stmtSec.Close()
+	stmtEquip, err := tx.Prepare("INSERT OR REPLACE INTO equipment (uid, weapon_nameid, weapon_prestige, weapon_history_json, equipped) VALUES (?, ?, ?, ?, ?)")
+	if err != nil {
+		return err
+	}
+	defer stmtEquip.Close()
+	stmtSanity, err := tx.Prepare("INSERT OR REPLACE INTO sanity (uid, stress, max_stress, break_state, break_cooldown) VALUES (?, ?, ?, ?, ?)")
+	if err != nil {
+		return err
+	}
+	defer stmtSanity.Close()
+	stmtTreasury, err := tx.Prepare("INSERT OR REPLACE INTO treasury (uid, wealth) VALUES (?, ?)")
+	if err != nil {
+		return err
+	}
+	defer stmtTreasury.Close()
+	stmtMarket, err := tx.Prepare("INSERT OR REPLACE INTO market (uid, wood_price, stone_price, iron_price, food_price, wage_rate) VALUES (?, ?, ?, ?, ?, ?)")
+	if err != nil {
+		return err
+	}
+	defer stmtMarket.Close()
+	stmtLegit, err := tx.Prepare("INSERT OR REPLACE INTO legitimacy (uid, score) VALUES (?, ?)")
+	if err != nil {
+		return err
+	}
+	defer stmtLegit.Close()
+	stmtLoyalty, err := tx.Prepare("INSERT OR REPLACE INTO loyalty (uid, value) VALUES (?, ?)")
+	if err != nil {
+		return err
+	}
+	defer stmtLoyalty.Close()
+	stmtJuris, err := tx.Prepare("INSERT OR REPLACE INTO jurisdiction (uid, radius_sq, illegal_action_ids, corruption, banned_secret_id, trauma) VALUES (?, ?, ?, ?, ?, ?)")
+	if err != nil {
+		return err
+	}
+	defer stmtJuris.Close()
+	stmtStruct, err := tx.Prepare("INSERT OR REPLACE INTO structure (uid, structure_type, integrity, data_a, owner_id) VALUES (?, ?, ?, ?, ?)")
+	if err != nil {
+		return err
+	}
+	defer stmtStruct.Close()
+	stmtConstr, err := tx.Prepare("INSERT OR REPLACE INTO construction_site (uid, wood_req, wood_gathered, stone_req, stone_gathered, progress, max_progress, builder_id, site_type) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)")
+	if err != nil {
+		return err
+	}
+	defer stmtConstr.Close()
+	stmtDemo, err := tx.Prepare("INSERT OR REPLACE INTO demographics (uid, peak_population, labor_crisis) VALUES (?, ?, ?)")
+	if err != nil {
+		return err
+	}
+	defer stmtDemo.Close()
+	stmtWork, err := tx.Prepare("INSERT OR REPLACE INTO workbench (uid, employer_id, x, y) VALUES (?, ?, ?, ?)")
+	if err != nil {
+		return err
+	}
+	defer stmtWork.Close()
+	stmtCulture, err := tx.Prepare("INSERT OR REPLACE INTO culture (uid, dialect_tick, foreign_ticks, language_id, foreign_language_id) VALUES (?, ?, ?, ?, ?)")
+	if err != nil {
+		return err
+	}
+	defer stmtCulture.Close()
+	stmtExtra, err := tx.Prepare("INSERT OR REPLACE INTO extra_tags (uid, is_capital, is_country, is_admin, country_currency_id, country_debasement) VALUES (?, ?, ?, ?, ?, ?)")
+	if err != nil {
+		return err
+	}
+	defer stmtExtra.Close()
+	stmtAmb, err := tx.Prepare("INSERT OR REPLACE INTO ambitions (uid, ambitions_json, offers_json, built_count, family_base) VALUES (?, ?, ?, ?, ?)")
+	if err != nil {
+		return err
+	}
+	defer stmtAmb.Close()
 
 	// Extract components
+	ambitionsID := ecs.ComponentID[components.AmbitionsComponent](world)
 	idID := ecs.ComponentID[components.Identity](world)
 	posID := ecs.ComponentID[components.Position](world)
 	needsID := ecs.ComponentID[components.Needs](world)
@@ -294,6 +486,21 @@ func SaveWorld(tm *TickManager, mapGrid *MapGrid, seedVal byte, db *sql.DB) erro
 	popID := ecs.ComponentID[components.PopulationComponent](world)
 	despID := ecs.ComponentID[components.DesperationComponent](world)
 	secID := ecs.ComponentID[components.SecretComponent](world)
+	equipID := ecs.ComponentID[components.EquipmentComponent](world)
+	sanityID := ecs.ComponentID[components.SanityComponent](world)
+	treasuryID := ecs.ComponentID[components.TreasuryComponent](world)
+	marketID := ecs.ComponentID[components.MarketComponent](world)
+	legitID := ecs.ComponentID[components.LegitimacyComponent](world)
+	loyaltyID := ecs.ComponentID[components.LoyaltyComponent](world)
+	jurisID := ecs.ComponentID[components.JurisdictionComponent](world)
+	structID := ecs.ComponentID[components.StructureComponent](world)
+	constrID := ecs.ComponentID[components.ConstructionSiteComponent](world)
+	demoID := ecs.ComponentID[components.DemographicsComponent](world)
+	workID := ecs.ComponentID[components.WorkbenchComponent](world)
+	cultureID := ecs.ComponentID[components.CultureComponent](world)
+	capitalID := ecs.ComponentID[components.CapitalComponent](world)
+	countryID := ecs.ComponentID[components.CountryComponent](world)
+	adminID := ecs.ComponentID[components.AdministrationMarker](world)
 
 	// We query entities with Identity
 	query := world.Query(ecs.All(idID))
@@ -451,6 +658,156 @@ func SaveWorld(tm *TickManager, mapGrid *MapGrid, seedVal byte, db *sql.DB) erro
 				return err
 			}
 			if _, err := stmtSec.Exec(uid, string(sJson)); err != nil {
+				query.Close()
+				return err
+			}
+		}
+
+		// Equipment
+		if world.Has(ent, equipID) {
+			eq := (*components.EquipmentComponent)(world.Get(ent, equipID))
+			histJson, err := json.Marshal(eq.Weapon.History)
+			if err != nil {
+				query.Close()
+				return err
+			}
+			if _, err := stmtEquip.Exec(uid, eq.Weapon.NameID, eq.Weapon.Prestige, string(histJson), eq.Equipped); err != nil {
+				query.Close()
+				return err
+			}
+		}
+
+		// Sanity
+		if world.Has(ent, sanityID) {
+			s := (*components.SanityComponent)(world.Get(ent, sanityID))
+			if _, err := stmtSanity.Exec(uid, s.Stress, s.MaxStress, s.BreakState, s.BreakCooldown); err != nil {
+				query.Close()
+				return err
+			}
+		}
+
+		// Treasury
+		if world.Has(ent, treasuryID) {
+			t := (*components.TreasuryComponent)(world.Get(ent, treasuryID))
+			if _, err := stmtTreasury.Exec(uid, t.Wealth); err != nil {
+				query.Close()
+				return err
+			}
+		}
+
+		// Market
+		if world.Has(ent, marketID) {
+			m := (*components.MarketComponent)(world.Get(ent, marketID))
+			if _, err := stmtMarket.Exec(uid, m.WoodPrice, m.StonePrice, m.IronPrice, m.FoodPrice, m.WageRate); err != nil {
+				query.Close()
+				return err
+			}
+		}
+
+		// Legitimacy
+		if world.Has(ent, legitID) {
+			l := (*components.LegitimacyComponent)(world.Get(ent, legitID))
+			if _, err := stmtLegit.Exec(uid, l.Score); err != nil {
+				query.Close()
+				return err
+			}
+		}
+
+		// Loyalty
+		if world.Has(ent, loyaltyID) {
+			l := (*components.LoyaltyComponent)(world.Get(ent, loyaltyID))
+			if _, err := stmtLoyalty.Exec(uid, l.Value); err != nil {
+				query.Close()
+				return err
+			}
+		}
+
+		// Jurisdiction
+		if world.Has(ent, jurisID) {
+			j := (*components.JurisdictionComponent)(world.Get(ent, jurisID))
+			if _, err := stmtJuris.Exec(uid, j.RadiusSquared, j.IllegalActionIDs, j.Corruption, j.BannedSecretID, j.Trauma); err != nil {
+				query.Close()
+				return err
+			}
+		}
+
+		// Structure
+		if world.Has(ent, structID) {
+			s := (*components.StructureComponent)(world.Get(ent, structID))
+			if _, err := stmtStruct.Exec(uid, s.StructureType, s.Integrity, s.DataA, s.OwnerID); err != nil {
+				query.Close()
+				return err
+			}
+		}
+
+		// ConstructionSite
+		if world.Has(ent, constrID) {
+			c := (*components.ConstructionSiteComponent)(world.Get(ent, constrID))
+			if _, err := stmtConstr.Exec(uid, c.WoodRequired, c.WoodGathered, c.StoneRequired, c.StoneGathered, c.Progress, c.MaxProgress, c.BuilderID, c.SiteType); err != nil {
+				query.Close()
+				return err
+			}
+		}
+
+		// Demographics
+		if world.Has(ent, demoID) {
+			d := (*components.DemographicsComponent)(world.Get(ent, demoID))
+			if _, err := stmtDemo.Exec(uid, d.PeakPopulation, d.LaborCrisisActive); err != nil {
+				query.Close()
+				return err
+			}
+		}
+
+		// Workbench
+		if world.Has(ent, workID) {
+			w := (*components.WorkbenchComponent)(world.Get(ent, workID))
+			if _, err := stmtWork.Exec(uid, w.EmployerID, w.X, w.Y); err != nil {
+				query.Close()
+				return err
+			}
+		}
+
+		// Culture
+		if world.Has(ent, cultureID) {
+			c := (*components.CultureComponent)(world.Get(ent, cultureID))
+			if _, err := stmtCulture.Exec(uid, c.DialectTickStamp, c.ForeignInteractionTicks, c.LanguageID, c.ForeignLanguageID); err != nil {
+				query.Close()
+				return err
+			}
+		}
+
+		// Ambitions (player goal progression)
+		if world.Has(ent, ambitionsID) {
+			a := (*components.AmbitionsComponent)(world.Get(ent, ambitionsID))
+			ambJson, err := json.Marshal(a.Ambitions)
+			if err != nil {
+				query.Close()
+				return err
+			}
+			offJson, err := json.Marshal(a.Offers)
+			if err != nil {
+				query.Close()
+				return err
+			}
+			if _, err := stmtAmb.Exec(uid, string(ambJson), string(offJson), a.BuiltCount, a.FamilyBase); err != nil {
+				query.Close()
+				return err
+			}
+		}
+
+		// Extra tags (Capital, Country, Administration)
+		isCapital := world.Has(ent, capitalID)
+		isCountry := world.Has(ent, countryID)
+		isAdmin := world.Has(ent, adminID)
+		if isCapital || isCountry || isAdmin {
+			var currencyID uint32
+			var debasement float32
+			if isCountry {
+				ctry := (*components.CountryComponent)(world.Get(ent, countryID))
+				currencyID = ctry.StandardCurrencyID
+				debasement = ctry.Debasement
+			}
+			if _, err := stmtExtra.Exec(uid, isCapital, isCountry, isAdmin, currencyID, debasement); err != nil {
 				query.Close()
 				return err
 			}
@@ -828,6 +1185,320 @@ func LoadWorld(tm *TickManager, db *sql.DB) error {
 		return err
 	}
 
+	// 17. Fetch Equipment
+	type equipData struct {
+		nameID, prestige uint32
+		histJson         string
+		equipped         bool
+	}
+	equipMap := make(map[uint64]equipData)
+	rowsEquip, err := db.Query("SELECT uid, weapon_nameid, weapon_prestige, weapon_history_json, equipped FROM equipment")
+	if err != nil {
+		return err
+	}
+	defer rowsEquip.Close()
+	for rowsEquip.Next() {
+		var u uint64
+		var e equipData
+		if err := rowsEquip.Scan(&u, &e.nameID, &e.prestige, &e.histJson, &e.equipped); err != nil {
+			return err
+		}
+		equipMap[u] = e
+	}
+	if err := rowsEquip.Err(); err != nil {
+		return err
+	}
+
+	// 18. Fetch Sanity
+	type sanityData struct {
+		stress, maxStress         float32
+		breakState, breakCooldown uint32
+	}
+	sanityMap := make(map[uint64]sanityData)
+	rowsSanity, err := db.Query("SELECT uid, stress, max_stress, break_state, break_cooldown FROM sanity")
+	if err != nil {
+		return err
+	}
+	defer rowsSanity.Close()
+	for rowsSanity.Next() {
+		var u uint64
+		var s sanityData
+		if err := rowsSanity.Scan(&u, &s.stress, &s.maxStress, &s.breakState, &s.breakCooldown); err != nil {
+			return err
+		}
+		sanityMap[u] = s
+	}
+	if err := rowsSanity.Err(); err != nil {
+		return err
+	}
+
+	// 19. Fetch Treasury
+	treasuryMap := make(map[uint64]float32)
+	rowsTreasury, err := db.Query("SELECT uid, wealth FROM treasury")
+	if err != nil {
+		return err
+	}
+	defer rowsTreasury.Close()
+	for rowsTreasury.Next() {
+		var u uint64
+		var w float32
+		if err := rowsTreasury.Scan(&u, &w); err != nil {
+			return err
+		}
+		treasuryMap[u] = w
+	}
+	if err := rowsTreasury.Err(); err != nil {
+		return err
+	}
+
+	// 20. Fetch Market
+	type marketData struct{ wood, stone, iron, food, wage float32 }
+	marketMap := make(map[uint64]marketData)
+	rowsMarket, err := db.Query("SELECT uid, wood_price, stone_price, iron_price, food_price, wage_rate FROM market")
+	if err != nil {
+		return err
+	}
+	defer rowsMarket.Close()
+	for rowsMarket.Next() {
+		var u uint64
+		var m marketData
+		if err := rowsMarket.Scan(&u, &m.wood, &m.stone, &m.iron, &m.food, &m.wage); err != nil {
+			return err
+		}
+		marketMap[u] = m
+	}
+	if err := rowsMarket.Err(); err != nil {
+		return err
+	}
+
+	// 21. Fetch Legitimacy
+	legitMap := make(map[uint64]uint32)
+	rowsLegit, err := db.Query("SELECT uid, score FROM legitimacy")
+	if err != nil {
+		return err
+	}
+	defer rowsLegit.Close()
+	for rowsLegit.Next() {
+		var u uint64
+		var s uint32
+		if err := rowsLegit.Scan(&u, &s); err != nil {
+			return err
+		}
+		legitMap[u] = s
+	}
+	if err := rowsLegit.Err(); err != nil {
+		return err
+	}
+
+	// 22. Fetch Loyalty
+	loyaltyMap := make(map[uint64]uint32)
+	rowsLoyalty, err := db.Query("SELECT uid, value FROM loyalty")
+	if err != nil {
+		return err
+	}
+	defer rowsLoyalty.Close()
+	for rowsLoyalty.Next() {
+		var u uint64
+		var v uint32
+		if err := rowsLoyalty.Scan(&u, &v); err != nil {
+			return err
+		}
+		loyaltyMap[u] = v
+	}
+	if err := rowsLoyalty.Err(); err != nil {
+		return err
+	}
+
+	// 23. Fetch Jurisdiction
+	type jurisData struct {
+		radiusSq                    float32
+		illegal, corruption, banned uint32
+		trauma                      uint16
+	}
+	jurisMap := make(map[uint64]jurisData)
+	rowsJuris, err := db.Query("SELECT uid, radius_sq, illegal_action_ids, corruption, banned_secret_id, trauma FROM jurisdiction")
+	if err != nil {
+		return err
+	}
+	defer rowsJuris.Close()
+	for rowsJuris.Next() {
+		var u uint64
+		var j jurisData
+		if err := rowsJuris.Scan(&u, &j.radiusSq, &j.illegal, &j.corruption, &j.banned, &j.trauma); err != nil {
+			return err
+		}
+		jurisMap[u] = j
+	}
+	if err := rowsJuris.Err(); err != nil {
+		return err
+	}
+
+	// 24. Fetch Structure
+	type structData struct {
+		sType     uint32
+		integrity float32
+		dataA     uint32
+		ownerID   uint32
+	}
+	structMap := make(map[uint64]structData)
+	rowsStruct, err := db.Query("SELECT uid, structure_type, integrity, data_a, owner_id FROM structure")
+	if err != nil {
+		return err
+	}
+	defer rowsStruct.Close()
+	for rowsStruct.Next() {
+		var u uint64
+		var s structData
+		if err := rowsStruct.Scan(&u, &s.sType, &s.integrity, &s.dataA, &s.ownerID); err != nil {
+			return err
+		}
+		structMap[u] = s
+	}
+	if err := rowsStruct.Err(); err != nil {
+		return err
+	}
+
+	// 25. Fetch ConstructionSite
+	type constrData struct {
+		woodReq, woodGot, stoneReq, stoneGot, progress, maxProgress uint32
+		builderID                                                   uint64
+		siteType                                                    uint32
+	}
+	constrMap := make(map[uint64]constrData)
+	rowsConstr, err := db.Query("SELECT uid, wood_req, wood_gathered, stone_req, stone_gathered, progress, max_progress, builder_id, site_type FROM construction_site")
+	if err != nil {
+		return err
+	}
+	defer rowsConstr.Close()
+	for rowsConstr.Next() {
+		var u uint64
+		var c constrData
+		if err := rowsConstr.Scan(&u, &c.woodReq, &c.woodGot, &c.stoneReq, &c.stoneGot, &c.progress, &c.maxProgress, &c.builderID, &c.siteType); err != nil {
+			return err
+		}
+		constrMap[u] = c
+	}
+	if err := rowsConstr.Err(); err != nil {
+		return err
+	}
+
+	// 26. Fetch Demographics
+	type demoData struct {
+		peak   uint32
+		crisis bool
+	}
+	demoMap := make(map[uint64]demoData)
+	rowsDemo, err := db.Query("SELECT uid, peak_population, labor_crisis FROM demographics")
+	if err != nil {
+		return err
+	}
+	defer rowsDemo.Close()
+	for rowsDemo.Next() {
+		var u uint64
+		var d demoData
+		if err := rowsDemo.Scan(&u, &d.peak, &d.crisis); err != nil {
+			return err
+		}
+		demoMap[u] = d
+	}
+	if err := rowsDemo.Err(); err != nil {
+		return err
+	}
+
+	// 27. Fetch Workbench
+	type workData struct {
+		employerID uint64
+		x, y       float32
+	}
+	workMap := make(map[uint64]workData)
+	rowsWork, err := db.Query("SELECT uid, employer_id, x, y FROM workbench")
+	if err != nil {
+		return err
+	}
+	defer rowsWork.Close()
+	for rowsWork.Next() {
+		var u uint64
+		var w workData
+		if err := rowsWork.Scan(&u, &w.employerID, &w.x, &w.y); err != nil {
+			return err
+		}
+		workMap[u] = w
+	}
+	if err := rowsWork.Err(); err != nil {
+		return err
+	}
+
+	// 28. Fetch Culture
+	type cultureData struct {
+		dialectTick           uint64
+		foreignTicks          uint32
+		langID, foreignLangID uint16
+	}
+	cultureMap := make(map[uint64]cultureData)
+	rowsCulture, err := db.Query("SELECT uid, dialect_tick, foreign_ticks, language_id, foreign_language_id FROM culture")
+	if err != nil {
+		return err
+	}
+	defer rowsCulture.Close()
+	for rowsCulture.Next() {
+		var u uint64
+		var c cultureData
+		if err := rowsCulture.Scan(&u, &c.dialectTick, &c.foreignTicks, &c.langID, &c.foreignLangID); err != nil {
+			return err
+		}
+		cultureMap[u] = c
+	}
+	if err := rowsCulture.Err(); err != nil {
+		return err
+	}
+
+	// 29. Fetch ExtraTags
+	type extraData struct {
+		capital, country, admin bool
+		currencyID              uint32
+		debasement              float32
+	}
+	extraMap := make(map[uint64]extraData)
+	rowsExtra, err := db.Query("SELECT uid, is_capital, is_country, is_admin, country_currency_id, country_debasement FROM extra_tags")
+	if err != nil {
+		return err
+	}
+	defer rowsExtra.Close()
+	for rowsExtra.Next() {
+		var u uint64
+		var e extraData
+		if err := rowsExtra.Scan(&u, &e.capital, &e.country, &e.admin, &e.currencyID, &e.debasement); err != nil {
+			return err
+		}
+		extraMap[u] = e
+	}
+	if err := rowsExtra.Err(); err != nil {
+		return err
+	}
+
+	// 30. Fetch Ambitions
+	type ambData struct {
+		ambJson, offJson  string
+		built, familyBase uint32
+	}
+	ambMap := make(map[uint64]ambData)
+	rowsAmb, err := db.Query("SELECT uid, ambitions_json, offers_json, built_count, family_base FROM ambitions")
+	if err != nil {
+		return err
+	}
+	defer rowsAmb.Close()
+	for rowsAmb.Next() {
+		var u uint64
+		var a ambData
+		if err := rowsAmb.Scan(&u, &a.ambJson, &a.offJson, &a.built, &a.familyBase); err != nil {
+			return err
+		}
+		ambMap[u] = a
+	}
+	if err := rowsAmb.Err(); err != nil {
+		return err
+	}
+
 	// Component IDs
 	idID := ecs.ComponentID[components.Identity](world)
 	posID := ecs.ComponentID[components.Position](world)
@@ -846,6 +1517,22 @@ func LoadWorld(tm *TickManager, db *sql.DB) error {
 	popID := ecs.ComponentID[components.PopulationComponent](world)
 	despID := ecs.ComponentID[components.DesperationComponent](world)
 	secID := ecs.ComponentID[components.SecretComponent](world)
+	equipID := ecs.ComponentID[components.EquipmentComponent](world)
+	sanityID := ecs.ComponentID[components.SanityComponent](world)
+	treasuryID := ecs.ComponentID[components.TreasuryComponent](world)
+	marketID := ecs.ComponentID[components.MarketComponent](world)
+	legitID := ecs.ComponentID[components.LegitimacyComponent](world)
+	loyaltyID := ecs.ComponentID[components.LoyaltyComponent](world)
+	jurisID := ecs.ComponentID[components.JurisdictionComponent](world)
+	structID := ecs.ComponentID[components.StructureComponent](world)
+	constrID := ecs.ComponentID[components.ConstructionSiteComponent](world)
+	demoID := ecs.ComponentID[components.DemographicsComponent](world)
+	workID := ecs.ComponentID[components.WorkbenchComponent](world)
+	cultureID := ecs.ComponentID[components.CultureComponent](world)
+	capitalID := ecs.ComponentID[components.CapitalComponent](world)
+	countryID := ecs.ComponentID[components.CountryComponent](world)
+	adminID := ecs.ComponentID[components.AdministrationMarker](world)
+	ambitionsID := ecs.ComponentID[components.AmbitionsComponent](world)
 
 	for _, uid := range uids {
 		ent := world.NewEntity()
@@ -985,6 +1672,136 @@ func LoadWorld(tm *TickManager, db *sql.DB) error {
 				return err
 			}
 			sec.Secrets = secrets
+		}
+
+		if e, ok := equipMap[uid]; ok {
+			world.Add(ent, equipID)
+			eq := (*components.EquipmentComponent)(world.Get(ent, equipID))
+			eq.Weapon.NameID = e.nameID
+			eq.Weapon.Prestige = e.prestige
+			eq.Equipped = e.equipped
+			var hist []uint32
+			if err := json.Unmarshal([]byte(e.histJson), &hist); err != nil {
+				return err
+			}
+			eq.Weapon.History = hist
+		}
+
+		if s, ok := sanityMap[uid]; ok {
+			world.Add(ent, sanityID)
+			san := (*components.SanityComponent)(world.Get(ent, sanityID))
+			san.Stress = s.stress
+			san.MaxStress = s.maxStress
+			san.BreakState = s.breakState
+			san.BreakCooldown = s.breakCooldown
+		}
+
+		if w, ok := treasuryMap[uid]; ok {
+			world.Add(ent, treasuryID)
+			t := (*components.TreasuryComponent)(world.Get(ent, treasuryID))
+			t.Wealth = w
+		}
+
+		if m, ok := marketMap[uid]; ok {
+			world.Add(ent, marketID)
+			mk := (*components.MarketComponent)(world.Get(ent, marketID))
+			mk.WoodPrice = m.wood
+			mk.StonePrice = m.stone
+			mk.IronPrice = m.iron
+			mk.FoodPrice = m.food
+			mk.WageRate = m.wage
+		}
+
+		if s, ok := legitMap[uid]; ok {
+			world.Add(ent, legitID)
+			l := (*components.LegitimacyComponent)(world.Get(ent, legitID))
+			l.Score = s
+		}
+
+		if v, ok := loyaltyMap[uid]; ok {
+			world.Add(ent, loyaltyID)
+			l := (*components.LoyaltyComponent)(world.Get(ent, loyaltyID))
+			l.Value = v
+		}
+
+		if j, ok := jurisMap[uid]; ok {
+			world.Add(ent, jurisID)
+			juris := (*components.JurisdictionComponent)(world.Get(ent, jurisID))
+			juris.RadiusSquared = j.radiusSq
+			juris.IllegalActionIDs = j.illegal
+			juris.Corruption = j.corruption
+			juris.BannedSecretID = j.banned
+			juris.Trauma = j.trauma
+		}
+
+		if s, ok := structMap[uid]; ok {
+			world.Add(ent, structID)
+			st := (*components.StructureComponent)(world.Get(ent, structID))
+			st.StructureType = s.sType
+			st.Integrity = s.integrity
+			st.DataA = s.dataA
+			st.OwnerID = s.ownerID
+		}
+
+		if c, ok := constrMap[uid]; ok {
+			world.Add(ent, constrID)
+			cs := (*components.ConstructionSiteComponent)(world.Get(ent, constrID))
+			cs.WoodRequired = c.woodReq
+			cs.WoodGathered = c.woodGot
+			cs.StoneRequired = c.stoneReq
+			cs.StoneGathered = c.stoneGot
+			cs.Progress = c.progress
+			cs.MaxProgress = c.maxProgress
+			cs.BuilderID = c.builderID
+			cs.SiteType = c.siteType
+		}
+
+		if d, ok := demoMap[uid]; ok {
+			world.Add(ent, demoID)
+			dm := (*components.DemographicsComponent)(world.Get(ent, demoID))
+			dm.PeakPopulation = d.peak
+			dm.LaborCrisisActive = d.crisis
+		}
+
+		if w, ok := workMap[uid]; ok {
+			world.Add(ent, workID)
+			wb := (*components.WorkbenchComponent)(world.Get(ent, workID))
+			wb.EmployerID = w.employerID
+			wb.X = w.x
+			wb.Y = w.y
+		}
+
+		if c, ok := cultureMap[uid]; ok {
+			world.Add(ent, cultureID)
+			cul := (*components.CultureComponent)(world.Get(ent, cultureID))
+			cul.DialectTickStamp = c.dialectTick
+			cul.ForeignInteractionTicks = c.foreignTicks
+			cul.LanguageID = c.langID
+			cul.ForeignLanguageID = c.foreignLangID
+		}
+
+		if e, ok := extraMap[uid]; ok {
+			if e.capital {
+				world.Add(ent, capitalID)
+			}
+			if e.admin {
+				world.Add(ent, adminID)
+			}
+			if e.country {
+				world.Add(ent, countryID)
+				ctry := (*components.CountryComponent)(world.Get(ent, countryID))
+				ctry.StandardCurrencyID = e.currencyID
+				ctry.Debasement = e.debasement
+			}
+		}
+
+		if a, ok := ambMap[uid]; ok {
+			world.Add(ent, ambitionsID)
+			amb := (*components.AmbitionsComponent)(world.Get(ent, ambitionsID))
+			_ = json.Unmarshal([]byte(a.ambJson), &amb.Ambitions)
+			_ = json.Unmarshal([]byte(a.offJson), &amb.Offers)
+			amb.BuiltCount = a.built
+			amb.FamilyBase = a.familyBase
 		}
 	}
 
