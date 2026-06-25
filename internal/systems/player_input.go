@@ -67,8 +67,14 @@ func (s *PlayerInputSystem) Update(world *ecs.World) {
 	var stamina float32
 	hasPlayer := false
 
+	// Iterate to completion (arche auto-closes on exhaustion); only the first
+	// possessed entity is controlled. Closing a fully-iterated query double-
+	// unlocks, so we never call Close() here.
 	q := world.Query(s.filter)
 	for q.Next() {
+		if hasPlayer {
+			continue
+		}
 		player = q.Entity()
 		pos := (*components.Position)(q.Get(s.posID))
 		px, py = pos.X, pos.Y
@@ -98,9 +104,7 @@ func (s *PlayerInputSystem) Update(world *ecs.World) {
 			}
 		}
 		hasPlayer = true
-		break
 	}
-	q.Close()
 
 	if !hasPlayer || s.bridge == nil {
 		if s.bridge != nil {
@@ -149,7 +153,6 @@ func (s *PlayerInputSystem) resolveAttack(world *ecs.World, player ecs.Entity, p
 			found = true
 		}
 	}
-	tq.Close()
 
 	if !found {
 		return

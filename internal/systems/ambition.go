@@ -157,15 +157,17 @@ func (s *AmbitionSystem) Update(world *ecs.World) {
 	adminID := ecs.ComponentID[components.AdministrationMarker](world)
 	identID := ecs.ComponentID[components.Identity](world)
 
+	// Iterate to completion (arche auto-closes on exhaustion); calling Close on
+	// an exhausted query double-unlocks. Capture the first possessed+ambition.
 	q := world.Query(ecs.All(possessedID, ambID))
 	var player ecs.Entity
 	found := false
 	for q.Next() {
-		player = q.Entity()
-		found = true
-		break
+		if !found {
+			player = q.Entity()
+			found = true
+		}
 	}
-	q.Close()
 	if !found {
 		return
 	}

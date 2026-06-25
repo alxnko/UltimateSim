@@ -28,14 +28,39 @@ $env:CGO_ENABLED=0; go build -o game.exe ./cmd/game
 ./game.exe
 ```
 
-## Controls
-- **Global Strategy / Action-RPG Mode**:
-    - `WASD`: Move possessed entity
-    - `Mouse Wheel`: Zoom camera
-    - `Left Click`: Attack / Primary Action
-    - `Right-Click`: Interact
-    - `SPACE`: Pause/Resume Simulation
-    - `ESC`: Exit Game
+## How to Play
+
+You possess a single character in a fully simulated medieval world. Survive, build,
+climb the social hierarchy, rule a city, wage war, and — when you die — continue as
+your heir. The world keeps simulating around you whether or not you act.
+
+### Controls
+| Input | Action |
+|-------|--------|
+| `WASD` | Move your character |
+| `Left Click` | Attack an NPC / select an entity (Shift+Click always selects) |
+| `Right Click` | Open a context menu (Talk, Trade, Attack, Order, Pick up, Build, Inspect) |
+| `Mouse Wheel` | Zoom (below 0.5x switches to the strategic lens map) |
+| `E` | Hammer the nearest construction site |
+| `B` | Toggle build mode (`R` cycles structure, click to place) |
+| `G` | Ambitions panel (optional goals + rewards) |
+| `C` | Character sheet |
+| `L` | Chronicle (event log) |
+| `Tab` / `F1`–`F4` | Cycle / pick strategic lens (Political, Wealth, Crime, Culture) |
+| `Space` | Pause / resume the simulation |
+| `Esc` | Pause menu (Save, Load, Quit) / close panels |
+
+### Core loops
+- **Survive**: keep Food, Blood and Stamina up; combat depletes vitals, pain slows you.
+- **Society**: Talk to build hooks (favors), Gift, Threaten, or Share rumors. Relationships
+  feed gossip, legitimacy and feuds.
+- **Power**: earn enough positive standing in your city to **Claim Leadership**. As a Ruler
+  you issue Orders (move/work/attack/follow) to subordinates and set Laws; as a Sovereign
+  (capital ruler) you control currency debasement and declare war.
+- **Build**: buy materials at a market, enter build mode, place Houses, Workshops,
+  Storehouses, Shrines, Farms or Taverns. NPC builders (or you, with `E`) complete them.
+- **Legacy**: when you die, pick a family heir to continue your dynasty — inheriting prestige,
+  debt, artifacts and feuds. No heir means a dynasty-end / reincarnate screen.
 
 ---
 

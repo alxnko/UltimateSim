@@ -1,3 +1,30 @@
+## Shell Phase: Playable Game Layer (Streets of Rogue / RimWorld UI)
+Spec: `docs/superpowers/specs/2026-06-11-playable-game-design.md`. Turns the simulation backend into a fully playable single-character action-RPG + grand-strategy hybrid.
+
+**UI toolkit (`internal/ui`)**
+- `camera.go`: `Camera{X,Y,Zoom}` with World/Screen transforms, wheel zoom 0.25–4.0.
+- `theme.go` / `widgets.go`: immediate-mode Panel, Button, Bar, Checkbox, ContextMenu, ScrollList over `ebiten/text/v2` + stdlib bitmap font.
+- `format.go`: decoders (TraitNames, InteractionName, JobName, StructureName, BiomeName, ItemName).
+- `notifications.go`: transient top-right feed; `player_context.go` keeps the full event log (Chronicle).
+
+**Rendering (`internal/render/sprites.go`)**: procedural pixel sprites generated in code — layered characters (skin/hair/clothing by genome+job, 2-frame walk) and ~20 distinct building/item sprites. `render_world.go` draws tiles, structures, sites (with progress bars), villages/capitals/ruins, items, corpses, characters, selection ring, build ghost; below 0.5x zoom switches to strategic lens mode (Political/Wealth/Crime/Culture heatmaps with settlement labels) in `lenses.go`.
+
+**HUD & panels**: bottom HUD (real Vitals/Needs/Sanity bars, identity, rank, date, speed + tool buttons), minimap, RimWorld-style entity inspector (Bio/Needs/Social/Politics tabs; village/structure overviews), context menus, and modal panels — dialog (Talk/Gift/Threaten/Rumor/Trade/Order), trade window, laws panel, ambitions, character sheet, chronicle, pause menu, heir-selection / game-over.
+
+**Player verbs & systems (`internal/systems`)**
+- `PlayerInputSystem` (rewritten): WASD + `InputBridge` mouse-attack intent → `CombatMarker`, attack cooldown, stamina gate, pain-slow. `input_bridge.go` decouples UI from sim.
+- `social_actions.go`: Chat / GiveGift / Threaten / ShareRumor (hooks, memory, jurisdiction crime, translation penalty).
+- `trade_actions.go`: market buy/sell + item/coin pickup.
+- `build_actions.go`: BuildCosts / CanPlace / PlaceSite / HammerSite; player-funded construction sites feed the existing builder pipeline.
+- `rank.go`: GetRank (Citizen/Ruler/Sovereign), CanClaimLeadership / ClaimLeadership via hook influence.
+- `law_actions.go`: jurisdiction law + contraband toggles, currency debasement, declare/peace war.
+- `player_order.go` + `PlayerOrderComponent`: rulers issue Move/AssignJob/Attack/BuildAt/Follow orders; obedience gated by Legitimacy vs Loyalty/hooks; refusal dents legitimacy (`WanderSystem` skips ordered NPCs).
+- `ambition.go` + `Ambition`/`AmbitionsComponent`: generates sandbox goals (Ruler/Wealth/Builder/Feud/Heir) from world state; completion grants prestige.
+- `structure_effect.go`: House/Tavern rest auras, Shrine belief spread, Farm village-food, Workshop→Workbench; new structure types (Workshop/Storehouse/Shrine/Farm/Tavern) with per-type completion effects in `construction.go`.
+- `heir.go` + `engine.PlayerEvents`: `DeathSystem` surfaces possessed-entity death; FindHeirs / PossessEntity / FindStartCandidate drive the legacy loop.
+
+**Engine integration**: `cmd/game/main.go` registers all shell systems plus ~30 previously-dormant simulation engines and the newly-merged Mining/Undermining/Cannibalism/Forgery engines; window 1280x720; `InputBridge` + `PlayerEvents` plumbed through `LoadingStatus`. Save/load wired to a pause menu (`savegame.db`). Soak + determinism integration tests in `cmd/game/soak_test.go`.
+
 ## Phase 51: UI State Machine Rewrite
 - **State Machine Architecture**: Added `internal/ui` package with a complete `GameState` interface and `StateManager`. Enables robust routing between game loops without polluting the ECS.
 - **Main Menu**: Boot into `StateMainMenu` offering a clean interface that transitions into the live simulation upon pressing Enter.
