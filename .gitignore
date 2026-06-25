@@ -27,3 +27,8 @@ go.work.sum
 
 # Worktrees
 .worktrees/
+
+# Claude Code session artifacts
+.claude/
+savegame.db
+game_smoke.exe
