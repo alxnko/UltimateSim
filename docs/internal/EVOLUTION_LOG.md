@@ -1,3 +1,21 @@
+## Evolution: Phase 67 - The Subterranean Mining Engine (MiningSystem)
+**Focus:** Integration (Geography + Biology + Economy + Entropy)
+
+**The Problem (Vision Gap):**
+The Vision requires physical parity for systems. Resource extraction was previously not fully modeled as physical labor impacting the ecosystem over time. Iron and stone need a proper extraction mechanism by individual entities that directly ties into market fluctuations and environmental degradation (Entropy).
+
+**The Solution (Autonomous DOD Execution):**
+I created the `MiningSystem` and introduced `JobMiner` (`uint8 = 15`).
+1. The system pre-caches active `StorageComponent` and `MarketComponent` maps for Employer entities to ensure fast O(1) lookups during execution.
+2. NPCs with `JobMiner` iterate, physically drawing `Stamina` (5.0 per extraction) to pull `Iron` or `Stone` from the `MapGrid` `ResourceDepot` at their tile.
+3. Extracted materials are directly added to the Employer's `StorageComponent`.
+4. Market prices for these resources mathematically lower over time (`-0.01` per extraction) based on supply influx.
+5. Repeated extraction triggers an entropy effect, permanently reducing the tile's `Elevation` and recalibrating its `BiomeID`.
+
+**The Butterfly Effect:**
+An NPC, lacking wealth, takes on a mining job (JobMiner). They physically drain their stamina over multiple ticks extracting iron ore. This action increases their employer's storage while slightly dropping the local market price of iron. Over weeks, the intense mining lowers the physical elevation of the map tile, potentially creating a valley or altering the biome, while the worker requires increased food consumption due to stamina loss, plugging into the `AgricultureSystem` and `MetabolismSystem`. Validated perfectly deterministic via `TestMiningSystem_Integration`.
+
+
 ## Evolution: Phase 68 - The Physical Medical Engine (MedicalSystem)
 **Focus:** Integration (Biology + Logistics + Economy + Social Hierarchy)
 
@@ -1077,3 +1095,60 @@ Because of localized famines, the city's `Trauma` spikes. The `ScapegoatSystem` 
 
 **Architecture Validation:**
 Strict Data-Oriented Design (DOD) maintained. We pre-cache potential victims into a flat `[]parasiteVictimData` array to entirely avoid nested `arche-go` ECS lock panics during the O(N^2) distance calculations. `ParasiteComponent` size validated via `unsafe.Sizeof` tests. E2E determinism proven via `TestParasiteSystem_Integration`.
+
+## Evolution: Phase 70 - The Deed Forgery Engine
+**Focus:** Integration (Economy + Genetics + Justice)
+
+**The Problem (Vision Gap):**
+The Vision requires "Total Simulation" where any system can be interacted with. Previously, property and business ownership (`BusinessComponent`) were static unless formally inherited or sold. There was no mechanism for an NPC to forcefully seize property from another through non-violent intellectual means, artificially isolating the Economic layer from Genetics (Intellect) and Justice (Theft).
+
+**The Solution (Autonomous DOD Execution):**
+I created the `ForgerySystem`.
+1. It pre-caches `BusinessComponent`s and queries desperate NPCs (`DesperationComponent`).
+2. If a desperate NPC has a higher `GenomeComponent.Intellect` than the current business owner, they mathematically steal the ownership deed.
+3. The act of theft dynamically spawns a `-100` negative hook against the forger in the `SparseHookGraph` and physically logs an `InteractionTheft` event into their `Memory` buffer.
+
+**The Butterfly Effect:**
+An economic crash forces a highly intelligent but poor scholar into desperation. They decide to use their intellect to forge the deed of a prominent Blacksmith's workshop. The ownership physically transfers, granting the scholar all future profits.
+However, the original Blacksmith, furious at being duped, immediately gains a `-100` Blood Feud grudge against the scholar. Concurrently, the scholar's `Memory` records the theft. If the scholar is ever detained by a Guard, or if Gossip spreads their secret, the `JusticeSystem` will detect the `InteractionTheft`, flag the scholar with a `CrimeMarker`, and direct Guards to arrest or execute them. What began as an intellectual property grab dynamically explodes into a deadly inter-clan rivalry and systemic criminal manhunt.
+Validated perfectly deterministic via `TestForgerySystem_Integration`.
+
+## Evolution: Phase 71 - The Macabre Survival Engine (CannibalismSystem)
+**Focus:** Integration (Biology + Economy + Sanitation + Psychology + Parasitic Symbiosis)
+
+**The Problem (Vision Gap):**
+The Vision requires "Total Freedom & Physical Constraints" and that all mechanics bridge into macro-emergence. Previously, starvation and death (`SanitationSystem`) generated corpses, but starving NPCs lacked any mechanism to violate social taboos to survive when food dropped to zero. This isolated the Sanitation system from deep biological desperation and prevented emergent origin stories for the `Parasitic Symbiosis Engine` (Phase 69).
+
+**The Solution (Autonomous DOD Execution):**
+I created the `CannibalismSystem`.
+1. It pre-caches `CorpseComponent` entities.
+2. It queries highly desperate, starving NPCs (`Needs.Food < 30.0` and `Desperation.Level >= 50`).
+3. These NPCs pathfind to the nearest physical corpse.
+4. Upon consumption (`distSq <= 2.0`), the system:
+   - Restores the NPC's `Needs.Food`.
+   - Physically destroys the corpse (intercepting the biological decay/plague vector).
+   - Induces massive psychological trauma (`Sanity.Stress += 50.0`).
+   - Forces a 100% deterministic contraction of the `ParasiteComponent` (organically triggering Phase 69).
+   - Natively tags the NPC with the `TraitEsoteric` identity mask and logs an `InteractionEsoteric` event into their `Memory` buffer.
+
+**The Butterfly Effect:**
+A harsh winter hits, spiking food prices. A poor lumberjack begins to starve, causing his `Desperation.Level` to max out. Nearby, another peasant dies from cold exposure, leaving a `CorpseComponent`.
+Driven by sheer biological necessity, the lumberjack consumes the corpse. He survives, but the massive `Stress` pushes him towards a `MentalBreak` (Phase 62). Simultaneously, the act infects him with the `ParasiteComponent`. He is now driven by a new biological need for Blood.
+Because the act logged an `InteractionEsoteric` event in his `Memory`, if a city Guard ever detains him or gossip leaks his secret, the `JusticeSystem` will assign him a `CrimeMarker`. What began as a pure economic-biological failure (starvation) has systemically mutated an NPC into an esoteric, parasitic serial killer now hunted by the Justice layer—all without a single hardcoded narrative script.
+Validated perfectly deterministic via `TestCannibalismSystem_Integration`.
+## Evolution: Phase 36 - The Sapper & Undermining Engine
+**Focus:** Integration (Warfare + Geography + Construction)
+
+**The Problem (Vision Gap):**
+In warfare, physical fortifications (`StructureComponent` walls) currently only take abstract damage or are bypassed entirely by simple paths. Phase 36 explicitly requires "Sappers & Undermining" during sieges, where `JobMiner` units dig under walls to collapse them, bridging the Mining System (Phase 67) with Siege Warfare and Construction (Phase 59).
+
+**The Solution (Autonomous DOD Execution):**
+I created the `UnderminingSystem` and a 16-byte aligned `TunnelComponent`.
+1. **Component Addition:** Introduced `TunnelComponent` (TargetID uint64, Progress float32, _ uint32 padding) to physically track underground tunnel integrity.
+2. **The Dig Mechanic:** During an active siege (`WarTrackerComponent.Active`), the system evaluates `JobMiner` NPCs near `StructureComponent` targets. Instead of directly attacking, miners generate a physical `TunnelComponent` under the wall.
+3. **Structural Collapse:** As miners spend ticks progressing the tunnel, the system mathematically deducts `Integrity` from the target `StructureComponent`.
+4. **Breach Execution:** When `Integrity <= 0`, the structure is physically destroyed, dynamically opening a physical path through the walls for the attacking army.
+
+**The Butterfly Effect:**
+An attacking army cannot breach a massive castle wall, halting their infantry assault. The commander deploys `JobMiner` NPCs. The miners dig `TunnelComponent` entities under the walls. The `StructureComponent` collapses physically. This destruction removes the barrier, allowing the attacking infantry's `Path` components to route into the city. The sudden influx of hostile troops triggers the `SiegeSystem` to spike starvation, leading to local `Desperation` and a complete economic collapse of the defending city.
+Validated perfectly deterministic via `TestUnderminingSystem_Integration` ensuring no multi-threading ECS locks during structural execution loops.

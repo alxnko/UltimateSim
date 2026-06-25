@@ -32,6 +32,7 @@ const (
 	JobBuilder    uint8 = 12 // Phase 59: The Physical Construction Engine
 	JobGravedigger uint8 = 13 // Phase 65: The Physical Sanitation Engine
 	JobDoctor      uint8 = 14 // Phase 68: The Physical Medical Engine
+	JobMiner       uint8 = 15 // Phase 67: The Subterranean Mining Engine
 )
 
 // Phase 09.5: Item Inheritance Threshold
@@ -691,4 +692,11 @@ type AmbitionsComponent struct {
 	Offers    []Ambition // Pending offers (max 3)
 	BuiltCount uint32    // Lifetime player-funded completed structures
 	FamilyBase uint32    // Family size snapshot when an AmbitionHeir was accepted
+}
+
+// Phase 36: Siege Warfare (Sappers & Undermining)
+type TunnelComponent struct {
+	TargetID uint64
+	Progress float32
+	_        uint32 // Padding to exactly 16 bytes
 }
