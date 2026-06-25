@@ -145,6 +145,9 @@ func BuildSimulation(gridWidth, gridHeight int, seedVal byte, status *render.Loa
 	tickManager.AddSystem(systems.NewBloodFeudSystem(world, hookGraph), engine.PhaseResolution)
 	tickManager.AddSystem(systems.NewCombatSystem(world), engine.PhaseResolution)
 
+	// Evolution: Phase 31 - Flora, Fauna, // Phase 31: Flora, Fauna, & Animal Husbandry Animal Husbandry
+	tickManager.AddSystem(systems.NewHusbandrySystem(world, pathQueue), engine.PhaseAI)
+
 	// Phase 41: The Ostracization Engine
 	tickManager.AddSystem(systems.NewOstracizationSystem(world, hookGraph), engine.PhaseResolution)
 

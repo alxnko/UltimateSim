@@ -1152,3 +1152,20 @@ I created the `UnderminingSystem` and a 16-byte aligned `TunnelComponent`.
 **The Butterfly Effect:**
 An attacking army cannot breach a massive castle wall, halting their infantry assault. The commander deploys `JobMiner` NPCs. The miners dig `TunnelComponent` entities under the walls. The `StructureComponent` collapses physically. This destruction removes the barrier, allowing the attacking infantry's `Path` components to route into the city. The sudden influx of hostile troops triggers the `SiegeSystem` to spike starvation, leading to local `Desperation` and a complete economic collapse of the defending city.
 Validated perfectly deterministic via `TestUnderminingSystem_Integration` ensuring no multi-threading ECS locks during structural execution loops.
+
+## Evolution: Phase 31 - Flora, Fauna, & Animal Husbandry Engine
+**Focus:** Integration (Geography + Biology + Economy)
+
+**The Problem (Vision Gap):**
+The Vision requires physical parity for systems, including the broader ecosystem beyond humanoid NPCs. Previously, `Phase 31` roadmap specified dynamic ecosystems of predators and prey and taming beasts, but there was no actual logic for animals interacting with the macro-economy or being tamed by NPCs.
+
+**The Solution (Autonomous DOD Execution):**
+I created the `HusbandrySystem` and introduced `JobHerder` (`uint8 = 16`), `AnimalComponent`, and `TamedMarker`.
+1. The system pre-caches active `StorageComponent` and `MarketComponent` maps for all cities to ensure fast O(1) lookups during execution.
+2. The system also pre-caches all animals with their taming status and owner ID.
+3. NPCs with `JobHerder` iterate, evaluating local famines via `MarketComponent.FoodPrice > 10.0`.
+4. If there is no famine, the herder actively seeks wild animals and structurally adds the `TamedMarker` component, claiming ownership.
+5. If there is a famine, the herder actively seeks their *own* tamed animals, structurally slaughtering them and depositing the animal's `YieldMeat` directly into the city's `StorageComponent`.
+
+**The Butterfly Effect:**
+A herder tames a wild animal, pulling it into their clan's ownership. Later, a localized famine occurs due to crop failure or spoilage, driving food prices to extreme highs. This triggers the herder to dynamically slaughter their tamed animal. The resulting influx of meat into the city's storage immediately drops the food price, naturally averting the famine without any central planning or hardcoded events. Validated perfectly deterministic via `TestHusbandrySystem_Integration`.
