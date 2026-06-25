@@ -1,9 +1,9 @@
 package systems
 
 import (
-	"testing"
-	"github.com/mlange-42/arche/ecs"
 	"github.com/ALXNKO/UltimateSim/internal/components"
+	"github.com/mlange-42/arche/ecs"
+	"testing"
 )
 
 // TestLanguageDriftDialectFormation verifies an entity generating a new dialect

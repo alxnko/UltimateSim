@@ -15,7 +15,7 @@ func TestEchoChamber_Integration(t *testing.T) {
 
 	// 1. Setup MapGrid with an isolated tile
 	mapGrid := engine.NewMapGrid(10, 10)
-	isolatedIdx := 1*10 + 1 // x=1, y=1
+	isolatedIdx := 1*10 + 1                         // x=1, y=1
 	mapGrid.TileStates[isolatedIdx].FootTraffic = 0 // Extreme isolation
 
 	// 2. Setup the Overlord Capital (Cosmopolitan, Belief 100)
@@ -100,7 +100,7 @@ func TestEchoChamber_Integration(t *testing.T) {
 		echoSystem.Update(&world)
 		frictionSystem.Update(&world)
 
-		if tick % 50 == 0 {
+		if tick%50 == 0 {
 			// Update the village's dominant belief based on NPCs for FrictionSystem to detect
 			// (Normally another system or shared pointer would aggregate this, but we simulate it here)
 			npcQuery := world.Query(ecs.All(ecs.ComponentID[components.NPC](&world), ecs.ComponentID[components.BeliefComponent](&world)))

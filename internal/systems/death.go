@@ -27,9 +27,9 @@ type heirData struct {
 	InheritedDebt uint32
 	OutgoingHooks map[uint64]int
 	IncomingHooks map[uint64]int
-	Artifact      *components.LegendComponent // Phase 32.1: Artifact Inheritance
+	Artifact      *components.LegendComponent       // Phase 32.1: Artifact Inheritance
 	LoanContract  *components.LoanContractComponent // Phase 46: Generational Debt Engine
-	Beliefs       []components.Belief // Phase 25.2: Ideological Succession Engine
+	Beliefs       []components.Belief               // Phase 25.2: Ideological Succession Engine
 }
 
 type DeathSystem struct {
@@ -39,6 +39,12 @@ type DeathSystem struct {
 	deadPos      []components.Position // Phase 20.3: Used for mapping trauma
 	hookGraph    *engine.SparseHookGraph
 	heirs        []heirData
+	playerEvents *engine.PlayerEvents // Shell Phase: surfaces possessed-entity death to the UI
+}
+
+// SetPlayerEvents wires the shared player-event sink (Shell Phase).
+func (s *DeathSystem) SetPlayerEvents(pe *engine.PlayerEvents) {
+	s.playerEvents = pe
 }
 
 // IsExpensive returns true to throttle this system during fast-forward.
@@ -79,6 +85,7 @@ func (s *DeathSystem) Update(world *ecs.World) {
 	loanID := ecs.ComponentID[components.LoanContractComponent](world)
 	beliefID := ecs.ComponentID[components.BeliefComponent](world)
 	vitalsID := ecs.ComponentID[components.VitalsComponent](world)
+	possessedID := ecs.ComponentID[components.Possessed](world) // Shell Phase
 
 	// Collect entities to remove to avoid modifying the world while iterating
 	// Reset the slice length to 0, retaining capacity to avoid GC pressure
@@ -107,6 +114,23 @@ func (s *DeathSystem) Update(world *ecs.World) {
 				posX = pos.X
 				posY = pos.Y
 				s.deadPos = append(s.deadPos, *pos)
+			}
+
+			// Shell Phase: surface the death of the player-possessed entity so
+			// the UI can offer heir selection.
+			if s.playerEvents != nil && query.Has(possessedID) {
+				s.playerEvents.PlayerDied = true
+				if vitalsDead {
+					s.playerEvents.DeathCause = engine.DeathCauseBleedOut
+				} else {
+					s.playerEvents.DeathCause = engine.DeathCauseStarvation
+				}
+				if query.Has(affilID) {
+					s.playerEvents.DeadFamilyID = (*components.Affiliation)(query.Get(affilID)).FamilyID
+				}
+				if query.Has(identityID) {
+					s.playerEvents.DeadID = (*components.Identity)(query.Get(identityID)).ID
+				}
 			}
 
 			// Phase 09.5: Item Inheritance logic

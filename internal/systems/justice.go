@@ -13,15 +13,15 @@ import (
 // It also directs Guards towards entities tagged with a CrimeMarker to enforce punishments.
 
 type adminJurisdictionData struct {
-	Entity   ecs.Entity
-	CityID   uint32
+	Entity        ecs.Entity
+	CityID        uint32
 	X             float32
 	Y             float32
 	RadiusSquared float32
 	Laws          uint32
-	Treasury *components.TreasuryComponent
-	Scapegoat *components.ScapegoatComponent // Pre-cached for Phase 18.3 Fines
-	Quarantine *components.QuarantineComponent // Phase 37.1
+	Treasury      *components.TreasuryComponent
+	Scapegoat     *components.ScapegoatComponent  // Pre-cached for Phase 18.3 Fines
+	Quarantine    *components.QuarantineComponent // Phase 37.1
 }
 
 type JusticeSystem struct {
@@ -65,7 +65,7 @@ func (s *JusticeSystem) Update(world *ecs.World) {
 	affID := ecs.ComponentID[components.Affiliation](world)
 	treasuryID := ecs.ComponentID[components.TreasuryComponent](world)
 	scapegoatID := ecs.ComponentID[components.ScapegoatComponent](world) // Phase 36.1
-	quarID := ecs.ComponentID[components.QuarantineComponent](world) // Phase 37.1
+	quarID := ecs.ComponentID[components.QuarantineComponent](world)     // Phase 37.1
 
 	jurQuery := world.Query(ecs.All(jurID, posID, affID))
 	s.jurisdictions = s.jurisdictions[:0]
@@ -100,8 +100,8 @@ func (s *JusticeSystem) Update(world *ecs.World) {
 			RadiusSquared: jur.RadiusSquared,
 			Laws:          jur.IllegalActionIDs,
 			Treasury:      treasury,
-			Scapegoat: scapegoat,
-			Quarantine: quarantine,
+			Scapegoat:     scapegoat,
+			Quarantine:    quarantine,
 		})
 	}
 
@@ -115,10 +115,10 @@ func (s *JusticeSystem) Update(world *ecs.World) {
 	pathID := ecs.ComponentID[components.Path](world)
 	crimeID := ecs.ComponentID[components.CrimeMarker](world)
 	storageID := ecs.ComponentID[components.StorageComponent](world)
-		contraID := ecs.ComponentID[components.ContrabandComponent](world)
+	contraID := ecs.ComponentID[components.ContrabandComponent](world)
 	beliefID := ecs.ComponentID[components.BeliefComponent](world) // Phase 36.1
-	jobID := ecs.ComponentID[components.JobComponent](world) // Phase 49
-	esoID := ecs.ComponentID[components.EsotericMarker](world) // Phase 49
+	jobID := ecs.ComponentID[components.JobComponent](world)       // Phase 49
+	esoID := ecs.ComponentID[components.EsotericMarker](world)     // Phase 49
 
 	npcQuery := world.Query(ecs.All(memID, posID, affID))
 
@@ -213,9 +213,15 @@ func (s *JusticeSystem) Update(world *ecs.World) {
 
 				if contra.Contraband > 0 {
 					// Check bits
-					if store.Wood > 0 && (contra.Contraband&(1<<components.ItemWood) != 0) { isCriminal = true }
-					if store.Stone > 0 && (contra.Contraband&(1<<components.ItemStone) != 0) { isCriminal = true }
-					if store.Iron > 0 && (contra.Contraband&(1<<components.ItemIron) != 0) { isCriminal = true }
+					if store.Wood > 0 && (contra.Contraband&(1<<components.ItemWood) != 0) {
+						isCriminal = true
+					}
+					if store.Stone > 0 && (contra.Contraband&(1<<components.ItemStone) != 0) {
+						isCriminal = true
+					}
+					if store.Iron > 0 && (contra.Contraband&(1<<components.ItemIron) != 0) {
+						isCriminal = true
+					}
 				}
 			}
 
@@ -293,7 +299,7 @@ func (s *JusticeSystem) Update(world *ecs.World) {
 		// ecs-arche: we cannot request componentIDs while a query is active if those IDs are new.
 		// Actually, query locks the world. We must fetch IDs before Query or rely on earlier IDs.
 		jobID := ecs.ComponentID[components.JobComponent](world)
-	pathID := ecs.ComponentID[components.Path](world)
+		pathID := ecs.ComponentID[components.Path](world)
 		velID := ecs.ComponentID[components.Velocity](world)
 		needsID := ecs.ComponentID[components.Needs](world)
 		jurID := ecs.ComponentID[components.JurisdictionComponent](world)
@@ -305,8 +311,8 @@ func (s *JusticeSystem) Update(world *ecs.World) {
 		var punishedEntities []ecs.Entity
 
 		type penalTarget struct {
-			Entity ecs.Entity
-			CityID uint32
+			Entity   ecs.Entity
+			CityID   uint32
 			Sentence uint16
 		}
 		var newPenalTargets []penalTarget
@@ -439,8 +445,8 @@ func (s *JusticeSystem) Update(world *ecs.World) {
 						if unpaidFine > 0.0 && gAff != nil {
 							// Defers the structural update until after iteration
 							newPenalTargets = append(newPenalTargets, penalTarget{
-								Entity: c.Entity,
-								CityID: gAff.CityID,
+								Entity:   c.Entity,
+								CityID:   gAff.CityID,
 								Sentence: uint16(unpaidFine * 5),
 							})
 						} else {
@@ -457,7 +463,9 @@ func (s *JusticeSystem) Update(world *ecs.World) {
 							if world.Has(c.Entity, velID) {
 								cVel := (*components.Velocity)(world.Get(c.Entity, velID))
 								// Send flying outward
-								if dx == 0 && dy == 0 { dx = 1 } // prevent div by zero
+								if dx == 0 && dy == 0 {
+									dx = 1
+								} // prevent div by zero
 								cVel.X = -dx * 2.0
 								cVel.Y = -dy * 2.0
 							}
@@ -472,7 +480,7 @@ func (s *JusticeSystem) Update(world *ecs.World) {
 					// Queue CrimeMarker for removal (cannot remove component while query is active)
 					punishedEntities = append(punishedEntities, c.Entity)
 					best = nil // Punished, no need to target anymore
-					break // Done with this guard
+					break      // Done with this guard
 				}
 
 				if distSq < bestDist {

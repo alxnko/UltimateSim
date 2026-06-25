@@ -4,8 +4,8 @@ import (
 	"testing"
 
 	"github.com/ALXNKO/UltimateSim/internal/components"
-	"github.com/ALXNKO/UltimateSim/internal/systems"
 	"github.com/ALXNKO/UltimateSim/internal/engine"
+	"github.com/ALXNKO/UltimateSim/internal/systems"
 	"github.com/mlange-42/arche/ecs"
 )
 

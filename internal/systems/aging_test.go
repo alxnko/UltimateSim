@@ -4,8 +4,8 @@ import (
 	"testing"
 
 	"github.com/ALXNKO/UltimateSim/internal/components"
-	"github.com/mlange-42/arche/ecs"
 	"github.com/ALXNKO/UltimateSim/internal/engine"
+	"github.com/mlange-42/arche/ecs"
 )
 
 // Phase 19.3: Biological Entropy (Aging)

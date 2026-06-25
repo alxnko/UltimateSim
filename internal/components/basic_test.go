@@ -362,13 +362,15 @@ func TestConstructionComponentsSize(t *testing.T) {
 		t.Errorf("Expected DemographicsComponent to be %d bytes for DOD, got %d", expectedDemo, actualDemo)
 	}
 
-	expectedConstruction := uintptr(32)
+	// Shell Phase: SiteType extends the site to 40 bytes (8-byte aligned).
+	expectedConstruction := uintptr(40)
 	actualConstruction := unsafe.Sizeof(ConstructionSiteComponent{})
 	if actualConstruction != expectedConstruction {
 		t.Errorf("Expected ConstructionSiteComponent to be %d bytes for DOD, got %d", expectedConstruction, actualConstruction)
 	}
 
-	expectedStructure := uintptr(8)
+	// Shell Phase: DataA/OwnerID extend the structure to 16 bytes (8-byte aligned).
+	expectedStructure := uintptr(16)
 	actualStructure := unsafe.Sizeof(StructureComponent{})
 	if actualStructure != expectedStructure {
 		t.Errorf("Expected StructureComponent to be %d bytes for DOD, got %d", expectedStructure, actualStructure)

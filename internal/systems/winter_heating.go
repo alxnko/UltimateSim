@@ -15,12 +15,12 @@ type WinterHeatingSystem struct {
 	calendar *engine.Calendar
 
 	// Component IDs
-	villageID  ecs.ID
-	posID      ecs.ID
-	popID      ecs.ID
-	storageID  ecs.ID
-	loyaltyID  ecs.ID
-	diseaseID  ecs.ID
+	villageID ecs.ID
+	posID     ecs.ID
+	popID     ecs.ID
+	storageID ecs.ID
+	loyaltyID ecs.ID
+	diseaseID ecs.ID
 }
 
 // NewWinterHeatingSystem creates a new WinterHeatingSystem.

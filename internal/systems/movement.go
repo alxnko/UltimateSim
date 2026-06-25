@@ -85,8 +85,16 @@ func (s *MovementSystem) Update(world *ecs.World) {
 		currentX, currentY := int(pos.X), int(pos.Y)
 
 		// Ensure currentX and currentY are within map bounds
-		if currentX < 0 { currentX = 0 } else if currentX >= s.mapGrid.Width { currentX = s.mapGrid.Width - 1 }
-		if currentY < 0 { currentY = 0 } else if currentY >= s.mapGrid.Height { currentY = s.mapGrid.Height - 1 }
+		if currentX < 0 {
+			currentX = 0
+		} else if currentX >= s.mapGrid.Width {
+			currentX = s.mapGrid.Width - 1
+		}
+		if currentY < 0 {
+			currentY = 0
+		} else if currentY >= s.mapGrid.Height {
+			currentY = s.mapGrid.Height - 1
+		}
 
 		tileIndex := currentY*s.mapGrid.Width + currentX
 		tile := s.mapGrid.Tiles[tileIndex]
@@ -194,8 +202,16 @@ func (s *MovementSystem) Update(world *ecs.World) {
 		// Detect tile transitions by comparing integer grids.
 		newX, newY := int(pos.X), int(pos.Y)
 		// Safe bounding (pos should be bounded above, but safeguard array indices)
-		if newX < 0 { newX = 0 } else if newX >= s.mapGrid.Width { newX = s.mapGrid.Width - 1 }
-		if newY < 0 { newY = 0 } else if newY >= s.mapGrid.Height { newY = s.mapGrid.Height - 1 }
+		if newX < 0 {
+			newX = 0
+		} else if newX >= s.mapGrid.Width {
+			newX = s.mapGrid.Width - 1
+		}
+		if newY < 0 {
+			newY = 0
+		} else if newY >= s.mapGrid.Height {
+			newY = s.mapGrid.Height - 1
+		}
 
 		if newX != currentX || newY != currentY {
 			// Entity transitioned to a new tile. Increment FootTraffic of the new tile.

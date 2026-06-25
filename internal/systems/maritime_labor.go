@@ -11,11 +11,11 @@ import (
 // If the ship cannot pay, the crew quits.
 
 type shipLaborData struct {
-	entity      ecs.Entity
-	identID     uint64
-	shipComp    *components.ShipComponent
-	treasury    *components.TreasuryComponent
-	pos         *components.Position
+	entity   ecs.Entity
+	identID  uint64
+	shipComp *components.ShipComponent
+	treasury *components.TreasuryComponent
+	pos      *components.Position
 }
 
 type MaritimeLaborSystem struct {

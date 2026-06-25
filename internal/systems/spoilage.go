@@ -54,7 +54,7 @@ func (s *SpoilageSystem) Update(world *ecs.World) {
 
 			// Force at least 1 unit to spoil if Food > 0, mimicking existing test behavior
 			if newFood == storage.Food {
-			    newFood--
+				newFood--
 			}
 
 			spoiledAmount := storage.Food - newFood
@@ -95,7 +95,7 @@ func (s *SpoilageSystem) Update(world *ecs.World) {
 			newFood := uint32((uint64(payload.Food) * 95) / 100)
 
 			if newFood == payload.Food {
-			    newFood--
+				newFood--
 			}
 			payload.Food = newFood
 		}

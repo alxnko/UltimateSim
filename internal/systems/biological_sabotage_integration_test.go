@@ -69,7 +69,7 @@ func TestBiologicalSabotageSystem_Integration(t *testing.T) {
 	pPos.X, pPos.Y = 10.5, 10.5 // distance squared = 0.5 (< 2.0)
 
 	pNeeds := (*components.Needs)(world.Get(peasantE, needsID))
-	pNeeds.Food = 10.0 // Starving (< 20)
+	pNeeds.Food = 10.0  // Starving (< 20)
 	pNeeds.Wealth = 5.0 // Too poor (< 50)
 
 	pAff := (*components.Affiliation)(world.Get(peasantE, affID))

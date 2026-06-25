@@ -20,14 +20,14 @@ type MintingSystem struct {
 	world *ecs.World
 
 	// Component IDs
-	villageID   ecs.ID
-	capitalID   ecs.ID
-	countryID   ecs.ID
-	storageID   ecs.ID
-	affilID     ecs.ID
-	posID       ecs.ID
-	coinTagID   ecs.ID
-	currencyID  ecs.ID
+	villageID  ecs.ID
+	capitalID  ecs.ID
+	countryID  ecs.ID
+	storageID  ecs.ID
+	affilID    ecs.ID
+	posID      ecs.ID
+	coinTagID  ecs.ID
+	currencyID ecs.ID
 
 	tickStamp uint64
 	toSpawn   []coinSpawn

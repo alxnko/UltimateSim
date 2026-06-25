@@ -12,36 +12,36 @@ import (
 // Once Integrity hits 0, the Structure is destroyed, opening breaches for infantry.
 
 type targetStructureData struct {
-	Entity ecs.Entity
-	ID     uint64
-	X      float32
-	Y      float32
+	Entity    ecs.Entity
+	ID        uint64
+	X         float32
+	Y         float32
 	Integrity float32
 }
 
 type structuralChange struct {
-	Type          uint8
-	TargetID      uint64
-	TargetEntity  ecs.Entity
-	MinerEntity   ecs.Entity
-	MinerX        float32
-	MinerY        float32
+	Type         uint8
+	TargetID     uint64
+	TargetEntity ecs.Entity
+	MinerEntity  ecs.Entity
+	MinerX       float32
+	MinerY       float32
 }
 
 const (
-	changeSpawnTunnel = 1
+	changeSpawnTunnel   = 1
 	changeDestroyStruct = 2
 )
 
 type UnderminingSystem struct {
 	tickCounter uint64
 
-	warID       ecs.ID
-	jobID       ecs.ID
-	posID       ecs.ID
-	idID        ecs.ID
-	structID    ecs.ID
-	tunnelID    ecs.ID
+	warID    ecs.ID
+	jobID    ecs.ID
+	posID    ecs.ID
+	idID     ecs.ID
+	structID ecs.ID
+	tunnelID ecs.ID
 
 	changes []structuralChange
 }
@@ -92,10 +92,10 @@ func (s *UnderminingSystem) Update(world *ecs.World) {
 		st := (*components.StructureComponent)(structQuery.Get(s.structID))
 
 		structures = append(structures, targetStructureData{
-			Entity: structQuery.Entity(),
-			ID:     id.ID,
-			X:      pos.X,
-			Y:      pos.Y,
+			Entity:    structQuery.Entity(),
+			ID:        id.ID,
+			X:         pos.X,
+			Y:         pos.Y,
 			Integrity: st.Integrity,
 		})
 	}
@@ -165,7 +165,7 @@ func (s *UnderminingSystem) Update(world *ecs.World) {
 					if stComp.Integrity <= 0 {
 						structuresToDestroy[bestTarget.ID] = true
 						s.changes = append(s.changes, structuralChange{
-							Type: changeDestroyStruct,
+							Type:         changeDestroyStruct,
 							TargetEntity: bestTarget.Entity,
 						})
 					}
@@ -173,10 +173,10 @@ func (s *UnderminingSystem) Update(world *ecs.World) {
 			} else {
 				// Defer tunnel creation
 				s.changes = append(s.changes, structuralChange{
-					Type: changeSpawnTunnel,
+					Type:     changeSpawnTunnel,
 					TargetID: bestTarget.ID,
-					MinerX: minerPos.X,
-					MinerY: minerPos.Y,
+					MinerX:   minerPos.X,
+					MinerY:   minerPos.Y,
 				})
 				// Optimistically add to local map to prevent multi-spawns in same tick
 				tunnels[bestTarget.ID] = &components.TunnelComponent{TargetID: bestTarget.ID, Progress: 0}

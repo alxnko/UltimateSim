@@ -1,15 +1,15 @@
 package systems
 
 import (
-	"github.com/mlange-42/arche/ecs"
 	"github.com/ALXNKO/UltimateSim/internal/components"
+	"github.com/mlange-42/arche/ecs"
 )
 
 // Phase 07.3: Linguistic Drift
 // Propagates language mutations and drift natively via ticks and interactions
 
 type LanguageDriftSystem struct {
-	tickCounter uint64
+	tickCounter           uint64
 	GlobalLanguageCounter uint16
 
 	cultureID ecs.ID

@@ -62,7 +62,7 @@ func TestClassWarfare_Integration(t *testing.T) {
 	peasantIdent.ID = 2002
 
 	peasantNeeds := (*components.Needs)(world.Get(peasantE, ecs.ComponentID[components.Needs](&world)))
-	peasantNeeds.Food = 10.0 // Starving (< 20)
+	peasantNeeds.Food = 10.0  // Starving (< 20)
 	peasantNeeds.Wealth = 5.0 // Too poor to buy food (5 < 50)
 
 	// Step 4. Run the update loop to trigger class warfare

@@ -115,7 +115,7 @@ func (s *SanitationSystem) Update(world *ecs.World) {
 			// 5 tile radius for smelling/seeing rot
 			if distSq <= 25.0 {
 				sanity.Stress += 0.5 // Continually adds stress if lingering
-				break // One corpse is enough to cause stress this tick
+				break                // One corpse is enough to cause stress this tick
 			}
 		}
 	}

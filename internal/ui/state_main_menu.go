@@ -1,10 +1,10 @@
 package ui
 
 import (
-	"image/color"
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/ebitenutil"
 	"github.com/hajimehoshi/ebiten/v2/inpututil"
+	"image/color"
 )
 
 type StateMainMenu struct {

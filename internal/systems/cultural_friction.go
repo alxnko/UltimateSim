@@ -14,9 +14,9 @@ import (
 // along ethnic and religious lines unless they actively use Propaganda (Phase 04.5) to assimilate them.
 
 type adminCultureData struct {
-	CountryID      uint32
-	LanguageID     uint16
-	PrimaryBelief  uint32
+	CountryID     uint32
+	LanguageID    uint16
+	PrimaryBelief uint32
 }
 
 type CulturalFrictionSystem struct {

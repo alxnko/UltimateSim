@@ -15,11 +15,11 @@ type ScholarSystem struct {
 	tickCounter uint64
 
 	// Component IDs
-	npcID     ecs.ID
-	posID     ecs.ID
-	genID     ecs.ID
-	needsID   ecs.ID
-	secretID  ecs.ID
+	npcID    ecs.ID
+	posID    ecs.ID
+	genID    ecs.ID
+	needsID  ecs.ID
+	secretID ecs.ID
 }
 
 // NewScholarSystem creates a new ScholarSystem.

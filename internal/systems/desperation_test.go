@@ -52,7 +52,7 @@ func TestDesperationSystem_Integration(t *testing.T) {
 	nAff.CityID = 1
 
 	nNeeds := (*components.Needs)(world.Get(npcEntity, needsID))
-	nNeeds.Food = 20.0 // Starving
+	nNeeds.Food = 20.0   // Starving
 	nNeeds.Wealth = 10.0 // Poor (Cannot afford 50.0 food price)
 
 	nDesp := (*components.DesperationComponent)(world.Get(npcEntity, despID))

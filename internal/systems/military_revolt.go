@@ -38,14 +38,14 @@ type MilitaryRevoltSystem struct {
 	tickCounter   uint64
 
 	// Component IDs
-	posID     ecs.ID
-	identID   ecs.ID
-	jobID     ecs.ID
-	secretID  ecs.ID
-	affID     ecs.ID
-	jurID     ecs.ID
-	capID     ecs.ID
-	legitID   ecs.ID
+	posID    ecs.ID
+	identID  ecs.ID
+	jobID    ecs.ID
+	secretID ecs.ID
+	affID    ecs.ID
+	jurID    ecs.ID
+	capID    ecs.ID
+	legitID  ecs.ID
 }
 
 // NewMilitaryRevoltSystem creates a new MilitaryRevoltSystem.
@@ -55,14 +55,14 @@ func NewMilitaryRevoltSystem(world *ecs.World, hooks *engine.SparseHookGraph) *M
 		jurisdictions: make([]adminJurisdictionRevoltData, 0, 20),
 		tickCounter:   0,
 
-		posID:     ecs.ComponentID[components.Position](world),
-		identID:   ecs.ComponentID[components.Identity](world),
-		jobID:     ecs.ComponentID[components.JobComponent](world),
-		secretID:  ecs.ComponentID[components.SecretComponent](world),
-		affID:     ecs.ComponentID[components.Affiliation](world),
-		jurID:     ecs.ComponentID[components.JurisdictionComponent](world),
-		capID:     ecs.ComponentID[components.CapitalComponent](world),
-		legitID:   ecs.ComponentID[components.LegitimacyComponent](world),
+		posID:    ecs.ComponentID[components.Position](world),
+		identID:  ecs.ComponentID[components.Identity](world),
+		jobID:    ecs.ComponentID[components.JobComponent](world),
+		secretID: ecs.ComponentID[components.SecretComponent](world),
+		affID:    ecs.ComponentID[components.Affiliation](world),
+		jurID:    ecs.ComponentID[components.JurisdictionComponent](world),
+		capID:    ecs.ComponentID[components.CapitalComponent](world),
+		legitID:  ecs.ComponentID[components.LegitimacyComponent](world),
 	}
 }
 

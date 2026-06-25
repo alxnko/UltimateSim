@@ -26,27 +26,27 @@ type ResourceWarSystem struct {
 	hooks       *engine.SparseHookGraph
 
 	// Component IDs
-	posID       ecs.ID
-	affID       ecs.ID
-	capID       ecs.ID
-	marketID    ecs.ID
-	storageID   ecs.ID
-	warCompID   ecs.ID
-	npcID       ecs.ID
-	identID     ecs.ID
+	posID     ecs.ID
+	affID     ecs.ID
+	capID     ecs.ID
+	marketID  ecs.ID
+	storageID ecs.ID
+	warCompID ecs.ID
+	npcID     ecs.ID
+	identID   ecs.ID
 }
 
 func NewResourceWarSystem(world *ecs.World, hooks *engine.SparseHookGraph) *ResourceWarSystem {
 	return &ResourceWarSystem{
-		hooks:       hooks,
-		posID:       ecs.ComponentID[components.Position](world),
-		affID:       ecs.ComponentID[components.Affiliation](world),
-		capID:       ecs.ComponentID[components.CapitalComponent](world),
-		marketID:    ecs.ComponentID[components.MarketComponent](world),
-		storageID:   ecs.ComponentID[components.StorageComponent](world),
-		warCompID:   ecs.ComponentID[components.WarTrackerComponent](world),
-		npcID:       ecs.ComponentID[components.NPC](world),
-		identID:     ecs.ComponentID[components.Identity](world),
+		hooks:     hooks,
+		posID:     ecs.ComponentID[components.Position](world),
+		affID:     ecs.ComponentID[components.Affiliation](world),
+		capID:     ecs.ComponentID[components.CapitalComponent](world),
+		marketID:  ecs.ComponentID[components.MarketComponent](world),
+		storageID: ecs.ComponentID[components.StorageComponent](world),
+		warCompID: ecs.ComponentID[components.WarTrackerComponent](world),
+		npcID:     ecs.ComponentID[components.NPC](world),
+		identID:   ecs.ComponentID[components.Identity](world),
 	}
 }
 

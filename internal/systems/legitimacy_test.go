@@ -105,8 +105,8 @@ func TestLegitimacySystem_Integration(t *testing.T) {
 	}
 
 	// Step B: Inject massive corruption and negative public sentiment to crush legitimacy
-	capJur.Corruption = 20           // -40 penalty
-	capTreasury.Wealth = 0.0         // 0 bonus
+	capJur.Corruption = 20                    // -40 penalty
+	capTreasury.Wealth = 0.0                  // 0 bonus
 	hookGraph.AddHook(999, capIdent.ID, -500) // Someone hates the King -> -50 penalty
 
 	// Run systems again (tick counters hit intervals)

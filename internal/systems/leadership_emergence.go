@@ -25,9 +25,9 @@ type LeadershipEmergenceSystem struct {
 	tickCount uint64
 
 	// Pre-allocated flat slices to prevent GC pressure and ECS locks
-	npcs        []npcLeadershipData
-	cityLeaders map[uint32]uint64     // CityID -> Leading NPC ID
-	cityScores  map[uint32]int        // CityID -> Leading Score
+	npcs         []npcLeadershipData
+	cityLeaders  map[uint32]uint64     // CityID -> Leading NPC ID
+	cityScores   map[uint32]int        // CityID -> Leading Score
 	cityEntities map[uint32]ecs.Entity // CityID -> Leading NPC Entity
 
 	toRemove []ecs.Entity // NPCs that lost the election

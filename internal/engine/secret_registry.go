@@ -8,10 +8,10 @@ import (
 
 // SecretRegistry is a global map to store strings precisely once to avoid RAM fragmentation.
 type SecretRegistry struct {
-	mu        sync.RWMutex
-	secrets   map[uint32]string
-	reverse   map[string]uint32
-	nextID    uint32
+	mu      sync.RWMutex
+	secrets map[uint32]string
+	reverse map[string]uint32
+	nextID  uint32
 }
 
 var (

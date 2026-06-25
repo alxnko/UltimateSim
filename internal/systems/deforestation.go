@@ -112,9 +112,9 @@ func (s *DeforestationSystem) Update() {
 
 					// If the biome is a forest, downgrade it to grassland
 					if tile.BiomeID == engine.BiomeTemperateDeciduousForest ||
-					   tile.BiomeID == engine.BiomeTemperateRainForest ||
-					   tile.BiomeID == engine.BiomeTropicalSeasonalForest ||
-					   tile.BiomeID == engine.BiomeTropicalRainForest {
+						tile.BiomeID == engine.BiomeTemperateRainForest ||
+						tile.BiomeID == engine.BiomeTropicalSeasonalForest ||
+						tile.BiomeID == engine.BiomeTropicalRainForest {
 
 						tile.BiomeID = engine.BiomeGrassland
 						s.mapGrid.Tiles[idx] = tile

@@ -105,7 +105,7 @@ func TestTickManager_Determinism(t *testing.T) {
 
 // Phase 01.3: SystemRunner Sequencing Test
 type TrackerSystem struct {
-	PhaseName string
+	PhaseName    string
 	ExecutionLog *[]string
 }
 

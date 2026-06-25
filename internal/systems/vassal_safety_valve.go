@@ -25,8 +25,8 @@ type npcValveData struct {
 }
 
 type clanWealthData struct {
-	TotalWealth    float32
-	WealthiestID   uint64
+	TotalWealth     float32
+	WealthiestID    uint64
 	MaxMemberWealth float32
 }
 
@@ -35,11 +35,11 @@ type VassalSafetyValveSystem struct {
 	hooks     *engine.SparseHookGraph
 
 	// Component IDs
-	npcID     ecs.ID
-	identID   ecs.ID
-	affilID   ecs.ID
-	needsID   ecs.ID
-	secretID  ecs.ID
+	npcID    ecs.ID
+	identID  ecs.ID
+	affilID  ecs.ID
+	needsID  ecs.ID
+	secretID ecs.ID
 }
 
 func NewVassalSafetyValveSystem(world *ecs.World, hooks *engine.SparseHookGraph) *VassalSafetyValveSystem {
@@ -138,7 +138,7 @@ func (s *VassalSafetyValveSystem) Update(world *ecs.World) {
 		}
 
 		for clanID, cData := range clans {
-			if cData.TotalWealth > 1000 && cData.TotalWealth > (totalCityW * 0.5) {
+			if cData.TotalWealth > 1000 && cData.TotalWealth > (totalCityW*0.5) {
 				cityMonopolies[cityID] = monopolyData{
 					ClanID:       clanID,
 					WealthiestID: cData.WealthiestID,
