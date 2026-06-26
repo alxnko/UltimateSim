@@ -279,3 +279,127 @@ func TestJusticeSystem_CarceralResentmentAndBlackmail(t *testing.T) {
 		}
 	}
 }
+
+// Phase 32: Espionage & Disguises Integration Test
+func TestJusticeSystem_Disguise_Integration(t *testing.T) {
+	world := ecs.NewWorld()
+	engine.InitializeRNG([32]byte{42})
+
+	// Register components
+	posID := ecs.ComponentID[components.Position](&world)
+	idID := ecs.ComponentID[components.Identity](&world)
+	memID := ecs.ComponentID[components.Memory](&world)
+	pathID := ecs.ComponentID[components.Path](&world)
+	crimeID := ecs.ComponentID[components.CrimeMarker](&world)
+	jurID := ecs.ComponentID[components.JurisdictionComponent](&world)
+	affID := ecs.ComponentID[components.Affiliation](&world)
+	jobID := ecs.ComponentID[components.JobComponent](&world)
+	velID := ecs.ComponentID[components.Velocity](&world)
+	disID := ecs.ComponentID[components.DisguiseComponent](&world)
+
+	hooks := engine.NewSparseHookGraph()
+	justice := NewJusticeSystem(&world, hooks)
+
+	// 1. Create a Jurisdiction (CityID: 10)
+	jurEnt := world.NewEntity()
+	world.Add(jurEnt, jurID, posID, affID)
+	jurPos := (*components.Position)(world.Get(jurEnt, posID))
+	jurPos.X = 10
+	jurPos.Y = 10
+	jur := (*components.JurisdictionComponent)(world.Get(jurEnt, jurID))
+	jur.RadiusSquared = 100.0 // 10 radius
+	jur.IllegalActionIDs = 1 << components.InteractionAssault
+	jurAff := (*components.Affiliation)(world.Get(jurEnt, affID))
+	jurAff.CityID = 10
+
+	// 2. Create a Guard inside Jurisdiction
+	guardEnt := world.NewEntity()
+	world.Add(guardEnt, posID, pathID, velID, jobID, affID, idID)
+	gPos := (*components.Position)(world.Get(guardEnt, posID))
+	gPos.X = 10
+	gPos.Y = 10
+	gAff := (*components.Affiliation)(world.Get(guardEnt, affID))
+	gAff.CityID = 10
+	gJob := (*components.JobComponent)(world.Get(guardEnt, jobID))
+	gJob.JobID = components.JobGuard
+	gIdent := (*components.Identity)(world.Get(guardEnt, idID))
+	gIdent.ID = 100
+
+	// 3. Create a normal Criminal (Assault in memory) inside Jurisdiction
+	criminalEnt := world.NewEntity()
+	world.Add(criminalEnt, posID, idID, memID, pathID, velID, affID)
+	cPos := (*components.Position)(world.Get(criminalEnt, posID))
+	cPos.X = 12
+	cPos.Y = 12
+	cIdent := (*components.Identity)(world.Get(criminalEnt, idID))
+	cIdent.ID = 200
+	cMem := (*components.Memory)(world.Get(criminalEnt, memID))
+	cMem.Events[0] = components.MemoryEvent{
+		TargetID:        100,
+		InteractionType: components.InteractionAssault, // Illegal
+	}
+
+	// 4. Create a Disguised Criminal (Assault in memory) inside Jurisdiction
+	disguisedEnt := world.NewEntity()
+	world.Add(disguisedEnt, posID, idID, memID, pathID, velID, affID, disID)
+	dPos := (*components.Position)(world.Get(disguisedEnt, posID))
+	dPos.X = 14
+	dPos.Y = 14
+	dIdent := (*components.Identity)(world.Get(disguisedEnt, idID))
+	dIdent.ID = 300
+	dMem := (*components.Memory)(world.Get(disguisedEnt, memID))
+	dMem.Events[0] = components.MemoryEvent{
+		TargetID:        100,
+		InteractionType: components.InteractionAssault, // Illegal
+	}
+	dis := (*components.DisguiseComponent)(world.Get(disguisedEnt, disID))
+	dis.IsActive = true
+	dis.SpoofedCityID = 10 // Matches the jurisdiction!
+
+	// 5. Create a Disguised Criminal with wrong CityID
+	badDisguiseEnt := world.NewEntity()
+	world.Add(badDisguiseEnt, posID, idID, memID, pathID, velID, affID, disID)
+	bdPos := (*components.Position)(world.Get(badDisguiseEnt, posID))
+	bdPos.X = 15
+	bdPos.Y = 15
+	bdIdent := (*components.Identity)(world.Get(badDisguiseEnt, idID))
+	bdIdent.ID = 400
+	bdMem := (*components.Memory)(world.Get(badDisguiseEnt, memID))
+	bdMem.Events[0] = components.MemoryEvent{
+		TargetID:        100,
+		InteractionType: components.InteractionAssault, // Illegal
+	}
+	bdis := (*components.DisguiseComponent)(world.Get(badDisguiseEnt, disID))
+	bdis.IsActive = true
+	bdis.SpoofedCityID = 999 // Does NOT match
+
+	// Run Step 1 & 2 (Detection)
+	justice.Update(&world)
+
+	// Verify CrimeMarkers
+	if !world.Has(criminalEnt, crimeID) {
+		t.Errorf("Expected normal criminal to get CrimeMarker")
+	}
+	if world.Has(disguisedEnt, crimeID) {
+		t.Errorf("Expected disguised criminal to bypass CrimeMarker due to spoofed CityID")
+	}
+	if !world.Has(badDisguiseEnt, crimeID) {
+		t.Errorf("Expected bad disguise criminal to get CrimeMarker")
+	}
+
+	// Now manually add a CrimeMarker to the disguised criminal to test Step 3 (Enforcement bypass)
+	world.Add(disguisedEnt, crimeID)
+
+	// Reset target mapping
+	justice.Update(&world)
+
+	gPath := (*components.Path)(world.Get(guardEnt, pathID))
+
+	// The guard should target criminalEnt (ID 200) or badDisguiseEnt (ID 400), but NOT disguisedEnt (ID 300)
+	if gPath.TargetX == 14 && gPath.TargetY == 14 {
+		t.Errorf("Guard targeted the disguised criminal (ID 300) despite the active disguise")
+	}
+	if (gPath.TargetX != 12 || gPath.TargetY != 12) && (gPath.TargetX != 15 || gPath.TargetY != 15) {
+		t.Errorf("Guard failed to target a valid criminal. Target is at %f, %f", gPath.TargetX, gPath.TargetY)
+	}
+}

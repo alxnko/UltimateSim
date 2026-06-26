@@ -336,6 +336,14 @@ type MarketComponent struct {
 }
 
 // Phase 18.1: Contraband Logic
+// Phase 32: Espionage, Disguises & Subterfuge
+// DisguiseComponent allows an entity to spoof their Identity/Faction to bypass Justice systems.
+type DisguiseComponent struct {
+	SpoofedCityID uint32
+	IsActive      bool
+	_             [3]byte // Padding to 8 bytes for DOD
+}
+
 // ContrabandComponent maintains local laws regarding illegal items.
 type ContrabandComponent struct {
 	Contraband uint32 // Bitmask flagging illegal ItemIDs

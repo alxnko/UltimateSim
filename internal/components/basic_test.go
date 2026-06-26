@@ -385,4 +385,9 @@ func TestConstructionComponentsSize(t *testing.T) {
 	if actualTunnel != 16 {
 		t.Errorf("TunnelComponent is %d bytes, expected exactly 16 bytes for DOD bounds", actualTunnel)
 	}
+
+	disguiseSize := unsafe.Sizeof(DisguiseComponent{})
+	if disguiseSize != 8 {
+		t.Errorf("DisguiseComponent struct size should be exactly 8 bytes for DOD bounds, got %d", disguiseSize)
+	}
 }

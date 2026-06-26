@@ -119,6 +119,7 @@ func (s *JusticeSystem) Update(world *ecs.World) {
 	beliefID := ecs.ComponentID[components.BeliefComponent](world) // Phase 36.1
 	jobID := ecs.ComponentID[components.JobComponent](world)       // Phase 49
 	esoID := ecs.ComponentID[components.EsotericMarker](world)     // Phase 49
+	disguiseID := ecs.ComponentID[components.DisguiseComponent](world) // Phase 32
 
 	npcQuery := world.Query(ecs.All(memID, posID, affID))
 
@@ -149,6 +150,19 @@ func (s *JusticeSystem) Update(world *ecs.World) {
 
 		if activeJur != nil {
 			isCriminal := false
+
+			isDisguised := false
+			if world.Has(entity, disguiseID) {
+				dis := (*components.DisguiseComponent)(world.Get(entity, disguiseID))
+				if dis.IsActive && dis.SpoofedCityID == activeJur.CityID {
+					isDisguised = true
+				}
+			}
+
+			if isDisguised {
+				// Bypass all jurisdiction detection checks due to active disguise matching the CityID
+				continue
+			}
 
 			// Evaluate recent memory events for illegal actions
 			// Realistically we should evaluate against a tick window, but for DOD speed we check the buffer
@@ -342,6 +356,19 @@ func (s *JusticeSystem) Update(world *ecs.World) {
 
 			for i := 0; i < len(criminals); i++ {
 				c := &criminals[i]
+
+				// Phase 32: Disguise Check for Enforcement bypass
+				isDisguised := false
+				if world.Has(c.Entity, disguiseID) {
+					dis := (*components.DisguiseComponent)(world.Get(c.Entity, disguiseID))
+					if dis.IsActive && gAff != nil && dis.SpoofedCityID == gAff.CityID {
+						isDisguised = true
+					}
+				}
+
+				if isDisguised {
+					continue
+				}
 
 				// Optional: Only target if they are within the same jurisdiction (omitted for speed unless req)
 
