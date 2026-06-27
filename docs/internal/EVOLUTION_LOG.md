@@ -1152,3 +1152,19 @@ I created the `UnderminingSystem` and a 16-byte aligned `TunnelComponent`.
 **The Butterfly Effect:**
 An attacking army cannot breach a massive castle wall, halting their infantry assault. The commander deploys `JobMiner` NPCs. The miners dig `TunnelComponent` entities under the walls. The `StructureComponent` collapses physically. This destruction removes the barrier, allowing the attacking infantry's `Path` components to route into the city. The sudden influx of hostile troops triggers the `SiegeSystem` to spike starvation, leading to local `Desperation` and a complete economic collapse of the defending city.
 Validated perfectly deterministic via `TestUnderminingSystem_Integration` ensuring no multi-threading ECS locks during structural execution loops.
+
+## Evolution: Phase 32 - The Espionage & Disguises Engine
+**Focus:** Integration (Justice + Subterfuge)
+
+**The Problem (Vision Gap):**
+The Vision requires "Total Freedom & Physical Constraints" allowing players to bypass strict systems through subterfuge. Previously, the `JusticeSystem` evaluated crimes via an omniscient sweep of memory buffers and jurisdictions, meaning there was no way for an NPC or player to systemic bypass the law once a crime was committed, removing potential emergent rogue or stealth behaviors.
+
+**The Solution (Autonomous DOD Execution):**
+I created the **Espionage & Disguises Engine** bridging the Subterfuge and Justice layers.
+1. **Component Addition:** Introduced `DisguiseComponent` (exactly 8 bytes for DOD compliance: `SpoofedCityID uint32`, `IsActive bool`, and `_ [3]byte` padding).
+2. **Detection Bypass:** The `JusticeSystem` now pre-caches `DisguiseComponent`. If an NPC is inside a jurisdiction boundary but has an active disguise spoofing that exact jurisdiction's `CityID`, the detection loop immediately `continue`s, blinding the law to their memory buffer.
+3. **Enforcement Bypass:** During the O(G*C) Guard enforcement loop, if a criminal has already been tagged but later activates a disguise matching the Guard's `Affiliation.CityID`, the Guard systemic bypasses targeting them, allowing for escapes in plain sight.
+
+**The Butterfly Effect:**
+A desperate peasant commits a theft to survive (Phase 70). Their memory records `InteractionTheft`. Normally, walking into a city would result in the Guard immediately detecting them and assigning a `CrimeMarker`. However, the peasant steals a uniform or crafts a disguise (SpoofedCityID). They walk into the capital. The Administration cannot detect their crimes. The peasant begins poisoning the ruling Clan's food supply using Alchemy (Phase 30), causing the Monarch to die in their sleep. The resulting power vacuum triggers a Geopolitical succession crisis (Phase 24), all initiated by a single undetected peasant using systemic stealth.
+Validated perfectly deterministic via `TestDisguiseSystem_Integration`.

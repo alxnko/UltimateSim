@@ -119,6 +119,7 @@ func (s *JusticeSystem) Update(world *ecs.World) {
 	beliefID := ecs.ComponentID[components.BeliefComponent](world) // Phase 36.1
 	jobID := ecs.ComponentID[components.JobComponent](world)       // Phase 49
 	esoID := ecs.ComponentID[components.EsotericMarker](world)     // Phase 49
+	disguiseID := ecs.ComponentID[components.DisguiseComponent](world) // Phase 32
 
 	npcQuery := world.Query(ecs.All(memID, posID, affID))
 
@@ -148,6 +149,14 @@ func (s *JusticeSystem) Update(world *ecs.World) {
 		}
 
 		if activeJur != nil {
+			// Phase 32: Espionage & Disguises Engine
+			if world.Has(entity, disguiseID) {
+				disguise := (*components.DisguiseComponent)(npcQuery.Get(disguiseID))
+				if disguise.IsActive && disguise.SpoofedCityID == activeJur.CityID {
+					continue // Bypass detection entirely
+				}
+			}
+
 			isCriminal := false
 
 			// Evaluate recent memory events for illegal actions
@@ -305,6 +314,7 @@ func (s *JusticeSystem) Update(world *ecs.World) {
 		jurID := ecs.ComponentID[components.JurisdictionComponent](world)
 		identID := ecs.ComponentID[components.Identity](world)
 		secID := ecs.ComponentID[components.SecretComponent](world)
+		disguiseID := ecs.ComponentID[components.DisguiseComponent](world) // Phase 32
 
 		guardQuery := world.Query(s.guardFilter)
 
@@ -349,6 +359,16 @@ func (s *JusticeSystem) Update(world *ecs.World) {
 				// Do not target if another Guard is already targeting them
 				if s.targetMapping[c.ID] {
 					continue
+				}
+
+				// Phase 32: Espionage & Disguises Engine (Guard Targeting Bypass)
+				if gAff != nil {
+					if world.Has(c.Entity, disguiseID) {
+						disguise := (*components.DisguiseComponent)(world.Get(c.Entity, disguiseID))
+						if disguise.IsActive && disguise.SpoofedCityID == gAff.CityID {
+							continue // Guard sees them as part of their own city
+						}
+					}
 				}
 
 				dx := gPos.X - c.X
