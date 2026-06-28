@@ -33,6 +33,7 @@ const (
 	JobGravedigger uint8 = 13 // Phase 65: The Physical Sanitation Engine
 	JobDoctor      uint8 = 14 // Phase 68: The Physical Medical Engine
 	JobMiner       uint8 = 15 // Phase 67: The Subterranean Mining Engine
+	JobHerder      uint8 = 16 // Phase 31: Animal Husbandry Engine
 )
 
 // Phase 09.5: Item Inheritance Threshold
@@ -699,4 +700,15 @@ type TunnelComponent struct {
 	TargetID uint64
 	Progress float32
 	_        uint32 // Padding to exactly 16 bytes
+}
+
+// Phase 31: Animal Husbandry Engine
+type AnimalComponent struct {
+	SpeciesID uint32
+	YieldWood uint32
+	YieldMeat uint32
+}
+
+type TamedMarker struct {
+	OwnerID uint64
 }

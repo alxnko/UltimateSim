@@ -1152,3 +1152,8 @@ I created the `UnderminingSystem` and a 16-byte aligned `TunnelComponent`.
 **The Butterfly Effect:**
 An attacking army cannot breach a massive castle wall, halting their infantry assault. The commander deploys `JobMiner` NPCs. The miners dig `TunnelComponent` entities under the walls. The `StructureComponent` collapses physically. This destruction removes the barrier, allowing the attacking infantry's `Path` components to route into the city. The sudden influx of hostile troops triggers the `SiegeSystem` to spike starvation, leading to local `Desperation` and a complete economic collapse of the defending city.
 Validated perfectly deterministic via `TestUnderminingSystem_Integration` ensuring no multi-threading ECS locks during structural execution loops.
+
+## Phase 31: Animal Husbandry Engine
+- **Date**: $(date)
+- **Goal**: Bridge the Ecosystem and Economy layers, adding missing granularity to the simulation's survival mechanics.
+- **Implementation**: Introduced `AnimalComponent` and `TamedMarker` in the ECS. Created the `HusbandrySystem` where `JobHerder` NPCs dynamically locate and tame wild animals. When localized market forces signal a famine (`MarketComponent.FoodPrice` > 10.0), herders are algorithmically driven to slaughter their tamed stock to inject `YieldMeat` into the localized food supply, generating an organic economic feedback loop that averts starvation.
