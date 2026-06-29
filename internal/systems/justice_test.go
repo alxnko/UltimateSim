@@ -279,3 +279,98 @@ func TestJusticeSystem_CarceralResentmentAndBlackmail(t *testing.T) {
 		}
 	}
 }
+
+func TestJusticeSystem_DisguiseEngine(t *testing.T) {
+	world := ecs.NewWorld()
+	hooks := engine.NewSparseHookGraph()
+	sys := NewJusticeSystem(&world, hooks)
+
+	posID := ecs.ComponentID[components.Position](&world)
+	affID := ecs.ComponentID[components.Affiliation](&world)
+	jurID := ecs.ComponentID[components.JurisdictionComponent](&world)
+	memID := ecs.ComponentID[components.Memory](&world)
+	storID := ecs.ComponentID[components.StorageComponent](&world)
+	crimeID := ecs.ComponentID[components.CrimeMarker](&world)
+	disguiseID := ecs.ComponentID[components.DisguiseComponent](&world)
+	jobID := ecs.ComponentID[components.JobComponent](&world)
+	pathID := ecs.ComponentID[components.Path](&world)
+	velID := ecs.ComponentID[components.Velocity](&world)
+	needsID := ecs.ComponentID[components.Needs](&world)
+
+	// Create Capital with Jurisdiction (City 1)
+	capEnt := world.NewEntity(posID, affID, jurID)
+	capPos := (*components.Position)(world.Get(capEnt, posID))
+	capPos.X, capPos.Y = 10, 10
+	capAff := (*components.Affiliation)(world.Get(capEnt, affID))
+	capAff.CityID = 1
+	capJur := (*components.JurisdictionComponent)(world.Get(capEnt, jurID))
+	capJur.RadiusSquared = 100.0 // Radius 10
+	capJur.IllegalActionIDs = 1 << components.InteractionAssault
+
+	// NPC 1: Commits Assault, No Disguise
+	npc1 := world.NewEntity(posID, affID, memID, storID)
+	npc1Pos := (*components.Position)(world.Get(npc1, posID))
+	npc1Pos.X, npc1Pos.Y = 15, 15
+	npc1Mem := (*components.Memory)(world.Get(npc1, memID))
+	npc1Mem.Events[0] = components.MemoryEvent{InteractionType: components.InteractionAssault}
+
+	// NPC 2: Commits Assault, Correct Disguise (City 1)
+	npc2 := world.NewEntity(posID, affID, memID, storID, disguiseID)
+	npc2Pos := (*components.Position)(world.Get(npc2, posID))
+	npc2Pos.X, npc2Pos.Y = 12, 12
+	npc2Mem := (*components.Memory)(world.Get(npc2, memID))
+	npc2Mem.Events[0] = components.MemoryEvent{InteractionType: components.InteractionAssault}
+	npc2Disg := (*components.DisguiseComponent)(world.Get(npc2, disguiseID))
+	npc2Disg.SpoofedCityID = 1
+	npc2Disg.IsActive = true
+
+	// NPC 3: Commits Assault, Wrong Disguise (City 2)
+	npc3 := world.NewEntity(posID, affID, memID, storID, disguiseID)
+	npc3Pos := (*components.Position)(world.Get(npc3, posID))
+	npc3Pos.X, npc3Pos.Y = 14, 14
+	npc3Mem := (*components.Memory)(world.Get(npc3, memID))
+	npc3Mem.Events[0] = components.MemoryEvent{InteractionType: components.InteractionAssault}
+	npc3Disg := (*components.DisguiseComponent)(world.Get(npc3, disguiseID))
+	npc3Disg.SpoofedCityID = 2
+	npc3Disg.IsActive = true
+
+	// --- Test Detection Phase ---
+	sys.Update(&world)
+
+	if !world.Has(npc1, crimeID) {
+		t.Errorf("NPC1 (No disguise) should have been caught")
+	}
+	if world.Has(npc2, crimeID) {
+		t.Errorf("NPC2 (Correct disguise) should NOT have been caught")
+	}
+	if !world.Has(npc3, crimeID) {
+		t.Errorf("NPC3 (Wrong disguise) should have been caught")
+	}
+
+	// --- Test Enforcement/Targeting Phase ---
+	// Let's create a criminal with a correct disguise and see if a guard targets them
+	crim := world.NewEntity(posID, affID, crimeID, disguiseID, needsID, velID)
+	cPos := (*components.Position)(world.Get(crim, posID))
+	cPos.X, cPos.Y = 5, 5
+	cCrime := (*components.CrimeMarker)(world.Get(crim, crimeID))
+	cCrime.Bounty = 100
+	cDisg := (*components.DisguiseComponent)(world.Get(crim, disguiseID))
+	cDisg.SpoofedCityID = 1
+	cDisg.IsActive = true
+
+	// Guard (City 1)
+	guard := world.NewEntity(posID, affID, jobID, pathID, velID)
+	gPos := (*components.Position)(world.Get(guard, posID))
+	gPos.X, gPos.Y = 8, 8
+	gJob := (*components.JobComponent)(world.Get(guard, jobID))
+	gJob.JobID = components.JobGuard
+	gAff := (*components.Affiliation)(world.Get(guard, affID))
+	gAff.CityID = 1
+	gPath := (*components.Path)(world.Get(guard, pathID))
+
+	sys.Update(&world)
+
+	if gPath.TargetX == 5 && gPath.TargetY == 5 {
+		t.Errorf("Guard should not have targeted correctly disguised criminal")
+	}
+}

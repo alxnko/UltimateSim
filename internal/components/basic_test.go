@@ -2,9 +2,10 @@ package components
 
 import (
 	"testing"
-	"unsafe"
+
 	"github.com/mlange-42/arche/ecs"
 	"github.com/mlange-42/arche/filter"
+	"unsafe"
 )
 
 func TestComponentSanity(t *testing.T) {
@@ -35,7 +36,7 @@ func TestComponentSanity(t *testing.T) {
 		pos := (*Position)(q.Get(posID))
 		vel := (*Velocity)(q.Get(velID))
 
-		if pos.X != float32(count) || pos.Y != float32(count * 2) {
+		if pos.X != float32(count) || pos.Y != float32(count*2) {
 			t.Errorf("Position mismatch at entity %d", count)
 		}
 
@@ -384,5 +385,11 @@ func TestConstructionComponentsSize(t *testing.T) {
 	actualTunnel := unsafe.Sizeof(TunnelComponent{})
 	if actualTunnel != 16 {
 		t.Errorf("TunnelComponent is %d bytes, expected exactly 16 bytes for DOD bounds", actualTunnel)
+	}
+}
+func TestDisguiseComponent_DODConstraints(t *testing.T) {
+	sz := unsafe.Sizeof(DisguiseComponent{})
+	if sz != 8 {
+		t.Errorf("DisguiseComponent size = %d, want 8", sz)
 	}
 }

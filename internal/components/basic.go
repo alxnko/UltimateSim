@@ -700,3 +700,9 @@ type TunnelComponent struct {
 	Progress float32
 	_        uint32 // Padding to exactly 16 bytes
 }
+// Phase 32: Espionage & Disguises Engine
+type DisguiseComponent struct {
+	SpoofedCityID uint32
+	IsActive      bool
+	_             [3]byte // Padding to exactly 8 bytes
+}

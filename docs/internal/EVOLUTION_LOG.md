@@ -1152,3 +1152,21 @@ I created the `UnderminingSystem` and a 16-byte aligned `TunnelComponent`.
 **The Butterfly Effect:**
 An attacking army cannot breach a massive castle wall, halting their infantry assault. The commander deploys `JobMiner` NPCs. The miners dig `TunnelComponent` entities under the walls. The `StructureComponent` collapses physically. This destruction removes the barrier, allowing the attacking infantry's `Path` components to route into the city. The sudden influx of hostile troops triggers the `SiegeSystem` to spike starvation, leading to local `Desperation` and a complete economic collapse of the defending city.
 Validated perfectly deterministic via `TestUnderminingSystem_Integration` ensuring no multi-threading ECS locks during structural execution loops.
+
+## Evolution: Phase 32 - The Espionage & Disguises Engine
+**Focus:** Integration (Subterfuge + Justice + Geopolitics)
+
+**The Problem (Vision Gap):**
+The Vision document under "Total Freedom & Physical Constraints" outlines that players can "scheme to overthrow an empire using espionage and disguises." Previously, there was no Subterfuge layer bridging Identity and Justice. If an NPC committed a crime, their identity was instantly known, and geographical boundaries applied universally without any mechanism for infiltration or evasion.
+
+**The Solution (Autonomous DOD Execution):**
+I created the **Espionage & Disguises Engine**.
+1. **Component Addition:** Introduced `DisguiseComponent` (exactly 8 bytes to adhere to DOD requirements) containing `SpoofedCityID` and an `IsActive` flag.
+2. **Detection Bypass:** Modified the `JusticeSystem` detection phase. If an NPC possesses an active `DisguiseComponent` matching the local jurisdiction's `CityID`, they completely bypass the geographical boundary checks for illegal actions, rendering them "invisible" to the law while within the spoofed territory.
+3. **Enforcement Bypass:** Modified the `JusticeSystem` enforcement phase. If a Guard attempts to target a criminal, but the criminal holds an active `DisguiseComponent` matching the Guard's `Affiliation.CityID`, the Guard ignores the criminal entirely, physically modeling the inability to pierce the disguise.
+
+**The Butterfly Effect:**
+A desperate, starving NPC takes a loan from a predatory, wealthy Guild leader (`LendingSystem`) but defaults. The Guild leader sends a hitman via the `MercenarySystem` (Phase 47). The Mercenary equips a `DisguiseComponent` spoofing the target's `CityID`. The Mercenary crosses the border, slipping past the `QuarantineSystem` and `JusticeSystem` detection nets flawlessly because they appear as a local citizen. The Mercenary locates the debtor and executes the hit (Phase 64 Combat/Phase 23 BloodFeud). Guards witness the attack but, due to the disguise, fail to target the assassin during the enforcement loop. The assassin escapes, leaving the city in chaos. A complete, unscripted geopolitical assassination executed via systematic espionage rules.
+
+**Architecture Validation:**
+Strict Data-Oriented Design (DOD) maintained. We mapped `DisguiseComponent` lookups safely inside the main Arche-Go loops (`npcQuery.Next()` and `crimeQuery.Next()`) with flat logical checks, avoiding nested or locking ECS queries. The new logic was proven 100% deterministic via E2E test `TestJusticeSystem_DisguiseEngine`.

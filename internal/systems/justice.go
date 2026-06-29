@@ -66,6 +66,7 @@ func (s *JusticeSystem) Update(world *ecs.World) {
 	treasuryID := ecs.ComponentID[components.TreasuryComponent](world)
 	scapegoatID := ecs.ComponentID[components.ScapegoatComponent](world) // Phase 36.1
 	quarID := ecs.ComponentID[components.QuarantineComponent](world)     // Phase 37.1
+	disguiseID := ecs.ComponentID[components.DisguiseComponent](world)   // Phase 32
 
 	jurQuery := world.Query(ecs.All(jurID, posID, affID))
 	s.jurisdictions = s.jurisdictions[:0]
@@ -134,6 +135,17 @@ func (s *JusticeSystem) Update(world *ecs.World) {
 		pos := (*components.Position)(npcQuery.Get(posID))
 		mem := (*components.Memory)(npcQuery.Get(memID))
 
+		// Phase 32: The Espionage & Disguises Engine (Subterfuge bypass)
+		isDisguised := false
+		var disguiseCityID uint32
+		if world.Has(entity, disguiseID) {
+			disguise := (*components.DisguiseComponent)(world.Get(entity, disguiseID))
+			if disguise.IsActive {
+				isDisguised = true
+				disguiseCityID = disguise.SpoofedCityID
+			}
+		}
+
 		// Find which jurisdiction they are in
 		var activeJur *adminJurisdictionData
 		for i := 0; i < len(s.jurisdictions); i++ {
@@ -148,6 +160,11 @@ func (s *JusticeSystem) Update(world *ecs.World) {
 		}
 
 		if activeJur != nil {
+			if isDisguised && disguiseCityID == activeJur.CityID {
+				// Bypass geographical boundary checks for this jurisdiction
+				continue
+			}
+
 			isCriminal := false
 
 			// Evaluate recent memory events for illegal actions
@@ -336,12 +353,27 @@ func (s *JusticeSystem) Update(world *ecs.World) {
 				gIdent = (*components.Identity)(guardQuery.Get(identID))
 			}
 
+			// Phase 32: The Espionage & Disguises Engine
+			// Guard bypass targeting logic
+			guardCityID := uint32(0)
+			if gAff != nil {
+				guardCityID = gAff.CityID
+			}
+
 			// Find closest non-targeted criminal
 			var best *cData
 			var bestDist float32 = 9999999.0
 
 			for i := 0; i < len(criminals); i++ {
 				c := &criminals[i]
+
+				// Phase 32: The Espionage & Disguises Engine
+				if guardCityID != 0 && world.Has(c.Entity, disguiseID) {
+					disguise := (*components.DisguiseComponent)(world.Get(c.Entity, disguiseID))
+					if disguise.IsActive && disguise.SpoofedCityID == guardCityID {
+						continue // Bypass guard targeting
+					}
+				}
 
 				// Optional: Only target if they are within the same jurisdiction (omitted for speed unless req)
 
