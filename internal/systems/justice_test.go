@@ -279,3 +279,68 @@ func TestJusticeSystem_CarceralResentmentAndBlackmail(t *testing.T) {
 		}
 	}
 }
+
+func TestJusticeSystem_DisguiseIntegration(t *testing.T) {
+	world := ecs.NewWorld()
+	sys := NewJusticeSystem(&world, engine.NewSparseHookGraph())
+
+	posID := ecs.ComponentID[components.Position](&world)
+	affID := ecs.ComponentID[components.Affiliation](&world)
+	jurID := ecs.ComponentID[components.JurisdictionComponent](&world)
+	contraID := ecs.ComponentID[components.ContrabandComponent](&world)
+	memID := ecs.ComponentID[components.Memory](&world)
+	storID := ecs.ComponentID[components.StorageComponent](&world)
+	crimeID := ecs.ComponentID[components.CrimeMarker](&world)
+	disguiseID := ecs.ComponentID[components.DisguiseComponent](&world)
+
+	// Create Capital with Jurisdiction
+	capEnt := world.NewEntity(posID, affID, jurID, contraID)
+	capPos := (*components.Position)(world.Get(capEnt, posID))
+	capPos.X, capPos.Y = 10, 10
+
+	capAff := (*components.Affiliation)(world.Get(capEnt, affID))
+	capAff.CityID = 1
+
+	capJur := (*components.JurisdictionComponent)(world.Get(capEnt, jurID))
+	capJur.RadiusSquared = 100.0 // Radius 10
+	capJur.IllegalActionIDs = 1 << components.InteractionAssault
+
+	capContra := (*components.ContrabandComponent)(world.Get(capEnt, contraID))
+	capContra.Contraband = 1 << components.ItemIron // Iron is contraband
+
+	// Create NPC 1: Commits Assault inside Jurisdiction BUT has Disguise spoofing CityID 1
+	npc1 := world.NewEntity(posID, affID, memID, storID, disguiseID)
+	npc1Pos := (*components.Position)(world.Get(npc1, posID))
+	npc1Pos.X, npc1Pos.Y = 15, 15
+
+	npc1Mem := (*components.Memory)(world.Get(npc1, memID))
+	npc1Mem.Events[0] = components.MemoryEvent{InteractionType: components.InteractionAssault}
+
+	npc1Disguise := (*components.DisguiseComponent)(world.Get(npc1, disguiseID))
+	npc1Disguise.IsActive = true
+	npc1Disguise.SpoofedCityID = 1
+
+	// Create NPC 2: Commits Assault inside Jurisdiction but Disguise is inactive
+	npc2 := world.NewEntity(posID, affID, memID, storID, disguiseID)
+	npc2Pos := (*components.Position)(world.Get(npc2, posID))
+	npc2Pos.X, npc2Pos.Y = 12, 12
+
+	npc2Mem := (*components.Memory)(world.Get(npc2, memID))
+	npc2Mem.Events[0] = components.MemoryEvent{InteractionType: components.InteractionAssault}
+
+	npc2Disguise := (*components.DisguiseComponent)(world.Get(npc2, disguiseID))
+	npc2Disguise.IsActive = false
+	npc2Disguise.SpoofedCityID = 1
+
+	sys.Update(&world)
+
+	// NPC 1 should NOT be tagged
+	if world.Has(npc1, crimeID) {
+		t.Errorf("Expected NPC 1 with active disguise to NOT get CrimeMarker")
+	}
+
+	// NPC 2 SHOULD be tagged
+	if !world.Has(npc2, crimeID) {
+		t.Errorf("Expected NPC 2 with inactive disguise to get CrimeMarker")
+	}
+}

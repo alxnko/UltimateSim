@@ -1152,3 +1152,19 @@ I created the `UnderminingSystem` and a 16-byte aligned `TunnelComponent`.
 **The Butterfly Effect:**
 An attacking army cannot breach a massive castle wall, halting their infantry assault. The commander deploys `JobMiner` NPCs. The miners dig `TunnelComponent` entities under the walls. The `StructureComponent` collapses physically. This destruction removes the barrier, allowing the attacking infantry's `Path` components to route into the city. The sudden influx of hostile troops triggers the `SiegeSystem` to spike starvation, leading to local `Desperation` and a complete economic collapse of the defending city.
 Validated perfectly deterministic via `TestUnderminingSystem_Integration` ensuring no multi-threading ECS locks during structural execution loops.
+
+## Evolution: Phase 32 - Espionage & Disguises Engine
+**Focus:** Integration (Subterfuge + Justice)
+
+**The Problem (Vision Gap):**
+The Vision document outlines a grand strategy emergent behavior where characters can operate as agents of chaos or use subterfuge to bypass traditional macro-level forces (e.g. city guards). Previously, the `JusticeSystem` detected all criminal acts blindly within a jurisdiction boundaries based on `MemoryEvents` or `ContrabandComponent`. The Subterfuge layer lacked a physical representation, preventing spies, thieves, or secret agents from moving through hostile territory undetected, artificially limiting Phase 32.
+
+**The Solution (Autonomous DOD Execution):**
+I created the **Espionage & Disguises Engine** via updating the `JusticeSystem`.
+1. **Component Addition:** Introduced `DisguiseComponent` (exactly 8 bytes: `SpoofedCityID uint32`, `IsActive bool`, `_ [3]byte` padding). This tags the individual NPC as actively wearing a disguise (e.g. stolen guard uniform).
+2. **Detection Bypass:** During the `JusticeSystem` step 2 detection phase, the system actively checks for an active `DisguiseComponent`. If the `SpoofedCityID` perfectly matches the evaluating `JurisdictionComponent.CityID`, the system organically bypasses the criminal checks (memory events and contraband), meaning the NPC goes entirely unnoticed.
+3. **Enforcement Bypass:** In the rare case the NPC was tagged with a `CrimeMarker` *before* putting on the disguise, the enforcement step (Step 3) checks if the target has an active disguise spoofing the hunting Guard's `CityID`. If true, the guard ignores them.
+
+**The Butterfly Effect:**
+A player (or advanced NPC) commits a murder, logging an `InteractionMurder` event in their `Memory` buffer. Normally, stepping into a heavily guarded city would result in immediate detection by the `JusticeSystem` and subsequent banishment, fines, or penal labor. However, they equip a stolen uniform from `CityID 1`, activating their `DisguiseComponent`. They walk through the city gates with `ItemIron` (contraband). The `JusticeSystem` evaluates them but natively skips them. The player can now walk up to the King, poison their food supply, and leave, completely avoiding the macro-level justice system and plunging the empire into a succession crisis.
+Validated perfectly deterministic via `TestJusticeSystem_DisguiseIntegration`.

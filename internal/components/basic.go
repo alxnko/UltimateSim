@@ -237,6 +237,13 @@ type LegendComponent struct {
 	History  []uint32 // Array of EventIDs tracking the item's history
 }
 
+// Phase 32: Espionage & Disguises Engine
+type DisguiseComponent struct {
+	SpoofedCityID uint32
+	IsActive      bool
+	_             [3]byte // Padding to exactly 8 bytes
+}
+
 // Phase 32.1: Artifact Equipment (Auras of Legitimacy)
 type EquipmentComponent struct {
 	Weapon   LegendComponent // Embedded 32-byte artifact

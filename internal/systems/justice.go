@@ -119,6 +119,7 @@ func (s *JusticeSystem) Update(world *ecs.World) {
 	beliefID := ecs.ComponentID[components.BeliefComponent](world) // Phase 36.1
 	jobID := ecs.ComponentID[components.JobComponent](world)       // Phase 49
 	esoID := ecs.ComponentID[components.EsotericMarker](world)     // Phase 49
+	disguiseID := ecs.ComponentID[components.DisguiseComponent](world) // Phase 32
 
 	npcQuery := world.Query(ecs.All(memID, posID, affID))
 
@@ -133,6 +134,12 @@ func (s *JusticeSystem) Update(world *ecs.World) {
 
 		pos := (*components.Position)(npcQuery.Get(posID))
 		mem := (*components.Memory)(npcQuery.Get(memID))
+
+		// Phase 32: Espionage & Disguises Engine
+		var disguise *components.DisguiseComponent
+		if world.Has(entity, disguiseID) {
+			disguise = (*components.DisguiseComponent)(world.Get(entity, disguiseID))
+		}
 
 		// Find which jurisdiction they are in
 		var activeJur *adminJurisdictionData
@@ -149,6 +156,11 @@ func (s *JusticeSystem) Update(world *ecs.World) {
 
 		if activeJur != nil {
 			isCriminal := false
+
+			// Phase 32: Espionage bypass
+			if disguise != nil && disguise.IsActive && disguise.SpoofedCityID == activeJur.CityID {
+				continue // Bypass detection entirely
+			}
 
 			// Evaluate recent memory events for illegal actions
 			// Realistically we should evaluate against a tick window, but for DOD speed we check the buffer
@@ -305,6 +317,7 @@ func (s *JusticeSystem) Update(world *ecs.World) {
 		jurID := ecs.ComponentID[components.JurisdictionComponent](world)
 		identID := ecs.ComponentID[components.Identity](world)
 		secID := ecs.ComponentID[components.SecretComponent](world)
+		disguiseID := ecs.ComponentID[components.DisguiseComponent](world)
 
 		guardQuery := world.Query(s.guardFilter)
 
@@ -349,6 +362,14 @@ func (s *JusticeSystem) Update(world *ecs.World) {
 				// Do not target if another Guard is already targeting them
 				if s.targetMapping[c.ID] {
 					continue
+				}
+
+				// Phase 32: Espionage bypass (Enforcement)
+				if world.Has(c.Entity, disguiseID) && gAff != nil {
+					disguise := (*components.DisguiseComponent)(world.Get(c.Entity, disguiseID))
+					if disguise.IsActive && disguise.SpoofedCityID == gAff.CityID {
+						continue // Guard ignores this criminal
+					}
 				}
 
 				dx := gPos.X - c.X
