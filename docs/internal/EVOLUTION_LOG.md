@@ -1152,3 +1152,24 @@ I created the `UnderminingSystem` and a 16-byte aligned `TunnelComponent`.
 **The Butterfly Effect:**
 An attacking army cannot breach a massive castle wall, halting their infantry assault. The commander deploys `JobMiner` NPCs. The miners dig `TunnelComponent` entities under the walls. The `StructureComponent` collapses physically. This destruction removes the barrier, allowing the attacking infantry's `Path` components to route into the city. The sudden influx of hostile troops triggers the `SiegeSystem` to spike starvation, leading to local `Desperation` and a complete economic collapse of the defending city.
 Validated perfectly deterministic via `TestUnderminingSystem_Integration` ensuring no multi-threading ECS locks during structural execution loops.
+
+---
+
+## Evolution: Phase 19.5 - Surgical Amputation Engine
+
+**Focus:** Depth & Integration (Biology + Geography + Economy + Psychology + Information)
+
+**The Problem (Vision Gap):**
+Currently, diseases abstractly affect health and kill entities over time. There is no physical mechanism to interact with locational damage, and "magical healing" violates the rule of parity. To fulfill the "Total Simulation" vision, injuries must be physical, locational, and treatable by physical NPCs in the world, carrying severe economic and psychological consequences.
+
+**The Solution (Autonomous DOD Execution):**
+I created the `SurgerySystem` and the strictly 8-byte DOD-aligned `AnatomyComponent` to manage physical amputations.
+1. **Component Addition:** Replaced abstract injury trackers with `AnatomyComponent`, explicitly tracking `MissingLimbs` (bitmask), `InfectedLimbs` (bitmask), and `InfectionProg` (float32).
+2. **Biology Progression:** `SurgerySystem` iterates over patients, progressing `InfectionProg`. If unchecked, it begins draining `Vitals.Blood`, physically simulating sepsis.
+3. **Geography Bridge:** `JobDoctor` NPCs physically pathfind via `PathRequestQueue` to the precise `Position` of infected patients.
+4. **Economic & Psychological Surgery:** Upon reaching the patient, the doctor shifts the infected limb bit to `MissingLimbs`. This operation charges a physical fee to `Needs.Wealth` and induces massive `Sanity.Stress` in the patient.
+5. **The Resentment Hook:** If the patient cannot afford the fee, the doctor takes all remaining wealth and generates a negative resentment hook (`SparseHookGraph`) against the patient, integrating medical debt into the justice and social memory systems.
+
+**The Butterfly Effect:**
+A patient contracts an infection on a limb. `SurgerySystem` begins draining their blood. A local doctor paths to them, amputating the limb to save their life. This amputation spikes the patient's `Sanity.Stress` towards a mental break. The patient is bankrupt, so the doctor extracts all their wealth and generates a negative hook. Now, the patient is physically handicapped, bankrupt, psychologically scarred, and legally resented by the medical establishment—perfectly simulating the cascading, brutal reality of medieval survival without a single "magic" abstraction.
+Validated purely deterministic via `TestSurgerySystem_AmputationAndHooks`.

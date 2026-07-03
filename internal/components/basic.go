@@ -517,6 +517,15 @@ type SanityComponent struct {
 	BreakCooldown uint32
 }
 
+// Phase 19.5: Physical Anatomy
+// AnatomyComponent tracks missing and infected limbs. Exactly 8 bytes.
+type AnatomyComponent struct {
+	InfectionProg float32 // 0.0 to 100.0+
+	MissingLimbs  uint8
+	InfectedLimbs uint8
+	_             [2]byte // Pad to 8 bytes
+}
+
 // Phase 19.4: Advanced Biology (Vitals)
 type VitalsComponent struct {
 	Stamina       float32
