@@ -109,6 +109,13 @@ type Needs struct {
 // Ledger is a tag component identifying physical records on the map.
 type Ledger struct{}
 
+// DisguiseComponent represents an active disguise (Phase 32).
+type DisguiseComponent struct {
+	SpoofedCityID uint32
+	IsActive      bool
+	_             [3]byte // Padding to exactly 8 bytes for DOD
+}
+
 // LedgerComponent represents materialized information (history, propaganda).
 type LedgerComponent struct {
 	Secrets []uint32

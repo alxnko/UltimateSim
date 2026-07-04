@@ -355,6 +355,15 @@ func TestPossessedSize(t *testing.T) {
 	}
 }
 
+func TestDisguiseComponentSize(t *testing.T) {
+	// Phase 32: Espionage & Disguise Engine
+	expected := uintptr(8)
+	actual := unsafe.Sizeof(DisguiseComponent{})
+	if actual != expected {
+		t.Errorf("Expected DisguiseComponent to be %d bytes for DOD, got %d", expected, actual)
+	}
+}
+
 func TestConstructionComponentsSize(t *testing.T) {
 	expectedDemo := uintptr(8)
 	actualDemo := unsafe.Sizeof(DemographicsComponent{})

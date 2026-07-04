@@ -119,6 +119,7 @@ func (s *JusticeSystem) Update(world *ecs.World) {
 	beliefID := ecs.ComponentID[components.BeliefComponent](world) // Phase 36.1
 	jobID := ecs.ComponentID[components.JobComponent](world)       // Phase 49
 	esoID := ecs.ComponentID[components.EsotericMarker](world)     // Phase 49
+	disguiseID := ecs.ComponentID[components.DisguiseComponent](world) // Fetch it here too!
 
 	npcQuery := world.Query(ecs.All(memID, posID, affID))
 
@@ -148,6 +149,15 @@ func (s *JusticeSystem) Update(world *ecs.World) {
 		}
 
 		if activeJur != nil {
+			// Phase 32: Espionage & Disguises
+			// If active disguise matches jurisdiction, bypass criminal evaluation
+			if world.Has(entity, disguiseID) {
+				disguise := (*components.DisguiseComponent)(world.Get(entity, disguiseID))
+				if disguise.IsActive && disguise.SpoofedCityID == activeJur.CityID {
+					continue // Bypass jurisdiction entirely
+				}
+			}
+
 			isCriminal := false
 
 			// Evaluate recent memory events for illegal actions
@@ -305,6 +315,7 @@ func (s *JusticeSystem) Update(world *ecs.World) {
 		jurID := ecs.ComponentID[components.JurisdictionComponent](world)
 		identID := ecs.ComponentID[components.Identity](world)
 		secID := ecs.ComponentID[components.SecretComponent](world)
+		disguiseID := ecs.ComponentID[components.DisguiseComponent](world)
 
 		guardQuery := world.Query(s.guardFilter)
 
@@ -344,6 +355,15 @@ func (s *JusticeSystem) Update(world *ecs.World) {
 				c := &criminals[i]
 
 				// Optional: Only target if they are within the same jurisdiction (omitted for speed unless req)
+
+				// Phase 32: Espionage & Disguises
+				// If criminal has active disguise matching guard's affiliation, they are ignored
+				if gAff != nil && world.Has(c.Entity, disguiseID) {
+					disguise := (*components.DisguiseComponent)(world.Get(c.Entity, disguiseID))
+					if disguise.IsActive && disguise.SpoofedCityID == gAff.CityID {
+						continue
+					}
+				}
 
 				// Phase 18.2: Target tracking
 				// Do not target if another Guard is already targeting them

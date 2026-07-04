@@ -279,3 +279,78 @@ func TestJusticeSystem_CarceralResentmentAndBlackmail(t *testing.T) {
 		}
 	}
 }
+
+func TestJusticeSystem_DisguiseIntegration(t *testing.T) {
+	world := ecs.NewWorld()
+	hooks := engine.NewSparseHookGraph()
+	sys := NewJusticeSystem(&world, hooks)
+
+	posID := ecs.ComponentID[components.Position](&world)
+	affID := ecs.ComponentID[components.Affiliation](&world)
+	jurID := ecs.ComponentID[components.JurisdictionComponent](&world)
+	memID := ecs.ComponentID[components.Memory](&world)
+	crimeID := ecs.ComponentID[components.CrimeMarker](&world)
+	disguiseID := ecs.ComponentID[components.DisguiseComponent](&world)
+	jobID := ecs.ComponentID[components.JobComponent](&world)
+	pathID := ecs.ComponentID[components.Path](&world)
+
+	// Create Jurisdiction (City 1)
+	capEnt := world.NewEntity(posID, affID, jurID)
+	capPos := (*components.Position)(world.Get(capEnt, posID))
+	capPos.X, capPos.Y = 10, 10
+	capAff := (*components.Affiliation)(world.Get(capEnt, affID))
+	capAff.CityID = 1
+	capJur := (*components.JurisdictionComponent)(world.Get(capEnt, jurID))
+	capJur.RadiusSquared = 100.0
+	capJur.IllegalActionIDs = 1 << components.InteractionAssault // Assault is illegal
+
+	// Create NPC 1: Commits Assault, but HAS a Disguise
+	npc1 := world.NewEntity(posID, affID, memID, disguiseID)
+	npc1Pos := (*components.Position)(world.Get(npc1, posID))
+	npc1Pos.X, npc1Pos.Y = 15, 15
+	npc1Mem := (*components.Memory)(world.Get(npc1, memID))
+	npc1Mem.Events[0] = components.MemoryEvent{
+		InteractionType: components.InteractionAssault,
+	}
+	npc1Mem.Head = 1
+	npc1Dis := (*components.DisguiseComponent)(world.Get(npc1, disguiseID))
+	npc1Dis.IsActive = true
+	npc1Dis.SpoofedCityID = 1 // Matches City 1
+
+	sys.Update(&world)
+
+	// NPC 1 should NOT be a criminal
+	if world.Has(npc1, crimeID) {
+		t.Errorf("NPC1 was detected as criminal despite active disguise")
+	}
+
+	// Create NPC 2: Existing criminal (has marker), with disguise matching guard's city
+	npc2 := world.NewEntity(posID, affID, memID, crimeID, disguiseID)
+	npc2Pos := (*components.Position)(world.Get(npc2, posID))
+	npc2Pos.X, npc2Pos.Y = 10, 10 // Exact same tile as Guard
+	npc2Dis := (*components.DisguiseComponent)(world.Get(npc2, disguiseID))
+	npc2Dis.IsActive = true
+	npc2Dis.SpoofedCityID = 2 // Will match Guard's City 2
+	npc2Crime := (*components.CrimeMarker)(world.Get(npc2, crimeID))
+	npc2Crime.Bounty = 100
+	npc2Crime.CrimeLevel = 1
+
+	// Create Guard for City 2
+	guard := world.NewEntity(posID, affID, jobID, pathID)
+	gPos := (*components.Position)(world.Get(guard, posID))
+	gPos.X, gPos.Y = 10, 10
+	gAff := (*components.Affiliation)(world.Get(guard, affID))
+	gAff.CityID = 2
+	gJob := (*components.JobComponent)(world.Get(guard, jobID))
+	gJob.JobID = components.JobGuard
+	_ = (*components.Path)(world.Get(guard, pathID)) // just ensure component exists
+
+	sys.Update(&world)
+
+	// Guard should ignore NPC2 because of disguise
+	// If Guard targeted NPC 2 (same tile), NPC2 would be punished (e.g. killed if CrimeLevel > 0, which we just set)
+	// We check if NPC2 is still alive and didn't get killed
+	if !world.Alive(npc2) {
+		t.Errorf("NPC2 was punished by Guard despite active disguise")
+	}
+}
