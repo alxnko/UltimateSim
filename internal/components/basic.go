@@ -525,6 +525,14 @@ type VitalsComponent struct {
 	Consciousness float32
 }
 
+// Phase 19.5: Advanced Biology (Anatomy)
+type AnatomyComponent struct {
+	InfectionProg float32
+	MissingLimbs  uint8
+	InfectedLimbs uint8
+	_             [2]byte // Pad to 8 bytes
+}
+
 // Phase 36.1: The Scapegoat & Witch Hunt Engine
 type ScapegoatComponent struct {
 	TargetBeliefID uint32

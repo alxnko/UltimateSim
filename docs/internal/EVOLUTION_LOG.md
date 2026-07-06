@@ -1152,3 +1152,21 @@ I created the `UnderminingSystem` and a 16-byte aligned `TunnelComponent`.
 **The Butterfly Effect:**
 An attacking army cannot breach a massive castle wall, halting their infantry assault. The commander deploys `JobMiner` NPCs. The miners dig `TunnelComponent` entities under the walls. The `StructureComponent` collapses physically. This destruction removes the barrier, allowing the attacking infantry's `Path` components to route into the city. The sudden influx of hostile troops triggers the `SiegeSystem` to spike starvation, leading to local `Desperation` and a complete economic collapse of the defending city.
 Validated perfectly deterministic via `TestUnderminingSystem_Integration` ensuring no multi-threading ECS locks during structural execution loops.
+
+## Evolution: Phase 19.5 - The Surgical Amputation Engine (SurgerySystem)
+**Focus:** Integration (Biology + Geography + Economy + Psychology)
+
+**The Problem (Vision Gap):**
+The Vision requires "Total Freedom & Physical Constraints" with a strict rejection of background math. Previously, infections might just deal abstract damage or cause death. There was no physical consequence or intervention for advanced localized infections (`AnatomyComponent`). This isolated biological failure from the economy, geography, and psychological stress engines, breaking the required Butterfly Effect.
+
+**The Solution (Autonomous DOD Execution):**
+I created the `SurgerySystem` to introduce severe physical consequences for untreated infections.
+1. **Component Addition:** Introduced `AnatomyComponent` (exactly 8 bytes for DOD bounds: `InfectionProg float32`, `MissingLimbs uint8`, `InfectedLimbs uint8`, `_ [2]byte`) to explicitly track localized body state.
+2. **The Amputation Mechanic:** The system evaluates NPCs with `InfectedLimbs > 0`. It then queries for `JobDoctor` NPCs, who physically pathfind to the patient.
+3. **The Execution:** When adjacent, the doctor performs an amputation: decrements `InfectedLimbs`, increments `MissingLimbs`, resets `InfectionProg` to 0, and demands a substantial wealth fee from the patient's `Needs`.
+4. **Psychological & Social Hooks:** The brutal nature of the surgery mathematically spikes the patient's `SanityComponent.Stress` by 50.0. If the patient is bankrupt and cannot pay the fee, a massive `-50` relationship hook (medical debt) is generated from the doctor to the patient via the `SparseHookGraph`.
+
+**The Butterfly Effect:**
+A poor lumberjack contracts an infection in his arm while working. He ignores it due to lack of wealth. The infection progresses until `InfectedLimbs` registers. A local `JobDoctor` pathfinds to him and amputates the arm. The lumberjack survives, but the massive `Stress` pushes him towards a `MentalBreak` (Phase 62), potentially causing him to go berserk.
+Simultaneously, because the lumberjack was poor, he could not pay the surgery fee. This generates a `-50` hook (resentment) from the Doctor. If the lumberjack goes berserk and commits a crime, the Doctor might use this hook to actively testify against him or spread malicious gossip, further isolating the amputee. Furthermore, the missing limb now permanently hinders his efficiency as a lumberjack, triggering a localized labor shortage, lowering wood supply, and organically driving up local market prices. A localized biological failure has rippled into severe psychological trauma, social debt, and macroeconomic shifts.
+Validated perfectly deterministic via `TestSurgerySystem_Integration`.
