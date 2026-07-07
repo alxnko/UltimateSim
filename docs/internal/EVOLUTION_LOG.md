@@ -1152,3 +1152,19 @@ I created the `UnderminingSystem` and a 16-byte aligned `TunnelComponent`.
 **The Butterfly Effect:**
 An attacking army cannot breach a massive castle wall, halting their infantry assault. The commander deploys `JobMiner` NPCs. The miners dig `TunnelComponent` entities under the walls. The `StructureComponent` collapses physically. This destruction removes the barrier, allowing the attacking infantry's `Path` components to route into the city. The sudden influx of hostile troops triggers the `SiegeSystem` to spike starvation, leading to local `Desperation` and a complete economic collapse of the defending city.
 Validated perfectly deterministic via `TestUnderminingSystem_Integration` ensuring no multi-threading ECS locks during structural execution loops.
+
+## Evolution: Phase 32 - Espionage & Disguises Engine
+**Focus:** Integration (Justice + Subterfuge)
+
+**The Problem (Vision Gap):**
+The Vision document under "Total Freedom & Physical Constraints" states that players and NPCs can "scheme to overthrow an empire using espionage and disguises". However, the Justice Engine operated on strict geographical checks with no way for an entity to bypass the detection logic if they were within bounds, completely isolating any Subterfuge mechanics.
+
+**The Solution (Autonomous DOD Execution):**
+I created the Espionage & Disguises Engine via updating `JusticeSystem`.
+1. **Component Addition:** Introduced `DisguiseComponent` (exactly 8 bytes to adhere to DOD constraints: `SpoofedCityID uint32`, `IsActive bool`, `_ [3]byte`).
+2. **The Bypass Mechanic:** In `JusticeSystem.Update` step 2 (Detection phase), the system evaluates NPCs committing crimes against `JurisdictionComponent`. I modified the detection loop to read the `DisguiseComponent`.
+3. **Guard Evasion:** If an NPC's `DisguiseComponent` has `IsActive == true` and `SpoofedCityID` matches the `CityID` of the local active jurisdiction, the entity bypasses criminal tagging. The guard's perception is fooled, structurally skipping the criminal evaluation for that entity.
+
+**The Butterfly Effect:**
+A spy infiltrates an enemy country. They activate their `DisguiseComponent` spoofing the enemy capital's `CityID`. The spy physically assaults an official (`InteractionAssault`) and steals sensitive information (`InteractionTheft`). Although the events are logged in the spy's `Memory` buffer and occur directly inside the enemy `JurisdictionComponent`, the local `JusticeSystem` sees them as one of their own and ignores them. This creates the missing link allowing systemic, non-violent infiltration and sabotage to exist within a world normally governed by absolute, deterministic spatial law.
+Validated perfectly deterministic via `TestDisguiseSystem_Integration`.

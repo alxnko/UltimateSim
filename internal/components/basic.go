@@ -540,6 +540,14 @@ type EsotericMarker struct {
 	_      [3]byte // Pad to 4 bytes
 }
 
+// Evolution: Phase 32 - Espionage & Disguises Engine
+// DisguiseComponent allows an NPC to bypass JusticeSystem geographic checks and guard targeting
+type DisguiseComponent struct {
+	SpoofedCityID uint32
+	IsActive      bool
+	_             [3]byte // Padding to 8 bytes
+}
+
 // Phase 31: Systemic Entropy (Natural Disasters)
 
 // NaturalDisasterEntity is a tag component identifying an active disaster event on the map.

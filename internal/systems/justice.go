@@ -119,6 +119,7 @@ func (s *JusticeSystem) Update(world *ecs.World) {
 	beliefID := ecs.ComponentID[components.BeliefComponent](world) // Phase 36.1
 	jobID := ecs.ComponentID[components.JobComponent](world)       // Phase 49
 	esoID := ecs.ComponentID[components.EsotericMarker](world)     // Phase 49
+	disguiseID := ecs.ComponentID[components.DisguiseComponent](world) // Phase 32: Espionage & Disguises Engine
 
 	npcQuery := world.Query(ecs.All(memID, posID, affID))
 
@@ -149,6 +150,20 @@ func (s *JusticeSystem) Update(world *ecs.World) {
 
 		if activeJur != nil {
 			isCriminal := false
+
+			// Evolution: Phase 32 - Espionage & Disguises Engine
+			// Check if the entity is disguised as a member of the active jurisdiction
+			hasValidDisguise := false
+			if world.Has(entity, disguiseID) {
+				disguise := (*components.DisguiseComponent)(world.Get(entity, disguiseID))
+				if disguise.IsActive && disguise.SpoofedCityID == activeJur.CityID {
+					hasValidDisguise = true
+				}
+			}
+
+			if hasValidDisguise {
+				continue // Guard does not recognize them, bypass criminal tagging entirely
+			}
 
 			// Evaluate recent memory events for illegal actions
 			// Realistically we should evaluate against a tick window, but for DOD speed we check the buffer
