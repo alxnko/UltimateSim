@@ -1152,3 +1152,19 @@ I created the `UnderminingSystem` and a 16-byte aligned `TunnelComponent`.
 **The Butterfly Effect:**
 An attacking army cannot breach a massive castle wall, halting their infantry assault. The commander deploys `JobMiner` NPCs. The miners dig `TunnelComponent` entities under the walls. The `StructureComponent` collapses physically. This destruction removes the barrier, allowing the attacking infantry's `Path` components to route into the city. The sudden influx of hostile troops triggers the `SiegeSystem` to spike starvation, leading to local `Desperation` and a complete economic collapse of the defending city.
 Validated perfectly deterministic via `TestUnderminingSystem_Integration` ensuring no multi-threading ECS locks during structural execution loops.
+
+## Evolution: Phase 32 - The Espionage & Disguises Engine
+**Focus:** Integration (Subterfuge + Justice)
+
+**The Problem (Vision Gap):**
+The Vision requires "Total Freedom & Physical Constraints" allowing the player and NPCs to bypass rigid social constraints via trickery. Previously, the `JusticeSystem` detected criminals entirely by `MemoryEvents` and targeted them rigidly based on their identity, ignoring any physical disguise worn by an entity. This isolated the Espionage (Phase 32) capabilities from the legal frameworks.
+
+**The Solution (Autonomous DOD Execution):**
+I integrated Espionage with Justice via `DisguiseComponent`.
+1. **Component Addition:** Introduced `DisguiseComponent` (exactly 8 bytes to adhere to DOD bounds) to track `SpoofedCityID` and an `IsActive` state.
+2. **Detection Evasion:** The `JusticeSystem` now checks for active disguises. If an NPC has committed crimes within a Jurisdiction, but holds an active `DisguiseComponent` matching the jurisdiction's `CityID`, they bypass the `CrimeMarker` tagging algorithm.
+3. **Guard Evasion:** Even if dynamically tagged via external means, Guard NPCs iterating through their enforcement array will drop their targeting lock and ignore criminals holding an active disguise matching the guard's `CityID`.
+
+**The Butterfly Effect:**
+A rogue assassin slips into a foreign capital. Normally, their past `MemoryEvents` would trigger immediate `CrimeMarker` execution the moment they enter the city bounds. However, they activate a `DisguiseComponent` spoofing the capital's `CityID`. The local Guards ignore them. The assassin freely walks up to the King, commits a murder, drops their disguise, and flees into the wilderness, causing complete structural collapse of the `AdministrationMarker` hierarchy while evading all initial defense layers.
+Validated perfectly deterministic via `TestEspionageSystem_Integration`.

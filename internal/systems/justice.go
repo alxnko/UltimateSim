@@ -119,6 +119,7 @@ func (s *JusticeSystem) Update(world *ecs.World) {
 	beliefID := ecs.ComponentID[components.BeliefComponent](world) // Phase 36.1
 	jobID := ecs.ComponentID[components.JobComponent](world)       // Phase 49
 	esoID := ecs.ComponentID[components.EsotericMarker](world)     // Phase 49
+	disguiseID := ecs.ComponentID[components.DisguiseComponent](world) // Phase 32
 
 	npcQuery := world.Query(ecs.All(memID, posID, affID))
 
@@ -149,6 +150,20 @@ func (s *JusticeSystem) Update(world *ecs.World) {
 
 		if activeJur != nil {
 			isCriminal := false
+
+			// Phase 32: Evolution: Espionage & Disguises Engine
+			// If disguised as a member of this jurisdiction, bypass detection.
+			isDisguised := false
+			if world.Has(entity, disguiseID) {
+				disg := (*components.DisguiseComponent)(npcQuery.Get(disguiseID))
+				if disg.IsActive && disg.SpoofedCityID == activeJur.CityID {
+					isDisguised = true
+				}
+			}
+
+			if isDisguised {
+				continue // Bypass tagging them as a criminal
+			}
 
 			// Evaluate recent memory events for illegal actions
 			// Realistically we should evaluate against a tick window, but for DOD speed we check the buffer
@@ -305,6 +320,7 @@ func (s *JusticeSystem) Update(world *ecs.World) {
 		jurID := ecs.ComponentID[components.JurisdictionComponent](world)
 		identID := ecs.ComponentID[components.Identity](world)
 		secID := ecs.ComponentID[components.SecretComponent](world)
+		disguiseID := ecs.ComponentID[components.DisguiseComponent](world) // Phase 32
 
 		guardQuery := world.Query(s.guardFilter)
 
@@ -344,6 +360,15 @@ func (s *JusticeSystem) Update(world *ecs.World) {
 				c := &criminals[i]
 
 				// Optional: Only target if they are within the same jurisdiction (omitted for speed unless req)
+
+				// Phase 32: Evolution: Espionage & Disguises Engine
+				// If the criminal is actively disguised as a local, guards lose targeting lock.
+				if world.Has(c.Entity, disguiseID) && gAff != nil {
+					disg := (*components.DisguiseComponent)(world.Get(c.Entity, disguiseID))
+					if disg.IsActive && disg.SpoofedCityID == gAff.CityID {
+						continue
+					}
+				}
 
 				// Phase 18.2: Target tracking
 				// Do not target if another Guard is already targeting them
