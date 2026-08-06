@@ -21,6 +21,7 @@ func TestSoakFullSimulation(t *testing.T) {
 	if !status.Done || status.TM == nil {
 		t.Fatal("simulation failed to build")
 	}
+	defer status.PathQueue.Close() // don't leak worker goroutines across runs
 
 	// Register the player input system exactly as main() does.
 	inputSys := systems.NewPlayerInputSystem(status.Bridge)
@@ -75,6 +76,7 @@ func TestSoakDeterminism(t *testing.T) {
 	run := func() uint64 {
 		status := &render.LoadingStatus{}
 		BuildSimulation(96, 96, 13, status)
+		defer status.PathQueue.Close() // don't leak worker goroutines across runs
 		for i := 0; i < 1500; i++ {
 			status.TM.Tick()
 		}

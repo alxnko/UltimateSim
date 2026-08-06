@@ -250,6 +250,7 @@ func BuildSimulation(gridWidth, gridHeight int, seedVal byte, status *render.Loa
 	status.HookGraph = hookGraph
 	status.Bridge = bridge
 	status.Events = playerEvents
+	status.PathQueue = pathQueue
 	status.Seed = seedVal
 	status.Done = true
 	status.Mutex.Unlock()
