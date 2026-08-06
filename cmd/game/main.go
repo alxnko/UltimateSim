@@ -209,6 +209,9 @@ func BuildSimulation(gridWidth, gridHeight int, seedVal byte, status *render.Loa
 	tickManager.AddSystem(systems.NewCraftingSystem(world, pathQueue), engine.PhaseResolution)
 	tickManager.AddSystem(systems.NewStructureEffectSystem(), engine.PhaseResolution)
 	tickManager.AddSystem(systems.NewAmbitionSystem(hookGraph), engine.PhaseResolution)
+	// Grand Strategy P2.4/P2.5: intrigue plots + council bonuses.
+	tickManager.AddSystem(systems.NewPlotSystem(world, hookGraph), engine.PhaseResolution)
+	tickManager.AddSystem(systems.NewCouncilSystem(world), engine.PhaseResolution)
 	tickManager.AddSystem(systems.NewPlayerOrderSystem(hookGraph, bridge), engine.PhaseAI)
 
 	// --- PHASE: CLEANUP ---

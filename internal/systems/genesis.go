@@ -2,7 +2,6 @@ package systems
 
 import (
 	"sort"
-	"strconv"
 
 	"github.com/ALXNKO/UltimateSim/internal/components"
 	"github.com/ALXNKO/UltimateSim/internal/engine"
@@ -106,7 +105,7 @@ func SeedCivilization(world *ecs.World, grid *engine.MapGrid, cfg GenesisConfig)
 
 	name := cfg.NameFn
 	if name == nil {
-		name = func(id uint64, _ uint8) string { return "NPC-" + strconv.FormatUint(id, 10) }
+		name = Name // deterministic syllable names (names.go)
 	}
 
 	nextNPC := genesisNPCIDBase
@@ -129,7 +128,7 @@ func SeedCivilization(world *ecs.World, grid *engine.MapGrid, cfg GenesisConfig)
 		vp.X, vp.Y = float32(site.x), float32(site.y)
 		vid := (*components.Identity)(world.Get(v, idID))
 		vid.ID = cityID
-		vid.Name = "Settlement-" + strconv.Itoa(i+1)
+		vid.Name = Name(cityID, culture)
 		vid.Age = 0
 		st := (*components.StorageComponent)(world.Get(v, storageID))
 		st.Wood, st.Food, st.Stone, st.Iron = 300, 500, 150, 50

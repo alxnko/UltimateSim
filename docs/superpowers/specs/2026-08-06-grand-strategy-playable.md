@@ -105,6 +105,24 @@ polished. Language stays **Go** (decided after Rust discussion; evidence: tick
 - [ ] G6 An event every ~30-90s of play at 1x in a living city; never a dead
       stretch over 3 minutes.
 
+## P5 — LIVING WORLD + BUILDING (user: "ai does almost nothing, building is
+## not good, hard and almost impossible to even play")
+
+- [ ] L1 Visible daily life: employed citizens walk to job anchors (farm
+      structure/fields for farmers, forest edge for lumberjacks, workshop for
+      artisans, patrol ring for guards), WORK there visibly, and return to the
+      village center in the evening (Calendar phase). WanderSystem stays only
+      for the unemployed/wilderness. NPCs must look busy at a glance.
+- [ ] L2 Building that feels good: ghost footprint preview under cursor in
+      build mode (green=valid, red=invalid, cost readout), sites show an
+      overhead progress bar, village builders auto-work player sites (verify
+      ConstructionSystem picks them up) with a toast when one starts/finishes.
+      Player hammering (E) stays as optional speed-up.
+- [ ] L3 Overhead info at action zoom: name plates on hover, health bar over
+      damaged NPCs, job-colored outfits already exist — verify readable.
+- [ ] L4 Onboarding sequence: scripted first-minute toasts (move → talk →
+      goals → build → claim leadership) that each dismiss on completion.
+
 ## P3 — Polish + perf
 
 - [ ] P3.1 DiseaseVectorSystem optimization (58% of tick) — target <20%.
