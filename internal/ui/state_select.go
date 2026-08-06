@@ -42,7 +42,7 @@ func (s *StatePlaying) DrawCharacterSelect(screen *ebiten.Image) {
 		if cy+26 > y+h-40 {
 			break
 		}
-		label := fmt.Sprintf("%s, %d — %s — City %d", c.Name, c.Age, JobName(c.JobID), c.CityID)
+		label := fmt.Sprintf("%s, %d — %s — %s", c.Name, c.Age, JobName(c.JobID), CityName(s.Status.TM.World, c.CityID))
 		DrawText(screen, label, x+16, cy+4, TextCol)
 		DrawText(screen, fmt.Sprintf("STR %d  INT %d  %dg", c.Strength, c.Intellect, int(c.Wealth)), x+340, cy+4, TextDim)
 		if Button(screen, "Live as", x+w-88, cy, 74, 22) {

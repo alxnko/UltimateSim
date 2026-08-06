@@ -70,10 +70,10 @@ func (s *StatePlaying) DrawHUD(screen *ebiten.Image) {
 	rank, cityID, countryID := systems.GetRank(world, player)
 	rankStr := systems.RankName(rank)
 	if cityID != 0 {
-		rankStr += fmt.Sprintf(" of City %d", cityID)
+		rankStr += " of " + CityName(world, cityID)
 	}
 	if countryID != 0 && rank == systems.RankSovereign {
-		rankStr = fmt.Sprintf("Sovereign of Country %d", countryID)
+		rankStr = fmt.Sprintf("Sovereign of Realm %d", countryID)
 	}
 	DrawText(screen, name, bx, y+6, TextCol)
 	DrawText(screen, job, bx, y+22, TextDim)
