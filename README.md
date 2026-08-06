@@ -53,7 +53,7 @@ can switch bodies at any time later: right-click anyone → **Play As**.
 | `Mouse Wheel` | Zoom (below 0.5x switches to the strategic lens map) |
 | `1` `2` `3` `4` | Sim speed 1x / 2x / 4x / 8x (also HUD buttons) |
 | `Space` | Pause / resume |
-| `P` / `M` | Diplomacy panel / Market & trade panel (also top tab strip) |
+| `P` / `Y` / `M` | Diplomacy / Dynasty & intrigue / Market panels (also top tab strip) |
 | `B` | Build mode: ghost preview shows validity + cost (`R` cycles structure) |
 | `E` | Hammer the nearest construction site (builders also auto-work) |
 | `G` / `C` / `L` | Goals / Character sheet / Chronicle |
