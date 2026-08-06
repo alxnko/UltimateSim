@@ -216,6 +216,47 @@ func InitDB(path string) (*sql.DB, error) {
 		labor_crisis BOOLEAN
 	);
 
+	CREATE TABLE IF NOT EXISTS dynasty (
+		uid INTEGER PRIMARY KEY,
+		spouse_id INTEGER,
+		children INTEGER,
+		married BOOLEAN
+	);
+
+	CREATE TABLE IF NOT EXISTS plot (
+		uid INTEGER PRIMARY KEY,
+		target_id INTEGER,
+		start_tick INTEGER,
+		progress INTEGER,
+		power INTEGER,
+		kind INTEGER,
+		exposed BOOLEAN
+	);
+
+	CREATE TABLE IF NOT EXISTS council (
+		uid INTEGER PRIMARY KEY,
+		steward INTEGER,
+		marshal INTEGER,
+		diplomat INTEGER,
+		spymaster INTEGER
+	);
+
+	CREATE TABLE IF NOT EXISTS diplomacy (
+		uid INTEGER PRIMARY KEY,
+		relations_json TEXT
+	);
+
+	CREATE TABLE IF NOT EXISTS tax_policy (
+		uid INTEGER PRIMARY KEY,
+		rate INTEGER
+	);
+
+	CREATE TABLE IF NOT EXISTS trade_routes (
+		from_city INTEGER,
+		to_city INTEGER,
+		volume INTEGER
+	);
+
 	CREATE TABLE IF NOT EXISTS workbench (
 		uid INTEGER PRIMARY KEY,
 		employer_id INTEGER,
@@ -466,9 +507,39 @@ func SaveWorld(tm *TickManager, mapGrid *MapGrid, seedVal byte, db *sql.DB) erro
 		return err
 	}
 	defer stmtAmb.Close()
+	stmtDynasty, err := tx.Prepare("INSERT OR REPLACE INTO dynasty (uid, spouse_id, children, married) VALUES (?, ?, ?, ?)")
+	if err != nil {
+		return err
+	}
+	defer stmtDynasty.Close()
+	stmtPlot, err := tx.Prepare("INSERT OR REPLACE INTO plot (uid, target_id, start_tick, progress, power, kind, exposed) VALUES (?, ?, ?, ?, ?, ?, ?)")
+	if err != nil {
+		return err
+	}
+	defer stmtPlot.Close()
+	stmtCouncil, err := tx.Prepare("INSERT OR REPLACE INTO council (uid, steward, marshal, diplomat, spymaster) VALUES (?, ?, ?, ?, ?)")
+	if err != nil {
+		return err
+	}
+	defer stmtCouncil.Close()
+	stmtDiplomacy, err := tx.Prepare("INSERT OR REPLACE INTO diplomacy (uid, relations_json) VALUES (?, ?)")
+	if err != nil {
+		return err
+	}
+	defer stmtDiplomacy.Close()
+	stmtTaxPolicy, err := tx.Prepare("INSERT OR REPLACE INTO tax_policy (uid, rate) VALUES (?, ?)")
+	if err != nil {
+		return err
+	}
+	defer stmtTaxPolicy.Close()
 
 	// Extract components
 	ambitionsID := ecs.ComponentID[components.AmbitionsComponent](world)
+	dynastyCompID := ecs.ComponentID[components.DynastyComponent](world)
+	plotCompID := ecs.ComponentID[components.PlotComponent](world)
+	councilCompID := ecs.ComponentID[components.CouncilComponent](world)
+	diplomacyCompID := ecs.ComponentID[components.DiplomacyComponent](world)
+	taxPolicyCompID := ecs.ComponentID[components.TaxPolicyComponent](world)
 	idID := ecs.ComponentID[components.Identity](world)
 	posID := ecs.ComponentID[components.Position](world)
 	needsID := ecs.ComponentID[components.Needs](world)
@@ -795,6 +866,56 @@ func SaveWorld(tm *TickManager, mapGrid *MapGrid, seedVal byte, db *sql.DB) erro
 			}
 		}
 
+		// Dynasty (Grand Strategy P2.3)
+		if world.Has(ent, dynastyCompID) {
+			d := (*components.DynastyComponent)(world.Get(ent, dynastyCompID))
+			if _, err := stmtDynasty.Exec(uid, d.SpouseID, d.Children, d.Married); err != nil {
+				query.Close()
+				return err
+			}
+		}
+
+		// Plot (Grand Strategy P2.4)
+		if world.Has(ent, plotCompID) {
+			p := (*components.PlotComponent)(world.Get(ent, plotCompID))
+			if _, err := stmtPlot.Exec(uid, p.TargetID, p.StartTick, p.Progress, p.Power, p.Kind, p.Exposed); err != nil {
+				query.Close()
+				return err
+			}
+		}
+
+		// Council (Grand Strategy P2.5)
+		if world.Has(ent, councilCompID) {
+			c := (*components.CouncilComponent)(world.Get(ent, councilCompID))
+			if _, err := stmtCouncil.Exec(uid, c.Steward, c.Marshal, c.Diplomat, c.Spymaster); err != nil {
+				query.Close()
+				return err
+			}
+		}
+
+		// Diplomacy relations ledger (Grand Strategy P2.2)
+		if world.Has(ent, diplomacyCompID) {
+			d := (*components.DiplomacyComponent)(world.Get(ent, diplomacyCompID))
+			relJson, err := json.Marshal(d.Relations)
+			if err != nil {
+				query.Close()
+				return err
+			}
+			if _, err := stmtDiplomacy.Exec(uid, string(relJson)); err != nil {
+				query.Close()
+				return err
+			}
+		}
+
+		// Tax policy (Grand Strategy P2.6)
+		if world.Has(ent, taxPolicyCompID) {
+			p := (*components.TaxPolicyComponent)(world.Get(ent, taxPolicyCompID))
+			if _, err := stmtTaxPolicy.Exec(uid, p.Rate); err != nil {
+				query.Close()
+				return err
+			}
+		}
+
 		// Extra tags (Capital, Country, Administration)
 		isCapital := world.Has(ent, capitalID)
 		isCountry := world.Has(ent, countryID)
@@ -811,6 +932,28 @@ func SaveWorld(tm *TickManager, mapGrid *MapGrid, seedVal byte, db *sql.DB) erro
 				query.Close()
 				return err
 			}
+		}
+	}
+
+	// Trade routes (Grand Strategy P2.6): route entities carry no Identity,
+	// so they are collected after the Identity loop and stored keyless.
+	routeCompID := ecs.ComponentID[components.TradeRouteComponent](world)
+	type routeRow struct {
+		from, to uint32
+		vol      uint16
+	}
+	var routeRows []routeRow
+	rq := world.Query(ecs.All(routeCompID))
+	for rq.Next() {
+		r := (*components.TradeRouteComponent)(rq.Get(routeCompID))
+		routeRows = append(routeRows, routeRow{r.FromCity, r.ToCity, r.Volume})
+	}
+	if _, err := tx.Exec("DELETE FROM trade_routes"); err != nil {
+		return err
+	}
+	for _, r := range routeRows {
+		if _, err := tx.Exec("INSERT INTO trade_routes (from_city, to_city, volume) VALUES (?, ?, ?)", r.from, r.to, r.vol); err != nil {
+			return err
 		}
 	}
 
@@ -1499,6 +1642,117 @@ func LoadWorld(tm *TickManager, db *sql.DB) error {
 		return err
 	}
 
+	// 31. Fetch Dynasty (Grand Strategy P2.3)
+	type dynastyData struct {
+		spouseID uint64
+		children uint16
+		married  bool
+	}
+	dynastyMap := make(map[uint64]dynastyData)
+	rowsDyn, err := db.Query("SELECT uid, spouse_id, children, married FROM dynasty")
+	if err != nil {
+		return err
+	}
+	defer rowsDyn.Close()
+	for rowsDyn.Next() {
+		var u uint64
+		var d dynastyData
+		if err := rowsDyn.Scan(&u, &d.spouseID, &d.children, &d.married); err != nil {
+			return err
+		}
+		dynastyMap[u] = d
+	}
+	if err := rowsDyn.Err(); err != nil {
+		return err
+	}
+
+	// 32. Fetch Plot (Grand Strategy P2.4)
+	type plotData struct {
+		targetID  uint64
+		startTick uint64
+		progress  uint16
+		power     uint16
+		kind      uint8
+		exposed   bool
+	}
+	plotMap := make(map[uint64]plotData)
+	rowsPlot, err := db.Query("SELECT uid, target_id, start_tick, progress, power, kind, exposed FROM plot")
+	if err != nil {
+		return err
+	}
+	defer rowsPlot.Close()
+	for rowsPlot.Next() {
+		var u uint64
+		var p plotData
+		if err := rowsPlot.Scan(&u, &p.targetID, &p.startTick, &p.progress, &p.power, &p.kind, &p.exposed); err != nil {
+			return err
+		}
+		plotMap[u] = p
+	}
+	if err := rowsPlot.Err(); err != nil {
+		return err
+	}
+
+	// 33. Fetch Council (Grand Strategy P2.5)
+	type councilData struct {
+		steward, marshal, diplomat, spymaster uint64
+	}
+	councilMap := make(map[uint64]councilData)
+	rowsCouncil, err := db.Query("SELECT uid, steward, marshal, diplomat, spymaster FROM council")
+	if err != nil {
+		return err
+	}
+	defer rowsCouncil.Close()
+	for rowsCouncil.Next() {
+		var u uint64
+		var c councilData
+		if err := rowsCouncil.Scan(&u, &c.steward, &c.marshal, &c.diplomat, &c.spymaster); err != nil {
+			return err
+		}
+		councilMap[u] = c
+	}
+	if err := rowsCouncil.Err(); err != nil {
+		return err
+	}
+
+	// 34. Fetch Diplomacy relations (Grand Strategy P2.2)
+	diploMap := make(map[uint64]string)
+	rowsDiplo, err := db.Query("SELECT uid, relations_json FROM diplomacy")
+	if err != nil {
+		return err
+	}
+	defer rowsDiplo.Close()
+	for rowsDiplo.Next() {
+		var u uint64
+		var relJson string
+		if err := rowsDiplo.Scan(&u, &relJson); err != nil {
+			return err
+		}
+		diploMap[u] = relJson
+	}
+	if err := rowsDiplo.Err(); err != nil {
+		return err
+	}
+
+	// 35. Fetch Tax Policy (Grand Strategy P2.6)
+	taxMap := make(map[uint64]uint8)
+	rowsTax, err := db.Query("SELECT uid, rate FROM tax_policy")
+	if err != nil {
+		return err
+	}
+	defer rowsTax.Close()
+	for rowsTax.Next() {
+		var u uint64
+		var rate uint8
+		if err := rowsTax.Scan(&u, &rate); err != nil {
+			return err
+		}
+		taxMap[u] = rate
+	}
+	if err := rowsTax.Err(); err != nil {
+		return err
+	}
+
 	// Component IDs
 	idID := ecs.ComponentID[components.Identity](world)
 	posID := ecs.ComponentID[components.Position](world)
@@ -1533,6 +1787,11 @@ func LoadWorld(tm *TickManager, db *sql.DB) error {
 	countryID := ecs.ComponentID[components.CountryComponent](world)
 	adminID := ecs.ComponentID[components.AdministrationMarker](world)
 	ambitionsID := ecs.ComponentID[components.AmbitionsComponent](world)
+	dynastyCompID := ecs.ComponentID[components.DynastyComponent](world)
+	plotCompID := ecs.ComponentID[components.PlotComponent](world)
+	councilCompID := ecs.ComponentID[components.CouncilComponent](world)
+	diplomacyCompID := ecs.ComponentID[components.DiplomacyComponent](world)
+	taxPolicyCompID := ecs.ComponentID[components.TaxPolicyComponent](world)
 
 	for _, uid := range uids {
 		ent := world.NewEntity()
@@ -1803,6 +2062,73 @@ func LoadWorld(tm *TickManager, db *sql.DB) error {
 			amb.BuiltCount = a.built
 			amb.FamilyBase = a.familyBase
 		}
+
+		if d, ok := dynastyMap[uid]; ok {
+			world.Add(ent, dynastyCompID)
+			dyn := (*components.DynastyComponent)(world.Get(ent, dynastyCompID))
+			dyn.SpouseID = d.spouseID
+			dyn.Children = d.children
+			dyn.Married = d.married
+		}
+
+		if p, ok := plotMap[uid]; ok {
+			world.Add(ent, plotCompID)
+			plot := (*components.PlotComponent)(world.Get(ent, plotCompID))
+			plot.TargetID = p.targetID
+			plot.StartTick = p.startTick
+			plot.Progress = p.progress
+			plot.Power = p.power
+			plot.Kind = p.kind
+			plot.Exposed = p.exposed
+		}
+
+		if c, ok := councilMap[uid]; ok {
+			world.Add(ent, councilCompID)
+			council := (*components.CouncilComponent)(world.Get(ent, councilCompID))
+			council.Steward = c.steward
+			council.Marshal = c.marshal
+			council.Diplomat = c.diplomat
+			council.Spymaster = c.spymaster
+		}
+
+		if relJson, ok := diploMap[uid]; ok {
+			world.Add(ent, diplomacyCompID)
+			d := (*components.DiplomacyComponent)(world.Get(ent, diplomacyCompID))
+			_ = json.Unmarshal([]byte(relJson), &d.Relations)
+		}
+
+		if rate, ok := taxMap[uid]; ok {
+			world.Add(ent, taxPolicyCompID)
+			(*components.TaxPolicyComponent)(world.Get(ent, taxPolicyCompID)).Rate = rate
+		}
+	}
+
+	// Trade routes are standalone entities recreated from their keyless table.
+	routeCompID := ecs.ComponentID[components.TradeRouteComponent](world)
+	type routeRow struct {
+		from, to uint32
+		vol      uint16
+	}
+	var routeRows []routeRow
+	trRows, err := db.Query("SELECT from_city, to_city, volume FROM trade_routes ORDER BY rowid")
+	if err != nil {
+		return err
+	}
+	defer trRows.Close()
+	for trRows.Next() {
+		var r routeRow
+		if err := trRows.Scan(&r.from, &r.to, &r.vol); err != nil {
+			return err
+		}
+		routeRows = append(routeRows, r)
+	}
+	if err := trRows.Err(); err != nil {
+		return err
+	}
+	for _, r := range routeRows {
+		ent := world.NewEntity(routeCompID)
+		route := (*components.TradeRouteComponent)(world.Get(ent, routeCompID))
+		route.FromCity, route.ToCity, route.Volume = r.from, r.to, r.vol
 	}
 
 	return nil
