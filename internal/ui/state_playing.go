@@ -396,6 +396,13 @@ func (s *StatePlaying) Draw(screen *ebiten.Image) {
 		ebitenutil.DebugPrintAt(screen, "Loading: "+s.Status.Message, 10, 10)
 		return
 	}
+	// Draw can run before the first Update on the state-switch frame; the
+	// sprite cache and bridges bind in Update, so wait one frame.
+	if !s.PC.Initialized {
+		screen.Fill(color.RGBA{20, 20, 30, 255})
+		ebitenutil.DebugPrintAt(screen, "Awakening...", 10, 10)
+		return
+	}
 	screen.Fill(color.RGBA{18, 20, 28, 255})
 
 	// Warmup: world visible behind a progress veil, chrome hidden.
