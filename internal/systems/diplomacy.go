@@ -184,16 +184,16 @@ func (s *DiplomacySystem) Update(world *ecs.World) {
 		}
 	}
 
-	// 3. Ensure every pair relation exists BEFORE caching row pointers: later
+	// 3. Ensure every pair relation exists BEFORE taking row pointers: later
 	// appends would reallocate Relations and orphan pointers taken earlier.
-	diplos := make([]*components.DiplomacyComponent, len(countries))
-	for i := range countries {
-		diplos[i] = (*components.DiplomacyComponent)(world.Get(countries[i].entity, s.diploID))
-	}
+	// Component pointers are fetched fresh per use and never stored in a
+	// slice (cache values, not component pointers — GC corruption class,
+	// see banditry.go); the step-5 DeclareWar adds would otherwise leave a
+	// live pointer slice aimed at freed archetype chunks.
 	for i := 0; i < len(countries); i++ {
 		for j := i + 1; j < len(countries); j++ {
-			ensureRelation(diplos[i], countries[j].countryID)
-			ensureRelation(diplos[j], countries[i].countryID)
+			ensureRelation((*components.DiplomacyComponent)(world.Get(countries[i].entity, s.diploID)), countries[j].countryID)
+			ensureRelation((*components.DiplomacyComponent)(world.Get(countries[j].entity, s.diploID)), countries[i].countryID)
 		}
 	}
 
@@ -209,8 +209,10 @@ func (s *DiplomacySystem) Update(world *ecs.World) {
 	for i := 0; i < len(countries); i++ {
 		for j := i + 1; j < len(countries); j++ {
 			a, b := &countries[i], &countries[j]
-			ra := relationRow(diplos[i], b.countryID)
-			rb := relationRow(diplos[j], a.countryID)
+			// Fresh per-pair component fetches; the returned relation rows
+			// point into ordinary heap slices, which the GC tracks safely.
+			ra := relationRow((*components.DiplomacyComponent)(world.Get(a.entity, s.diploID)), b.countryID)
+			rb := relationRow((*components.DiplomacyComponent)(world.Get(b.entity, s.diploID)), a.countryID)
 
 			// Macro parity sync: WarTrackerComponent is the source of truth
 			// for whether a war exists (resource wars, the ruler law UI and
