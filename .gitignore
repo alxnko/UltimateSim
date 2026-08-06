@@ -32,3 +32,8 @@ go.work.sum
 .claude/
 savegame.db
 game_smoke.exe
+
+probe*.log
+probe*_*.txt
+probe_*.txt
+gs_probe.exe
