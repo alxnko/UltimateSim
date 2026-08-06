@@ -29,7 +29,7 @@ func (s *StatePlaying) openContextMenu(mx, my int, wx, wy float32) {
 	} else {
 		switch kind {
 		case TargetNPC:
-			items = []string{"Inspect", "Talk", "Attack"}
+			items = []string{"Inspect", "Talk", "Attack", "Play As"}
 			if player, ok := pc.PossessedEntity(); ok {
 				rank, cityID, _ := systems.GetRank(world, player)
 				affID := ecs.ComponentID[components.Affiliation](world)
@@ -86,6 +86,8 @@ func (s *StatePlaying) runContextAction(idx int) {
 	case "Edit Laws":
 		pc.LawsOpen = true
 		pc.LawsVillage = ctx.entity
+	case "Play As":
+		s.possessAs(ctx.entity, false)
 	case "Give Order":
 		s.openOrderMenu(ctx.entity)
 	case "Pick up":

@@ -79,6 +79,19 @@ type PlayerContext struct {
 	GameOverOpen  bool
 	HeirChoices   []systems.HeirInfo
 
+	// Character select (start-of-game or after full dynasty wipe)
+	SelectOpen    bool
+	SelectChoices []systems.StartCandidate
+
+	// Warmup ticks remaining before character select opens on a fresh world.
+	Warmup int
+
+	// Free camera: true while the player pans away from their character.
+	CamFree  bool
+	dragging bool
+	dragX    int
+	dragY    int
+
 	// Strategic lens (active below zoom threshold)
 	Lens uint8
 
@@ -94,7 +107,8 @@ type PlayerContext struct {
 // AnyModal reports whether a window that owns the keyboard is open.
 func (pc *PlayerContext) AnyModal() bool {
 	return pc.DialogOpen || pc.TradeOpen || pc.LawsOpen || pc.AmbitionsOpen ||
-		pc.CharOpen || pc.PauseOpen || pc.HeirOpen || pc.GameOverOpen || pc.EventLogOpen
+		pc.CharOpen || pc.PauseOpen || pc.HeirOpen || pc.GameOverOpen || pc.EventLogOpen ||
+		pc.SelectOpen
 }
 
 // CloseAll dismisses every open window and resets tool modes.

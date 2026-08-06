@@ -16,9 +16,49 @@ func PointIn(px, py, x, y, w, h int) bool {
 	return px >= x && px < x+w && py >= y && py < y+h
 }
 
-// leftClicked reports a fresh left-button press this frame.
+// Input snapshot. Widgets render during Draw(), but Ebiten's "just pressed"
+// state lives on the Update tick timeline — when FPS != TPS, Draw-time
+// inpututil reads miss every click, which made every button in the game dead.
+// BeginUIFrame captures the click during Update; drawn widgets consume it.
+// A click no widget consumed is promoted to a world click on the NEXT tick
+// (one 16ms frame of latency), so UI always has first claim.
+var (
+	uiMX, uiMY        int  // cursor at the capturing Update tick
+	uiClick           bool // one unconsumed left click (widgets eat this)
+	worldMX, worldMY  int  // cursor where the surviving click happened
+	worldClickPending bool // click that survived a full widget pass
+)
+
+// BeginUIFrame snapshots input state. Call once per Update tick before any
+// widget-bearing Draw runs.
+func BeginUIFrame() {
+	worldClickPending = uiClick
+	worldMX, worldMY = uiMX, uiMY
+	uiMX, uiMY = ebiten.CursorPosition()
+	uiClick = inpututil.IsMouseButtonJustPressed(ebiten.MouseButtonLeft)
+}
+
+// TakeWorldClick returns (and consumes) a left click no UI widget claimed.
+func TakeWorldClick() (int, int, bool) {
+	if worldClickPending {
+		worldClickPending = false
+		return worldMX, worldMY, true
+	}
+	return 0, 0, false
+}
+
+// consumeClickIn eats the pending click if it landed inside the rect.
+func consumeClickIn(x, y, w, h int) bool {
+	if uiClick && PointIn(uiMX, uiMY, x, y, w, h) {
+		uiClick = false
+		return true
+	}
+	return false
+}
+
+// leftClicked reports a fresh, unconsumed left-button press this tick.
 func leftClicked() bool {
-	return inpututil.IsMouseButtonJustPressed(ebiten.MouseButtonLeft)
+	return uiClick
 }
 
 // DrawPanel draws a filled panel with a 1px border.
@@ -43,7 +83,7 @@ func Button(dst *ebiten.Image, label string, x, y, w, h int) bool {
 	tx := x + (w-MeasureText(label))/2
 	ty := y + (h-13)/2
 	DrawText(dst, label, tx, ty, TextCol)
-	return hover && leftClicked()
+	return consumeClickIn(x, y, w, h)
 }
 
 // Bar draws a labelled progress bar; frac is clamped to 0..1.
@@ -71,9 +111,8 @@ func Checkbox(dst *ebiten.Image, label string, x, y int, checked bool) bool {
 		ebitenutil.DrawRect(dst, float64(x+3), float64(y+3), float64(box-6), float64(box-6), AccentCol)
 	}
 	DrawText(dst, label, x+box+6, y+1, TextCol)
-	mx, my := ebiten.CursorPosition()
 	w := box + 8 + MeasureText(label)
-	return PointIn(mx, my, x, y, w, box) && leftClicked()
+	return consumeClickIn(x, y, w, box)
 }
 
 // ContextMenu is a small click-driven popup list.
@@ -120,8 +159,8 @@ func (m *ContextMenu) Update() (int, bool) {
 	if !leftClicked() {
 		return -1, false
 	}
-	mx, my := ebiten.CursorPosition()
-	idx := m.IndexAt(mx, my)
+	uiClick = false // the menu is topmost: it consumes the click either way
+	idx := m.IndexAt(uiMX, uiMY)
 	m.Visible = false
 	if idx >= 0 && idx < len(m.Items) {
 		return idx, true
