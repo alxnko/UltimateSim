@@ -11,10 +11,11 @@ import (
 // If a Village is geographically isolated (very low FootTraffic meaning no caravans or visitors),
 // the dominant belief in the village naturally amplifies over time without external preachers, leading to radicalization.
 
+// cache values, not component pointers — GC corruption class, see banditry.go
+// (s.npcs persists across ticks; BeliefComponent is re-fetched via the entity handle at use time)
 type npcData struct {
-	entity  ecs.Entity
-	cityID  uint32
-	beliefs *components.BeliefComponent
+	entity ecs.Entity
+	cityID uint32
 }
 
 type EchoChamberSystem struct {
@@ -108,9 +109,8 @@ func (s *EchoChamberSystem) Update(world *ecs.World) {
 		beliefs := (*components.BeliefComponent)(npcQuery.Get(beliefID))
 
 		s.npcs = append(s.npcs, npcData{
-			entity:  npcQuery.Entity(),
-			cityID:  aff.CityID,
-			beliefs: beliefs,
+			entity: npcQuery.Entity(),
+			cityID: aff.CityID,
 		})
 
 		if s.cityBeliefCounts[aff.CityID] == nil {
@@ -149,10 +149,16 @@ func (s *EchoChamberSystem) Update(world *ecs.World) {
 			continue
 		}
 
+		// Re-fetch via entity handle at use time (cached pointers do not survive archetype moves)
+		if !world.Alive(n.entity) {
+			continue
+		}
+		npcBeliefs := (*components.BeliefComponent)(world.Get(n.entity, beliefID))
+
 		foundDominant := false
 
-		for i := 0; i < len(n.beliefs.Beliefs); i++ {
-			b := &n.beliefs.Beliefs[i]
+		for i := 0; i < len(npcBeliefs.Beliefs); i++ {
+			b := &npcBeliefs.Beliefs[i]
 			if b.BeliefID == domBelief {
 				// Amplify dominant belief
 				if b.Weight < 200 { // Allow extreme radicalization
@@ -169,7 +175,7 @@ func (s *EchoChamberSystem) Update(world *ecs.World) {
 
 		// If they didn't hold the dominant belief at all, they start adopting it due to peer pressure
 		if !foundDominant {
-			n.beliefs.Beliefs = append(n.beliefs.Beliefs, components.Belief{
+			npcBeliefs.Beliefs = append(npcBeliefs.Beliefs, components.Belief{
 				BeliefID: domBelief,
 				Weight:   1,
 			})

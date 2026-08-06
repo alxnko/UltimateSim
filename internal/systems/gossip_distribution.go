@@ -42,15 +42,18 @@ func (s *GossipDistributionSystem) Update(world *ecs.World) {
 	s.tickCounter++
 
 	// nodeData represents extracted data for DOD optimized proximity checking
+	// cache values, not component pointers — GC corruption class, see banditry.go
+	// Mutable components (Secret/Memory/Belief) are re-fetched via the entity handle at use time.
 	type nodeData struct {
-		entity    ecs.Entity
-		pos       *components.Position
-		secret    *components.SecretComponent
-		memory    *components.Memory
-		ident     *components.Identity
-		culture   *components.CultureComponent
-		belief    *components.BeliefComponent // Optional, might be nil
-		equipment *components.EquipmentComponent
+		entity         ecs.Entity
+		x              float32
+		y              float32
+		identID        uint64
+		baseTraits     uint32
+		languageID     uint16
+		hasBelief      bool
+		hasEquipment   bool
+		weaponPrestige uint32
 	}
 
 	// Runs on a slower tick execution (every 10 Ticks)
@@ -69,28 +72,32 @@ func (s *GossipDistributionSystem) Update(world *ecs.World) {
 	var nodes []nodeData
 
 	for query.Next() {
-		var belief *components.BeliefComponent
-		if query.Has(s.beliefID) {
-			belief = (*components.BeliefComponent)(query.Get(s.beliefID))
-		}
+		hasBelief := query.Has(s.beliefID)
 
-		var equipment *components.EquipmentComponent
+		hasEquipment := false
+		var weaponPrestige uint32
 		if query.Has(equipID) {
 			equip := (*components.EquipmentComponent)(query.Get(equipID))
 			if equip.Equipped {
-				equipment = equip
+				hasEquipment = true
+				weaponPrestige = equip.Weapon.Prestige
 			}
 		}
 
+		pos := (*components.Position)(query.Get(s.posID))
+		ident := (*components.Identity)(query.Get(s.identID))
+		culture := (*components.CultureComponent)(query.Get(s.cultureID))
+
 		nodes = append(nodes, nodeData{
-			entity:    query.Entity(),
-			pos:       (*components.Position)(query.Get(s.posID)),
-			secret:    (*components.SecretComponent)(query.Get(s.secretID)),
-			memory:    (*components.Memory)(query.Get(s.memoryID)),
-			ident:     (*components.Identity)(query.Get(s.identID)),
-			culture:   (*components.CultureComponent)(query.Get(s.cultureID)),
-			belief:    belief,
-			equipment: equipment,
+			entity:         query.Entity(),
+			x:              pos.X,
+			y:              pos.Y,
+			identID:        ident.ID,
+			baseTraits:     ident.BaseTraits,
+			languageID:     culture.LanguageID,
+			hasBelief:      hasBelief,
+			hasEquipment:   hasEquipment,
+			weaponPrestige: weaponPrestige,
 		})
 	}
 
@@ -99,7 +106,12 @@ func (s *GossipDistributionSystem) Update(world *ecs.World) {
 	for i := 0; i < len(nodes); i++ {
 		sender := nodes[i]
 
-		if len(sender.secret.Secrets) == 0 {
+		if !world.Alive(sender.entity) {
+			continue
+		}
+		senderSecret := (*components.SecretComponent)(world.Get(sender.entity, s.secretID))
+
+		if len(senderSecret.Secrets) == 0 {
 			continue
 		}
 
@@ -111,19 +123,29 @@ func (s *GossipDistributionSystem) Update(world *ecs.World) {
 			receiver := nodes[j]
 
 			// Distance check (Squared to avoid sqrt overhead)
-			dx := sender.pos.X - receiver.pos.X
-			dy := sender.pos.Y - receiver.pos.Y
+			dx := sender.x - receiver.x
+			dy := sender.y - receiver.y
 			distSq := dx*dx + dy*dy
 
 			// Overlap defined as distance < 2.0 (distSq < 4.0)
 			if distSq < 4.0 {
-				languageMismatch := sender.culture.LanguageID != receiver.culture.LanguageID
+				if !world.Alive(receiver.entity) {
+					continue
+				}
+				receiverSecret := (*components.SecretComponent)(world.Get(receiver.entity, s.secretID))
+				receiverMemory := (*components.Memory)(world.Get(receiver.entity, s.memoryID))
+				var receiverBelief *components.BeliefComponent
+				if receiver.hasBelief {
+					receiverBelief = (*components.BeliefComponent)(world.Get(receiver.entity, s.beliefID))
+				}
+
+				languageMismatch := sender.languageID != receiver.languageID
 
 				// Evaluate each secret the sender holds
-				for _, secret := range sender.secret.Secrets {
+				for _, secret := range senderSecret.Secrets {
 					// Check if receiver already knows the secret
 					alreadyKnown := false
-					for _, known := range receiver.secret.Secrets {
+					for _, known := range receiverSecret.Secrets {
 						if known.SecretID == secret.SecretID {
 							alreadyKnown = true
 							break
@@ -145,13 +167,13 @@ func (s *GossipDistributionSystem) Update(world *ecs.World) {
 
 					// Apply TraitGossip modifier
 					modifier := float32(1.0)
-					if sender.ident.BaseTraits&components.TraitGossip != 0 {
+					if sender.baseTraits&components.TraitGossip != 0 {
 						modifier = 2.0
 					}
 
 					// Phase 32.1: Aura of Legitimacy
 					// A highly prestigious artifact multiplies your influence
-					if sender.equipment != nil && sender.equipment.Weapon.Prestige >= components.ExtremePrestigeThreshold {
+					if sender.hasEquipment && sender.weaponPrestige >= components.ExtremePrestigeThreshold {
 						modifier *= 3.0
 					}
 
@@ -162,20 +184,20 @@ func (s *GossipDistributionSystem) Update(world *ecs.World) {
 						// Pass the secret
 
 						// Inject SecretID into neighbor's MemoryComponent buffer
-						head := receiver.memory.Head
-						receiver.memory.Events[head] = components.MemoryEvent{
+						head := receiverMemory.Head
+						receiverMemory.Events[head] = components.MemoryEvent{
 							TargetID:        uint64(sender.entity.ID()), // Storing ECS entity ID for reference
 							TickStamp:       s.tickCounter,
 							InteractionType: components.InteractionGossip,
-							LanguageID:      sender.culture.LanguageID,
+							LanguageID:      sender.languageID,
 							Value:           int32(secret.SecretID), // Safe because SecretID is uint32 and we use int32
 						}
 
 						// Increment ring buffer head
-						receiver.memory.Head = (head + 1) % 50
+						receiverMemory.Head = (head + 1) % 50
 
 						// Give the receiver the secret as well
-						receiver.secret.Secrets = append(receiver.secret.Secrets, components.Secret{
+						receiverSecret.Secrets = append(receiverSecret.Secrets, components.Secret{
 							OriginID: secret.OriginID,
 							SecretID: secret.SecretID,
 							Virality: secret.Virality,
@@ -184,18 +206,18 @@ func (s *GossipDistributionSystem) Update(world *ecs.World) {
 
 						// Phase 07.5: Ideological Infection
 						// If the secret carries a BeliefID, spread the ideology
-						if secret.BeliefID != 0 && receiver.belief != nil {
+						if secret.BeliefID != 0 && receiverBelief != nil {
 							found := false
-							for k := range receiver.belief.Beliefs {
-								if receiver.belief.Beliefs[k].BeliefID == secret.BeliefID {
-									receiver.belief.Beliefs[k].Weight += 1 // Linearly modify weight
+							for k := range receiverBelief.Beliefs {
+								if receiverBelief.Beliefs[k].BeliefID == secret.BeliefID {
+									receiverBelief.Beliefs[k].Weight += 1 // Linearly modify weight
 									found = true
 									break
 								}
 							}
 							if !found {
 								// First time encountering this belief
-								receiver.belief.Beliefs = append(receiver.belief.Beliefs, components.Belief{
+								receiverBelief.Beliefs = append(receiverBelief.Beliefs, components.Belief{
 									BeliefID: secret.BeliefID,
 									Weight:   1,
 								})
@@ -214,8 +236,8 @@ func (s *GossipDistributionSystem) Update(world *ecs.World) {
 							misunderstoodStr := "misunderstood_" + secretStr
 							misunderstoodID := engine.GetSecretRegistry().RegisterSecret(misunderstoodStr)
 
-							receiver.secret.Secrets = append(receiver.secret.Secrets, components.Secret{
-								OriginID: receiver.ident.ID, // The receiver originated this mutated rumor
+							receiverSecret.Secrets = append(receiverSecret.Secrets, components.Secret{
+								OriginID: receiver.identID, // The receiver originated this mutated rumor
 								SecretID: misunderstoodID,
 								Virality: secret.Virality,
 								BeliefID: secret.BeliefID,
@@ -224,7 +246,7 @@ func (s *GossipDistributionSystem) Update(world *ecs.World) {
 							// Systemic Emergence: Misunderstandings cause diplomatic friction
 							// Receiver gains a negative hook against the sender (-10) due to offensive misunderstanding
 							if s.HookGraph != nil {
-								s.HookGraph.AddHook(receiver.ident.ID, sender.ident.ID, -10)
+								s.HookGraph.AddHook(receiver.identID, sender.identID, -10)
 							}
 						} else {
 							// Phase 07.4: Silent Hooks
@@ -232,7 +254,7 @@ func (s *GossipDistributionSystem) Update(world *ecs.World) {
 							// 25% chance of a "Silent Hook" occurring when there's an overlap but mismatched languages.
 							if engine.GetRandomFloat32() < 0.25 {
 								if s.HookGraph != nil {
-									s.HookGraph.AddHook(sender.ident.ID, receiver.ident.ID, 1)
+									s.HookGraph.AddHook(sender.identID, receiver.identID, 1)
 								}
 							}
 						}

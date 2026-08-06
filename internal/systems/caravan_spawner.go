@@ -9,11 +9,13 @@ import (
 // Spawns CaravanEntity if a VillageEntity processes extreme local disparity signals
 // mapped via MarketComponent pricing boundaries.
 
+// cache values + the entity handle, not component pointers — GC corruption
+// class, see banditry.go. Storage is written through, so it is re-fetched via
+// world.Get at use time; position is read-only and copied by value.
 type villageData struct {
-	entity  ecs.Entity
-	storage *components.StorageComponent
-	pos     *components.Position
-	market  *components.MarketComponent
+	entity ecs.Entity
+	x      float32
+	y      float32
 }
 
 type CaravanSpawnerSystem struct {
@@ -38,19 +40,18 @@ func (s *CaravanSpawnerSystem) Update(world *ecs.World) {
 	s.toSpawn = s.toSpawn[:0] // Clear slice to reuse capacity
 
 	for query.Next() {
-		storage := (*components.StorageComponent)(query.Get(storageID))
 		market := (*components.MarketComponent)(query.Get(marketID))
 		pos := (*components.Position)(query.Get(posID))
 
 		// Phase 13.1: Market logic bounds trigger
 		// Float thresholds dictating extreme famine or need
 		if market.FoodPrice > 10.0 {
-			// Deep copy the pointers logic out of the Next loop
+			// Copy the values out of the Next loop; storage is re-fetched by
+			// entity handle at spawn time to deduct Wood
 			s.toSpawn = append(s.toSpawn, villageData{
-				entity:  query.Entity(),
-				storage: storage, // We copy the pointer so we can deduct Wood later
-				pos:     pos,     // Pointer to copy values later
-				market:  market,
+				entity: query.Entity(),
+				x:      pos.X,
+				y:      pos.Y,
 			})
 		}
 	}
@@ -67,11 +68,18 @@ func (s *CaravanSpawnerSystem) Update(world *ecs.World) {
 	pathID := ecs.ComponentID[components.Path](world)
 
 	for _, v := range s.toSpawn {
+		if !world.Alive(v.entity) {
+			continue
+		}
+		// Re-fetch after any prior structural change (NewEntity below) — cached
+		// component pointers do not survive archetype moves.
+		storage := (*components.StorageComponent)(world.Get(v.entity, storageID))
+
 		// Calculate potential payload limit
 		var woodToTransfer uint32 = 0
-		if v.storage.Wood > 50 {
+		if storage.Wood > 50 {
 			woodToTransfer = 50
-			v.storage.Wood -= 50
+			storage.Wood -= 50
 		}
 
 		// Instantiate a CaravanEntity
@@ -79,7 +87,8 @@ func (s *CaravanSpawnerSystem) Update(world *ecs.World) {
 
 		// Set Position (copying from Village)
 		newPos := (*components.Position)(world.Get(caravanEntity, posID))
-		*newPos = *v.pos
+		newPos.X = v.x
+		newPos.Y = v.y
 
 		// Set Velocity (initialize)
 		newVel := (*components.Velocity)(world.Get(caravanEntity, velID))

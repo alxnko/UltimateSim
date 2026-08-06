@@ -43,8 +43,10 @@ func NewAdministrativeFractureSystem(world *ecs.World) *AdministrativeFractureSy
 	}
 }
 
+// capitalData caches values, not component pointers — GC corruption class, see banditry.go.
 type capitalData struct {
-	pos        *components.Position
+	x          float32
+	y          float32
 	corruption uint32
 }
 
@@ -72,7 +74,8 @@ func (s *AdministrativeFractureSystem) Update(world *ecs.World) {
 		}
 
 		capitalDataMap[affil.CountryID] = capitalData{
-			pos:        pos,
+			x:          pos.X,
+			y:          pos.Y,
 			corruption: corruption,
 		}
 	}
@@ -90,8 +93,8 @@ func (s *AdministrativeFractureSystem) Update(world *ecs.World) {
 				pos := (*components.Position)(villageQuery.Get(s.posID))
 
 				// Calculate distance squared to capital
-				dx := pos.X - capData.pos.X
-				dy := pos.Y - capData.pos.Y
+				dx := pos.X - capData.x
+				dy := pos.Y - capData.y
 				distSq := dx*dx + dy*dy
 
 				// Phase 22.1: The Corruption Engine

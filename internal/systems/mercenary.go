@@ -13,13 +13,13 @@ import (
 // hire desperate/unemployed NPCs in close physical proximity to execute the hit.
 // The mercenary absorbs the negative hook natively, triggering BloodFeudSystem.
 
+// cache values, not component pointers — GC corruption class, see banditry.go
+// Needs/JobComponent (written) are re-fetched via the entity handle at use time.
 type wealthyClientData struct {
 	Entity ecs.Entity
 	ID     uint64
 	X      float32
 	Y      float32
-	Wealth float32
-	Needs  *components.Needs
 }
 
 type desperateMercData struct {
@@ -27,7 +27,6 @@ type desperateMercData struct {
 	ID     uint64
 	X      float32
 	Y      float32
-	Job    *components.JobComponent
 }
 
 type MercenarySystem struct {
@@ -86,8 +85,6 @@ func (s *MercenarySystem) Update(world *ecs.World) {
 				ID:     ident.ID,
 				X:      pos.X,
 				Y:      pos.Y,
-				Wealth: needs.Wealth,
-				Needs:  needs,
 			})
 		}
 	}
@@ -117,7 +114,6 @@ func (s *MercenarySystem) Update(world *ecs.World) {
 					ID:     ident.ID,
 					X:      pos.X,
 					Y:      pos.Y,
-					Job:    job,
 				})
 			}
 		}
@@ -137,9 +133,15 @@ func (s *MercenarySystem) Update(world *ecs.World) {
 
 	// 3. Match Clients to Mercenaries based on severe negative hooks
 	for _, client := range clients {
+		// Re-fetch via entity handle at use time (cached pointers do not survive archetype moves)
+		if !world.Alive(client.Entity) {
+			continue
+		}
+		clientNeeds := (*components.Needs)(world.Get(client.Entity, s.needsID))
+
 		// A client will only hire a hitman if they have wealth to spare.
 		// Bribe cost is 200 wealth.
-		if client.Needs.Wealth < 200.0 {
+		if clientNeeds.Wealth < 200.0 {
 			continue
 		}
 
@@ -185,11 +187,15 @@ func (s *MercenarySystem) Update(world *ecs.World) {
 		if bestMerc != nil {
 			// Contract Executed. Transfer Wealth.
 			bribe := float32(200.0)
-			client.Needs.Wealth -= bribe
+			clientNeeds.Wealth -= bribe
 
 			// Update the merc's job natively
-			bestMerc.Job.JobID = components.JobMercenary
-			bestMerc.Job.EmployerID = client.ID
+			// Re-fetch via entity handle at use time (cached pointers do not survive archetype moves)
+			if world.Alive(bestMerc.Entity) {
+				mercJob := (*components.JobComponent)(world.Get(bestMerc.Entity, s.jobID))
+				mercJob.JobID = components.JobMercenary
+				mercJob.EmployerID = client.ID
+			}
 
 			hiredMercs[bestMerc.ID] = true
 

@@ -11,9 +11,13 @@ import (
 // CraftingSystem requires JobArtisan NPCs to physically walk to a WorkbenchComponent
 // to consume Iron and convert it into market Wealth for their employer.
 
-type employerCraftingData struct {
-	Treasury *components.TreasuryComponent
-	Storage  *components.StorageComponent
+// cache values, not component pointers — GC corruption class, see banditry.go.
+// Employers are cached as entity handles (Treasury/Storage are written through,
+// so they are re-fetched via world.Get at use time); workbenches are read-only
+// so their coordinates are copied by value.
+type workbenchData struct {
+	X float32
+	Y float32
 }
 
 type CraftingSystem struct {
@@ -25,8 +29,8 @@ type CraftingSystem struct {
 	workbenchFilter ecs.Filter
 	artisanFilter   ecs.Filter
 
-	employerCache  map[uint64]*employerCraftingData
-	workbenchCache map[uint64][]*components.WorkbenchComponent
+	employerCache  map[uint64]ecs.Entity
+	workbenchCache map[uint64][]workbenchData
 }
 
 func NewCraftingSystem(world *ecs.World, pathQueue *engine.PathRequestQueue) *CraftingSystem {
@@ -57,8 +61,8 @@ func NewCraftingSystem(world *ecs.World, pathQueue *engine.PathRequestQueue) *Cr
 		businessFilter:  businessMask,
 		workbenchFilter: workbenchMask,
 		artisanFilter:   artisanMask,
-		employerCache:   make(map[uint64]*employerCraftingData),
-		workbenchCache:  make(map[uint64][]*components.WorkbenchComponent),
+		employerCache:   make(map[uint64]ecs.Entity),
+		workbenchCache:  make(map[uint64][]workbenchData),
 	}
 }
 
@@ -73,42 +77,28 @@ func (s *CraftingSystem) updateCaches() {
 		delete(s.workbenchCache, k)
 	}
 
-	tID := ecs.ComponentID[components.TreasuryComponent](s.world)
-	sID := ecs.ComponentID[components.StorageComponent](s.world)
 	idID := ecs.ComponentID[components.Identity](s.world)
 
-	// Cache Villages
+	// Cache Villages (entity handles only; components re-fetched at use time)
 	qVill := s.world.Query(s.villageFilter)
 	for qVill.Next() {
 		id := (*components.Identity)(qVill.Get(idID))
-		treas := (*components.TreasuryComponent)(qVill.Get(tID))
-		stor := (*components.StorageComponent)(qVill.Get(sID))
-
-		s.employerCache[id.ID] = &employerCraftingData{
-			Treasury: treas,
-			Storage:  stor,
-		}
+		s.employerCache[id.ID] = qVill.Entity()
 	}
 
 	// Cache Businesses
 	qBus := s.world.Query(s.businessFilter)
 	for qBus.Next() {
 		id := (*components.Identity)(qBus.Get(idID))
-		treas := (*components.TreasuryComponent)(qBus.Get(tID))
-		stor := (*components.StorageComponent)(qBus.Get(sID))
-
-		s.employerCache[id.ID] = &employerCraftingData{
-			Treasury: treas,
-			Storage:  stor,
-		}
+		s.employerCache[id.ID] = qBus.Entity()
 	}
 
-	// Cache Workbenches
+	// Cache Workbenches (read-only coordinates copied by value)
 	wbID := ecs.ComponentID[components.WorkbenchComponent](s.world)
 	qWb := s.world.Query(s.workbenchFilter)
 	for qWb.Next() {
 		wb := (*components.WorkbenchComponent)(qWb.Get(wbID))
-		s.workbenchCache[wb.EmployerID] = append(s.workbenchCache[wb.EmployerID], wb)
+		s.workbenchCache[wb.EmployerID] = append(s.workbenchCache[wb.EmployerID], workbenchData{X: wb.X, Y: wb.Y})
 	}
 }
 
@@ -117,6 +107,8 @@ func (s *CraftingSystem) processArtisans() {
 	pID := ecs.ComponentID[components.Position](s.world)
 	identID := ecs.ComponentID[components.Identity](s.world)
 	pathID := ecs.ComponentID[components.Path](s.world)
+	tID := ecs.ComponentID[components.TreasuryComponent](s.world)
+	sID := ecs.ComponentID[components.StorageComponent](s.world)
 
 	qArt := s.world.Query(s.artisanFilter)
 	for qArt.Next() {
@@ -128,7 +120,7 @@ func (s *CraftingSystem) processArtisans() {
 		pos := (*components.Position)(qArt.Get(pID))
 		ident := (*components.Identity)(qArt.Get(identID))
 
-		employer, eExists := s.employerCache[job.EmployerID]
+		employerEnt, eExists := s.employerCache[job.EmployerID]
 		if !eExists {
 			continue
 		}
@@ -139,10 +131,11 @@ func (s *CraftingSystem) processArtisans() {
 		}
 
 		// Find closest workbench
-		var bestWb *components.WorkbenchComponent
+		var bestWb *workbenchData
 		var bestDist float32 = 9999999.0
 
-		for _, wb := range workbenches {
+		for i := range workbenches {
+			wb := &workbenches[i]
 			dx := pos.X - wb.X
 			dy := pos.Y - wb.Y
 			distSq := dx*dx + dy*dy
@@ -186,10 +179,16 @@ func (s *CraftingSystem) processArtisans() {
 					}
 				}
 			} else {
-				// At workbench, craft!
-				if employer.Storage.Iron > 0 {
-					employer.Storage.Iron--
-					employer.Treasury.Wealth += 50.0 // Value added per craft
+				// At workbench, craft! Re-fetch employer components by entity
+				// handle — cache values, not component pointers (GC corruption
+				// class, see banditry.go).
+				if s.world.Alive(employerEnt) {
+					storage := (*components.StorageComponent)(s.world.Get(employerEnt, sID))
+					if storage.Iron > 0 {
+						storage.Iron--
+						treasury := (*components.TreasuryComponent)(s.world.Get(employerEnt, tID))
+						treasury.Wealth += 50.0 // Value added per craft
+					}
 				}
 			}
 		}

@@ -48,8 +48,10 @@ func (s *PenalLaborSystem) Update(world *ecs.World) {
 	adminID := ecs.ComponentID[components.AdministrationMarker](world)
 
 	cityQuery := world.Query(s.cityFilter)
+	// cache values + the entity handle, not component pointers — GC corruption
+	// class, see banditry.go. Storage is re-fetched via world.Get at use time.
 	type cityData struct {
-		Storage *components.StorageComponent
+		Entity  ecs.Entity
 		RulerID uint64
 	}
 
@@ -57,7 +59,6 @@ func (s *PenalLaborSystem) Update(world *ecs.World) {
 
 	for cityQuery.Next() {
 		aff := (*components.Affiliation)(cityQuery.Get(cAffID))
-		stor := (*components.StorageComponent)(cityQuery.Get(cStorID))
 
 		// Find Ruler ID (either the Capital's own ID or an emergent AdministrationMarker)
 		var rulerID uint64 = 0
@@ -67,7 +68,7 @@ func (s *PenalLaborSystem) Update(world *ecs.World) {
 		}
 
 		cities[aff.CityID] = cityData{
-			Storage: stor,
+			Entity:  cityQuery.Entity(),
 			RulerID: rulerID,
 		}
 	}
@@ -119,7 +120,12 @@ func (s *PenalLaborSystem) Update(world *ecs.World) {
 
 			// Generate state resources (Free Labor driving down market wages)
 			if cd, exists := cities[penal.StateCityID]; exists {
-				cd.Storage.Stone += 1.0 // Forced quarrying
+				// Re-fetch storage by entity handle — cache values, not
+				// component pointers (GC corruption class, see banditry.go).
+				if world.Alive(cd.Entity) {
+					stor := (*components.StorageComponent)(world.Get(cd.Entity, cStorID))
+					stor.Stone += 1.0 // Forced quarrying
+				}
 
 				// Record event for social backlash
 				if s.tickCounter%10 == 0 && cd.RulerID != 0 {

@@ -12,16 +12,20 @@ import (
 // JusticeSystem evaluates MemoryEvents and assigns CrimeMarkers to entities committing illegal actions within a Jurisdiction bounds.
 // It also directs Guards towards entities tagged with a CrimeMarker to enforce punishments.
 
+// adminJurisdictionData caches values, not component pointers — GC corruption class, see banditry.go.
+// Writes (Treasury fines) re-fetch through the Entity handle at use time.
 type adminJurisdictionData struct {
-	Entity        ecs.Entity
-	CityID        uint32
-	X             float32
-	Y             float32
-	RadiusSquared float32
-	Laws          uint32
-	Treasury      *components.TreasuryComponent
-	Scapegoat     *components.ScapegoatComponent  // Pre-cached for Phase 18.3 Fines
-	Quarantine    *components.QuarantineComponent // Phase 37.1
+	Entity                  ecs.Entity
+	CityID                  uint32
+	X                       float32
+	Y                       float32
+	RadiusSquared           float32
+	Laws                    uint32
+	HasTreasury             bool   // Pre-cached for Phase 18.3 Fines
+	ScapegoatActive         bool   // Phase 36.1
+	ScapegoatTargetEsoteric bool   // Phase 49
+	ScapegoatTargetBeliefID uint32 // Phase 36.1
+	QuarantineActive        bool   // Phase 37.1
 }
 
 type JusticeSystem struct {
@@ -75,33 +79,37 @@ func (s *JusticeSystem) Update(world *ecs.World) {
 		pos := (*components.Position)(jurQuery.Get(posID))
 		aff := (*components.Affiliation)(jurQuery.Get(affID))
 
-		var treasury *components.TreasuryComponent
-		if world.Has(jurQuery.Entity(), treasuryID) {
-			treasury = (*components.TreasuryComponent)(jurQuery.Get(treasuryID))
-		}
+		hasTreasury := world.Has(jurQuery.Entity(), treasuryID)
 
 		// Phase 36.1: The Scapegoat Engine
-		var scapegoat *components.ScapegoatComponent
+		var scapegoatActive, scapegoatTargetEsoteric bool
+		var scapegoatTargetBeliefID uint32
 		if world.Has(jurQuery.Entity(), scapegoatID) {
-			scapegoat = (*components.ScapegoatComponent)(world.Get(jurQuery.Entity(), scapegoatID))
+			scapegoat := (*components.ScapegoatComponent)(world.Get(jurQuery.Entity(), scapegoatID))
+			scapegoatActive = scapegoat.Active
+			scapegoatTargetEsoteric = scapegoat.TargetEsoteric
+			scapegoatTargetBeliefID = scapegoat.TargetBeliefID
 		}
 
 		// Phase 37.1: The Quarantine Engine
-		var quarantine *components.QuarantineComponent
+		var quarantineActive bool
 		if world.Has(jurQuery.Entity(), quarID) {
-			quarantine = (*components.QuarantineComponent)(world.Get(jurQuery.Entity(), quarID))
+			quarantine := (*components.QuarantineComponent)(world.Get(jurQuery.Entity(), quarID))
+			quarantineActive = quarantine.Active
 		}
 
 		s.jurisdictions = append(s.jurisdictions, adminJurisdictionData{
-			Entity:        jurQuery.Entity(),
-			CityID:        aff.CityID,
-			X:             pos.X,
-			Y:             pos.Y,
-			RadiusSquared: jur.RadiusSquared,
-			Laws:          jur.IllegalActionIDs,
-			Treasury:      treasury,
-			Scapegoat:     scapegoat,
-			Quarantine:    quarantine,
+			Entity:                  jurQuery.Entity(),
+			CityID:                  aff.CityID,
+			X:                       pos.X,
+			Y:                       pos.Y,
+			RadiusSquared:           jur.RadiusSquared,
+			Laws:                    jur.IllegalActionIDs,
+			HasTreasury:             hasTreasury,
+			ScapegoatActive:         scapegoatActive,
+			ScapegoatTargetEsoteric: scapegoatTargetEsoteric,
+			ScapegoatTargetBeliefID: scapegoatTargetBeliefID,
+			QuarantineActive:        quarantineActive,
 		})
 	}
 
@@ -164,7 +172,7 @@ func (s *JusticeSystem) Update(world *ecs.World) {
 			}
 
 			// Phase 49: The Witch Hunt Engine
-			if !isCriminal && activeJur.Scapegoat != nil && activeJur.Scapegoat.TargetEsoteric {
+			if !isCriminal && activeJur.ScapegoatTargetEsoteric {
 				isEsoteric := false
 				if world.Has(entity, idID) {
 					ident := (*components.Identity)(world.Get(entity, idID))
@@ -194,11 +202,11 @@ func (s *JusticeSystem) Update(world *ecs.World) {
 
 			// Phase 36.1: The Scapegoat & Witch Hunt Engine
 			// The state actively criminalizes minorities during crises.
-			if !isCriminal && activeJur.Scapegoat != nil && activeJur.Scapegoat.Active {
+			if !isCriminal && activeJur.ScapegoatActive {
 				if world.Has(entity, beliefID) {
 					bel := (*components.BeliefComponent)(world.Get(entity, beliefID))
 					for bIdx := 0; bIdx < len(bel.Beliefs); bIdx++ {
-						if bel.Beliefs[bIdx].BeliefID == activeJur.Scapegoat.TargetBeliefID {
+						if bel.Beliefs[bIdx].BeliefID == activeJur.ScapegoatTargetBeliefID {
 							isCriminal = true
 							break
 						}
@@ -227,7 +235,7 @@ func (s *JusticeSystem) Update(world *ecs.World) {
 
 			// Phase 37.1: The Quarantine Engine
 			// If Quarantine is active, any attempt to move across the border is a crime.
-			if !isCriminal && activeJur.Quarantine != nil && activeJur.Quarantine.Active {
+			if !isCriminal && activeJur.QuarantineActive {
 				// Need to check if the entity has a Path and is moving across the border
 				if world.Has(entity, pathID) {
 					path := (*components.Path)(world.Get(entity, pathID))
@@ -429,11 +437,17 @@ func (s *JusticeSystem) Update(world *ecs.World) {
 
 						// Phase 18.3: Sentencing & Prisons (Fines transfer wealth to the enforcing CityID)
 						if collectedFine > 0.0 && gAff != nil {
-							// Find the pre-cached TreasuryComponent of the Guard's City
+							// Re-fetch the TreasuryComponent at use time: structural changes
+							// (CrimeMarker adds) happened since caching, so entity handles are
+							// safe but component pointers are not — see banditry.go.
 							for jIdx := 0; jIdx < len(s.jurisdictions); jIdx++ {
 								if s.jurisdictions[jIdx].CityID == gAff.CityID {
-									if s.jurisdictions[jIdx].Treasury != nil {
-										s.jurisdictions[jIdx].Treasury.Wealth += collectedFine
+									if s.jurisdictions[jIdx].HasTreasury {
+										jurEnt := s.jurisdictions[jIdx].Entity
+										if world.Alive(jurEnt) && world.Has(jurEnt, treasuryID) {
+											treasury := (*components.TreasuryComponent)(world.Get(jurEnt, treasuryID))
+											treasury.Wealth += collectedFine
+										}
 									}
 									break
 								}

@@ -39,27 +39,36 @@ func (s *PreacherSystem) Update(world *ecs.World) {
 	filter := ecs.All(s.posID, s.beliefID).Without(s.ruinID)
 	query := world.Query(&filter)
 
+	// cache values, not component pointers — GC corruption class, see banditry.go
+	// BeliefComponent (written) is re-fetched via the entity handle at use time.
 	type nodeData struct {
 		entity ecs.Entity
-		pos    *components.Position
-		job    *components.JobComponent // Optional
-		belief *components.BeliefComponent
+		x      float32
+		y      float32
+		hasJob bool // Optional
+		jobID  uint8
 	}
 
 	var nodes []nodeData
 
 	// O(N) extraction to flat array
 	for query.Next() {
-		var job *components.JobComponent
+		hasJob := false
+		var jobID uint8
 		if query.Has(s.jobID) {
-			job = (*components.JobComponent)(query.Get(s.jobID))
+			job := (*components.JobComponent)(query.Get(s.jobID))
+			hasJob = true
+			jobID = job.JobID
 		}
+
+		pos := (*components.Position)(query.Get(s.posID))
 
 		nodes = append(nodes, nodeData{
 			entity: query.Entity(),
-			pos:    (*components.Position)(query.Get(s.posID)),
-			job:    job,
-			belief: (*components.BeliefComponent)(query.Get(s.beliefID)),
+			x:      pos.X,
+			y:      pos.Y,
+			hasJob: hasJob,
+			jobID:  jobID,
 		})
 	}
 
@@ -67,11 +76,17 @@ func (s *PreacherSystem) Update(world *ecs.World) {
 	for i := 0; i < len(nodes); i++ {
 		preacher := nodes[i]
 
-		if preacher.job == nil || preacher.job.JobID != components.JobPreacher {
+		if !preacher.hasJob || preacher.jobID != components.JobPreacher {
 			continue
 		}
 
-		if len(preacher.belief.Beliefs) == 0 {
+		// Re-fetch via entity handle at use time (cached pointers do not survive archetype moves)
+		if !world.Alive(preacher.entity) {
+			continue
+		}
+		preacherBelief := (*components.BeliefComponent)(world.Get(preacher.entity, s.beliefID))
+
+		if len(preacherBelief.Beliefs) == 0 {
 			continue
 		}
 
@@ -79,7 +94,7 @@ func (s *PreacherSystem) Update(world *ecs.World) {
 		var strongestBeliefID uint32
 		var maxWeight int32 = -1
 
-		for _, b := range preacher.belief.Beliefs {
+		for _, b := range preacherBelief.Beliefs {
 			if b.Weight > maxWeight {
 				maxWeight = b.Weight
 				strongestBeliefID = b.BeliefID
@@ -99,27 +114,33 @@ func (s *PreacherSystem) Update(world *ecs.World) {
 			target := nodes[j]
 
 			// Preachers target over a vast region: radius 20.0 = distSq 400.0
-			dx := preacher.pos.X - target.pos.X
-			dy := preacher.pos.Y - target.pos.Y
+			dx := preacher.x - target.x
+			dy := preacher.y - target.y
 			distSq := dx*dx + dy*dy
 
 			if distSq < 400.0 {
+				// Re-fetch via entity handle at use time (cached pointers do not survive archetype moves)
+				if !world.Alive(target.entity) {
+					continue
+				}
+				targetBelief := (*components.BeliefComponent)(world.Get(target.entity, s.beliefID))
+
 				found := false
 				// Suppress competing beliefs and elevate the Preacher's strongest belief
-				for k := range target.belief.Beliefs {
-					if target.belief.Beliefs[k].BeliefID == strongestBeliefID {
-						target.belief.Beliefs[k].Weight += 5
+				for k := range targetBelief.Beliefs {
+					if targetBelief.Beliefs[k].BeliefID == strongestBeliefID {
+						targetBelief.Beliefs[k].Weight += 5
 						found = true
 					} else {
 						// Suppress competing belief
-						if target.belief.Beliefs[k].Weight > 0 {
-							target.belief.Beliefs[k].Weight -= 1
+						if targetBelief.Beliefs[k].Weight > 0 {
+							targetBelief.Beliefs[k].Weight -= 1
 						}
 					}
 				}
 
 				if !found {
-					target.belief.Beliefs = append(target.belief.Beliefs, components.Belief{
+					targetBelief.Beliefs = append(targetBelief.Beliefs, components.Belief{
 						BeliefID: strongestBeliefID,
 						Weight:   5,
 					})

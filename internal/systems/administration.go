@@ -27,11 +27,16 @@ type AdministrationSystem struct {
 	cities []adminCityData
 }
 
+// adminCityData caches values, not component pointers — GC corruption class, see banditry.go.
 type adminCityData struct {
-	id     uint64
-	pos    *components.Position
-	market *components.MarketComponent
-	affil  *components.Affiliation
+	id         uint64
+	x          float32
+	y          float32
+	countryID  uint32
+	foodPrice  float32
+	woodPrice  float32
+	stonePrice float32
+	ironPrice  float32
 }
 
 // NewAdministrationSystem initializes the administrative cost-benefit analysis.
@@ -71,10 +76,14 @@ func (s *AdministrationSystem) Update(world *ecs.World) {
 		affil := (*components.Affiliation)(query.Get(affilID))
 
 		s.cities = append(s.cities, adminCityData{
-			id:     ident.ID,
-			pos:    pos,
-			market: market,
-			affil:  affil,
+			id:         ident.ID,
+			x:          pos.X,
+			y:          pos.Y,
+			countryID:  affil.CountryID,
+			foodPrice:  market.FoodPrice,
+			woodPrice:  market.WoodPrice,
+			stonePrice: market.StonePrice,
+			ironPrice:  market.IronPrice,
 		})
 	}
 
@@ -86,13 +95,13 @@ func (s *AdministrationSystem) Update(world *ecs.World) {
 			cityB := s.cities[j]
 
 			// If already in same Country/Union, no need for Diplomatic Hook
-			if cityA.affil.CountryID != 0 && cityA.affil.CountryID == cityB.affil.CountryID {
+			if cityA.countryID != 0 && cityA.countryID == cityB.countryID {
 				continue
 			}
 
 			// Distance Check (Integer math to preserve determinism & DOD speed)
-			dx := cityA.pos.X - cityB.pos.X
-			dy := cityA.pos.Y - cityB.pos.Y
+			dx := cityA.x - cityB.x
+			dy := cityA.y - cityB.y
 			distSq := dx*dx + dy*dy
 
 			if distSq > MaxDiplomaticRange*MaxDiplomaticRange {
@@ -100,8 +109,8 @@ func (s *AdministrationSystem) Update(world *ecs.World) {
 			}
 
 			// Calculate Total Price Volume/Disparity
-			sumA := cityA.market.FoodPrice + cityA.market.WoodPrice + cityA.market.StonePrice + cityA.market.IronPrice
-			sumB := cityB.market.FoodPrice + cityB.market.WoodPrice + cityB.market.StonePrice + cityB.market.IronPrice
+			sumA := cityA.foodPrice + cityA.woodPrice + cityA.stonePrice + cityA.ironPrice
+			sumB := cityB.foodPrice + cityB.woodPrice + cityB.stonePrice + cityB.ironPrice
 
 			// Prevent divide by zero (baseline should never technically be 0, but DOD safety)
 			if sumA < 1.0 {

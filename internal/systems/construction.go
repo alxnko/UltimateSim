@@ -14,14 +14,14 @@ import (
 // and progress the site. When complete, it becomes a StructureComponent and increases
 // the village's PeakPopulation, directly tying infrastructure to demographics.
 
+// cache values + the entity handle, not component pointers — GC corruption
+// class, see banditry.go. Treasury/Storage/Demographics are re-fetched via
+// world.Get at use time (they are written through after structural changes).
 type villageConstructionData struct {
-	Treasury *components.TreasuryComponent
-	Storage  *components.StorageComponent
-	Demo     *components.DemographicsComponent
-	X        float32
-	Y        float32
-	Entity   ecs.Entity
-	CityID   uint32
+	X      float32
+	Y      float32
+	Entity ecs.Entity
+	CityID uint32
 }
 
 type ConstructionSystem struct {
@@ -84,28 +84,19 @@ func (s *ConstructionSystem) Update(world *ecs.World) {
 func (s *ConstructionSystem) updateVillageCache() {
 	clear(s.villageCache)
 
-	tID := ecs.ComponentID[components.TreasuryComponent](s.world)
-	sID := ecs.ComponentID[components.StorageComponent](s.world)
-	dID := ecs.ComponentID[components.DemographicsComponent](s.world)
 	pID := ecs.ComponentID[components.Position](s.world)
 	aID := ecs.ComponentID[components.Affiliation](s.world)
 
 	q := s.world.Query(s.villageFilter)
 	for q.Next() {
 		aff := (*components.Affiliation)(q.Get(aID))
-		treas := (*components.TreasuryComponent)(q.Get(tID))
-		stor := (*components.StorageComponent)(q.Get(sID))
-		demo := (*components.DemographicsComponent)(q.Get(dID))
 		pos := (*components.Position)(q.Get(pID))
 
 		s.villageCache[aff.CityID] = &villageConstructionData{
-			Treasury: treas,
-			Storage:  stor,
-			Demo:     demo,
-			X:        pos.X,
-			Y:        pos.Y,
-			Entity:   q.Entity(),
-			CityID:   aff.CityID,
+			X:      pos.X,
+			Y:      pos.Y,
+			Entity: q.Entity(),
+			CityID: aff.CityID,
 		}
 	}
 }
@@ -114,11 +105,18 @@ func (s *ConstructionSystem) spawnSites() {
 	siteCompID := ecs.ComponentID[components.ConstructionSiteComponent](s.world)
 	posID := ecs.ComponentID[components.Position](s.world)
 	affID := ecs.ComponentID[components.Affiliation](s.world)
+	tID := ecs.ComponentID[components.TreasuryComponent](s.world)
 
 	for _, vData := range s.villageCache {
+		if !s.world.Alive(vData.Entity) {
+			continue
+		}
+		// Re-fetch after any prior structural change (NewEntity below) — cached
+		// component pointers do not survive archetype moves.
+		treasury := (*components.TreasuryComponent)(s.world.Get(vData.Entity, tID))
 		// If village is wealthy enough, start a construction site
-		if vData.Treasury.Wealth > 500 {
-			vData.Treasury.Wealth -= 500
+		if treasury.Wealth > 500 {
+			treasury.Wealth -= 500
 
 			ent := s.world.NewEntity(siteCompID, posID, affID)
 
@@ -146,11 +144,14 @@ func (s *ConstructionSystem) processBuilders() {
 	jID := ecs.ComponentID[components.JobComponent](s.world)
 	identID := ecs.ComponentID[components.Identity](s.world)
 	pathID := ecs.ComponentID[components.Path](s.world)
+	sID := ecs.ComponentID[components.StorageComponent](s.world)
+	dID := ecs.ComponentID[components.DemographicsComponent](s.world)
 
-	// Map of unclaimed sites
+	// Map of unclaimed sites — cache values, not component pointers (GC
+	// corruption class, see banditry.go); the site component is re-fetched
+	// via world.Get at use time.
 	type SiteData struct {
 		Entity ecs.Entity
-		Site   *components.ConstructionSiteComponent
 		X      float32
 		Y      float32
 	}
@@ -180,7 +181,6 @@ func (s *ConstructionSystem) processBuilders() {
 
 		citySites[aff.CityID] = append(citySites[aff.CityID], SiteData{
 			Entity: qSite.Entity(),
-			Site:   site,
 			X:      pos.X,
 			Y:      pos.Y,
 		})
@@ -200,10 +200,15 @@ func (s *ConstructionSystem) processBuilders() {
 
 		var mySite *SiteData
 
-		// Find site for this builder
+		// Find site for this builder (site component re-fetched by entity
+		// handle — cached pointers do not survive structural changes)
 		sites := citySites[aff.CityID]
 		for i := range sites {
-			if sites[i].Site.BuilderID == ident.ID {
+			if !s.world.Alive(sites[i].Entity) {
+				continue
+			}
+			site := (*components.ConstructionSiteComponent)(s.world.Get(sites[i].Entity, siteID))
+			if site.BuilderID == ident.ID {
 				mySite = &sites[i]
 				break
 			}
@@ -212,8 +217,12 @@ func (s *ConstructionSystem) processBuilders() {
 		// Claim a new site if we don't have one
 		if mySite == nil {
 			for i := range sites {
-				if sites[i].Site.BuilderID == 0 {
-					sites[i].Site.BuilderID = ident.ID
+				if !s.world.Alive(sites[i].Entity) {
+					continue
+				}
+				site := (*components.ConstructionSiteComponent)(s.world.Get(sites[i].Entity, siteID))
+				if site.BuilderID == 0 {
+					site.BuilderID = ident.ID
 					mySite = &sites[i]
 					break
 				}
@@ -259,20 +268,25 @@ func (s *ConstructionSystem) processBuilders() {
 			} else {
 				// At site, build!
 				vData, vExists := s.villageCache[aff.CityID]
-				if !vExists {
+				if !vExists || !s.world.Alive(vData.Entity) || !s.world.Alive(mySite.Entity) {
 					continue
 				}
 
+				// Re-fetch by entity handle — cache values, not component
+				// pointers (GC corruption class, see banditry.go).
+				storage := (*components.StorageComponent)(s.world.Get(vData.Entity, sID))
+				site := (*components.ConstructionSiteComponent)(s.world.Get(mySite.Entity, siteID))
+
 				// Drain resources
-				if mySite.Site.WoodGathered < mySite.Site.WoodRequired && vData.Storage.Wood > 0 {
-					vData.Storage.Wood--
-					mySite.Site.WoodGathered++
-				} else if mySite.Site.StoneGathered < mySite.Site.StoneRequired && vData.Storage.Stone > 0 {
-					vData.Storage.Stone--
-					mySite.Site.StoneGathered++
-				} else if mySite.Site.WoodGathered >= mySite.Site.WoodRequired && mySite.Site.StoneGathered >= mySite.Site.StoneRequired {
+				if site.WoodGathered < site.WoodRequired && storage.Wood > 0 {
+					storage.Wood--
+					site.WoodGathered++
+				} else if site.StoneGathered < site.StoneRequired && storage.Stone > 0 {
+					storage.Stone--
+					site.StoneGathered++
+				} else if site.WoodGathered >= site.WoodRequired && site.StoneGathered >= site.StoneRequired {
 					// Hammer progress
-					mySite.Site.Progress++
+					site.Progress++
 				}
 			}
 		}
@@ -312,8 +326,11 @@ func (s *ConstructionSystem) processBuilders() {
 
 		if popBonus > 0 && s.world.Has(ent, aID) {
 			aff := (*components.Affiliation)(s.world.Get(ent, aID))
-			if vData, exists := s.villageCache[aff.CityID]; exists {
-				vData.Demo.PeakPopulation += popBonus
+			if vData, exists := s.villageCache[aff.CityID]; exists && s.world.Alive(vData.Entity) {
+				// Re-fetch AFTER the structural changes above (Remove/Add/
+				// NewEntity) — cached pointers do not survive archetype moves.
+				demo := (*components.DemographicsComponent)(s.world.Get(vData.Entity, dID))
+				demo.PeakPopulation += popBonus
 			}
 		}
 	}

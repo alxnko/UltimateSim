@@ -89,10 +89,13 @@ func CountryTaxMultiplier(world *ecs.World, countryID uint32) float32 {
 	return float32(GetTaxRate(world, countryID)) / float32(DefaultTaxRatePercent)
 }
 
-// villageTaxSnap captures a village treasury right before a base collection
-// so the wrapper can measure exactly what the base system took.
+// villageTaxSnap captures a village treasury level right before a base
+// collection so the wrapper can measure exactly what the base system took.
+// It stores the entity handle, not a component pointer, and re-fetches the
+// treasury at use time (cache values, not component pointers — GC corruption
+// class, see banditry.go).
 type villageTaxSnap struct {
-	treasury  *components.TreasuryComponent
+	village   ecs.Entity
 	pre       float32
 	countryID uint32
 }
@@ -138,15 +141,15 @@ func (s *TaxPolicySystem) Update(world *ecs.World) {
 	taxID := ecs.ComponentID[components.TaxPolicyComponent](world)
 
 	// 1. Snapshot every village the base system may tax (same query shape).
-	// Held pointers stay valid across base.Update: TaxationSystem performs no
-	// structural mutations (no Add/Remove/RemoveEntity).
+	// Entity handles survive base.Update; treasuries are re-fetched at use
+	// time so no component pointer is retained across it.
 	s.snaps = s.snaps[:0]
 	villageQuery := world.Query(filter.All(villageID, affilID, marketID, treasuryID, loyaltyID))
 	for villageQuery.Next() {
 		affil := (*components.Affiliation)(villageQuery.Get(affilID))
 		treasury := (*components.TreasuryComponent)(villageQuery.Get(treasuryID))
 		s.snaps = append(s.snaps, villageTaxSnap{
-			treasury:  treasury,
+			village:   villageQuery.Entity(),
 			pre:       treasury.Wealth,
 			countryID: affil.CountryID,
 		})
@@ -155,25 +158,26 @@ func (s *TaxPolicySystem) Update(world *ecs.World) {
 	// 2. Run the baseline collection.
 	s.base.Update(world)
 
-	// 3. Build per-country multiplier + treasury lookup (read-only map use;
-	// iteration below runs over the deterministic snapshot slice).
+	// 3. Build per-country multiplier + capital lookup (read-only map use;
+	// iteration below runs over the deterministic snapshot slice). Treasuries
+	// are re-fetched by entity handle at use time — cache values, not
+	// component pointers (GC corruption class, see banditry.go).
 	type countryTax struct {
-		treasury *components.TreasuryComponent
-		mult     float32
+		capital ecs.Entity
+		mult    float32
 	}
 	countries := make(map[uint32]countryTax)
 	capitalQuery := world.Query(filter.All(countryCompID, capitalID, affilID, treasuryID))
 	for capitalQuery.Next() {
 		affil := (*components.Affiliation)(capitalQuery.Get(affilID))
-		treasury := (*components.TreasuryComponent)(capitalQuery.Get(treasuryID))
 		rate := DefaultTaxRatePercent
 		if capitalQuery.Has(taxID) {
 			policy := (*components.TaxPolicyComponent)(world.Get(capitalQuery.Entity(), taxID))
 			rate = policy.Rate
 		}
 		countries[affil.CountryID] = countryTax{
-			treasury: treasury,
-			mult:     float32(rate) / float32(DefaultTaxRatePercent),
+			capital: capitalQuery.Entity(),
+			mult:    float32(rate) / float32(DefaultTaxRatePercent),
 		}
 	}
 
@@ -184,28 +188,33 @@ func (s *TaxPolicySystem) Update(world *ecs.World) {
 		if !ok || country.mult == 1.0 {
 			continue
 		}
-		collected := snap.pre - snap.treasury.Wealth
+		if !world.Alive(snap.village) || !world.Alive(country.capital) {
+			continue
+		}
+		villageTreasury := (*components.TreasuryComponent)(world.Get(snap.village, treasuryID))
+		countryTreasury := (*components.TreasuryComponent)(world.Get(country.capital, treasuryID))
+		collected := snap.pre - villageTreasury.Wealth
 		if collected <= 0 {
 			continue // Evasion or nothing collectable: rate does not apply.
 		}
 		delta := collected*country.mult - collected
 		if delta > 0 {
 			// Higher rate: take the surplus, capped by remaining village wealth.
-			if delta > snap.treasury.Wealth {
-				delta = snap.treasury.Wealth
+			if delta > villageTreasury.Wealth {
+				delta = villageTreasury.Wealth
 			}
-			snap.treasury.Wealth -= delta
-			country.treasury.Wealth += delta
+			villageTreasury.Wealth -= delta
+			countryTreasury.Wealth += delta
 		} else {
 			// Lower rate: rebate out of the country treasury. The rebate is
 			// <= collected, which the country received this very tick, but cap
 			// defensively so the treasury can never go negative.
 			rebate := -delta
-			if rebate > country.treasury.Wealth {
-				rebate = country.treasury.Wealth
+			if rebate > countryTreasury.Wealth {
+				rebate = countryTreasury.Wealth
 			}
-			country.treasury.Wealth -= rebate
-			snap.treasury.Wealth += rebate
+			countryTreasury.Wealth -= rebate
+			villageTreasury.Wealth += rebate
 		}
 	}
 }
@@ -307,13 +316,12 @@ func ListTradeRoutes(world *ecs.World) []TradeRouteInfo {
 	return routes
 }
 
-// tradeCityData caches one living city's economy pointers for a transfer
-// window. Pointers stay valid until the deferred route removals at the end of
-// the update (no structural mutation happens before then).
+// tradeCityData caches one living city's entity handle and country for a
+// transfer window. Economy components are re-fetched via world.Get at use
+// time — cache values, not component pointers (GC corruption class, see
+// banditry.go).
 type tradeCityData struct {
-	storage   *components.StorageComponent
-	market    *components.MarketComponent
-	treasury  *components.TreasuryComponent
+	city      ecs.Entity
 	countryID uint32
 }
 
@@ -372,19 +380,18 @@ func (s *TradeRouteSystem) Update(world *ecs.World) {
 		ident := (*components.Identity)(cityQuery.Get(identID))
 		affil := (*components.Affiliation)(cityQuery.Get(affilID))
 		cities[uint32(ident.ID)] = tradeCityData{
-			storage:   (*components.StorageComponent)(cityQuery.Get(storageID)),
-			market:    (*components.MarketComponent)(cityQuery.Get(marketID)),
-			treasury:  (*components.TreasuryComponent)(cityQuery.Get(treasuryID)),
+			city:      cityQuery.Entity(),
 			countryID: affil.CountryID,
 		}
 	}
 
-	// 2. Index country treasuries for the sovereign cut.
-	countryTreasuries := make(map[uint32]*components.TreasuryComponent)
+	// 2. Index country capitals for the sovereign cut (treasuries re-fetched
+	// by entity handle at use time).
+	countryCapitals := make(map[uint32]ecs.Entity)
 	capitalQuery := world.Query(filter.All(countryCompID, capitalID, affilID, treasuryID))
 	for capitalQuery.Next() {
 		affil := (*components.Affiliation)(capitalQuery.Get(affilID))
-		countryTreasuries[affil.CountryID] = (*components.TreasuryComponent)(capitalQuery.Get(treasuryID))
+		countryCapitals[affil.CountryID] = capitalQuery.Entity()
 	}
 
 	// 3. Execute transfers; collect dead routes for deferred removal.
@@ -394,28 +401,36 @@ func (s *TradeRouteSystem) Update(world *ecs.World) {
 		route := (*components.TradeRouteComponent)(routeQuery.Get(routeID))
 		from, okFrom := cities[route.FromCity]
 		to, okTo := cities[route.ToCity]
-		if !okFrom || !okTo {
+		if !okFrom || !okTo || !world.Alive(from.city) || !world.Alive(to.city) {
 			s.toRemove = append(s.toRemove, routeQuery.Entity())
 			continue
 		}
 
+		// Local pointers used immediately within this route iteration (no
+		// structural change happens inside the loop) — this is safe; only
+		// retained pointers in cache structs are not.
+		fromMarket := (*components.MarketComponent)(world.Get(from.city, marketID))
+		toMarket := (*components.MarketComponent)(world.Get(to.city, marketID))
+
 		for _, item := range tradeGoodsOrder {
-			priceFrom := PriceOf(from.market, item)
-			priceTo := PriceOf(to.market, item)
+			priceFrom := PriceOf(fromMarket, item)
+			priceTo := PriceOf(toMarket, item)
 			if priceFrom == priceTo {
 				continue // No gradient, no trade.
 			}
 
 			// Goods flow from the cheaper city toward the pricier one.
-			src, dst := from, to
+			srcEnt, dstEnt := from.city, to.city
 			low, high := priceFrom, priceTo
 			if priceFrom > priceTo {
-				src, dst = to, from
+				srcEnt, dstEnt = to.city, from.city
 				low, high = priceTo, priceFrom
 			}
 
-			srcStock := StorageOf(src.storage, item)
-			dstStock := StorageOf(dst.storage, item)
+			srcStorage := (*components.StorageComponent)(world.Get(srcEnt, storageID))
+			dstStorage := (*components.StorageComponent)(world.Get(dstEnt, storageID))
+			srcStock := StorageOf(srcStorage, item)
+			dstStock := StorageOf(dstStorage, item)
 			qty := uint32(route.Volume)
 			if *srcStock < qty {
 				qty = *srcStock
@@ -429,12 +444,16 @@ func (s *TradeRouteSystem) Update(world *ecs.World) {
 
 			// Route income from the price gradient.
 			profit := (high - low) * float32(qty)
-			from.treasury.Wealth += profit * tradeCityIncomeShare
-			to.treasury.Wealth += profit * tradeCityIncomeShare
-			if ct, ok := countryTreasuries[from.countryID]; ok && from.countryID != 0 {
+			fromTreasury := (*components.TreasuryComponent)(world.Get(from.city, treasuryID))
+			fromTreasury.Wealth += profit * tradeCityIncomeShare
+			toTreasury := (*components.TreasuryComponent)(world.Get(to.city, treasuryID))
+			toTreasury.Wealth += profit * tradeCityIncomeShare
+			if capEnt, ok := countryCapitals[from.countryID]; ok && from.countryID != 0 && world.Alive(capEnt) {
+				ct := (*components.TreasuryComponent)(world.Get(capEnt, treasuryID))
 				ct.Wealth += profit * tradeCountryCutShare
 			}
-			if ct, ok := countryTreasuries[to.countryID]; ok && to.countryID != 0 {
+			if capEnt, ok := countryCapitals[to.countryID]; ok && to.countryID != 0 && world.Alive(capEnt) {
+				ct := (*components.TreasuryComponent)(world.Get(capEnt, treasuryID))
 				ct.Wealth += profit * tradeCountryCutShare
 			}
 		}

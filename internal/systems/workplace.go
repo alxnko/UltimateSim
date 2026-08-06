@@ -9,9 +9,15 @@ import (
 // Phase 15.4: Physical Locations & Workplaces
 // WorkplaceSystem manages NPC travel to workplaces and calculates productivity.
 
+// BusinessData caches workplace coordinates by value and the business entity
+// handle — cache values, not component pointers (GC corruption class, see
+// banditry.go). The treasury is written through, so it is re-fetched via
+// world.Get at use time.
 type BusinessData struct {
-	Workplace *components.WorkplaceComponent
-	Treasury  *components.TreasuryComponent
+	Entity      ecs.Entity
+	WorkplaceX  float32
+	WorkplaceY  float32
+	HasTreasury bool
 }
 
 type WorkplaceSystem struct {
@@ -54,15 +60,12 @@ func (s *WorkplaceSystem) Update(world *ecs.World) {
 		id := (*components.Identity)(bq.Get(idID))
 		wp := (*components.WorkplaceComponent)(bq.Get(workplaceID))
 
-		data := BusinessData{
-			Workplace: wp,
+		s.activeBusinesses[id.ID] = BusinessData{
+			Entity:      bq.Entity(),
+			WorkplaceX:  wp.X,
+			WorkplaceY:  wp.Y,
+			HasTreasury: bq.Has(treasuryID),
 		}
-
-		if bq.Has(treasuryID) {
-			data.Treasury = (*components.TreasuryComponent)(bq.Get(treasuryID))
-		}
-
-		s.activeBusinesses[id.ID] = data
 	}
 
 	// 2. Process all employed NPCs
@@ -89,8 +92,8 @@ func (s *WorkplaceSystem) Update(world *ecs.World) {
 		id := (*components.Identity)(eq.Get(idID))
 
 		// Calculate distance once per NPC iteration
-		dx := pos.X - businessData.Workplace.X
-		dy := pos.Y - businessData.Workplace.Y
+		dx := pos.X - businessData.WorkplaceX
+		dy := pos.Y - businessData.WorkplaceY
 		distSq := dx*dx + dy*dy
 
 		isAtWork := distSq <= 1.0
@@ -102,13 +105,13 @@ func (s *WorkplaceSystem) Update(world *ecs.World) {
 					EntityID: id.ID,
 					StartX:   pos.X,
 					StartY:   pos.Y,
-					TargetX:  businessData.Workplace.X,
-					TargetY:  businessData.Workplace.Y,
+					TargetX:  businessData.WorkplaceX,
+					TargetY:  businessData.WorkplaceY,
 				}
 				s.pathQueue.Enqueue(req)
 				path.HasPath = true
-				path.TargetX = businessData.Workplace.X
-				path.TargetY = businessData.Workplace.Y
+				path.TargetX = businessData.WorkplaceX
+				path.TargetY = businessData.WorkplaceY
 			}
 		}
 
@@ -118,8 +121,11 @@ func (s *WorkplaceSystem) Update(world *ecs.World) {
 			// Productivity formula based on Phase 15.4: Genetics.Strength/Intellect
 			productivityBoost := float32(genetics.Strength)*0.01 + float32(genetics.Intellect)*0.01
 
-			if businessData.Treasury != nil {
-				businessData.Treasury.Wealth += productivityBoost
+			// Re-fetch the treasury by entity handle — cache values, not
+			// component pointers (GC corruption class, see banditry.go).
+			if businessData.HasTreasury && world.Alive(businessData.Entity) {
+				treasury := (*components.TreasuryComponent)(world.Get(businessData.Entity, treasuryID))
+				treasury.Wealth += productivityBoost
 			}
 		}
 	}

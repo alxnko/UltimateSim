@@ -39,11 +39,12 @@ func (s *TraumaticTraditionsSystem) Update(world *ecs.World) {
 
 	jurQuery := world.Query(ecs.All(s.jurID, s.posID))
 
+	// jurData caches values, not component pointers — GC corruption class, see banditry.go.
 	type jurData struct {
-		entity ecs.Entity
-		comp   *components.JurisdictionComponent
-		x      float32
-		y      float32
+		entity        ecs.Entity
+		radiusSquared float32
+		x             float32
+		y             float32
 	}
 
 	// Collect traumatic jurisdictions
@@ -56,10 +57,10 @@ func (s *TraumaticTraditionsSystem) Update(world *ecs.World) {
 		// Trauma threshold for "Massive Societal Trauma"
 		if jur.Trauma > 10 {
 			activeTraumas = append(activeTraumas, jurData{
-				entity: jurQuery.Entity(),
-				comp:   jur,
-				x:      pos.X,
-				y:      pos.Y,
+				entity:        jurQuery.Entity(),
+				radiusSquared: jur.RadiusSquared,
+				x:             pos.X,
+				y:             pos.Y,
 			})
 		}
 
@@ -86,7 +87,7 @@ func (s *TraumaticTraditionsSystem) Update(world *ecs.World) {
 			dy := pos.Y - j.y
 
 			// If inside traumatized jurisdiction
-			if dx*dx+dy*dy <= j.comp.RadiusSquared {
+			if dx*dx+dy*dy <= j.radiusSquared {
 				hasXenophobia := false
 				for _, b := range bel.Beliefs {
 					if b.BeliefID == components.BeliefXenophobia {
