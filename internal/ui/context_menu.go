@@ -3,6 +3,7 @@ package ui
 import (
 	"github.com/ALXNKO/UltimateSim/internal/components"
 	"github.com/ALXNKO/UltimateSim/internal/systems"
+	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/mlange-42/arche/ecs"
 )
 
@@ -161,7 +162,16 @@ func (s *StatePlaying) openOrderMenu(target ecs.Entity) {
 	pc.SubMenu.Open(mx, my, []string{"Move to...", "Follow me", "Attack...", "Work as Builder", "Work as Farmer", "Work as Guard"})
 }
 
-func orderMenuPos() (int, int) { return 1280/2 - 60, 720/2 - 60 }
+func orderMenuPos() (int, int) {
+	sw, sh := ebiten.WindowSize()
+	if sw < 960 {
+		sw = 960
+	}
+	if sh < 540 {
+		sh = 540
+	}
+	return sw/2 - 60, sh/2 - 60
+}
 
 // runSubMenuAction handles order-verb selection.
 func (s *StatePlaying) runSubMenuAction(idx int) {

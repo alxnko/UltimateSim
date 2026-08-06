@@ -254,7 +254,11 @@ func (s *StatePlaying) handleHotkeys() {
 
 func (pc *PlayerContext) overMinimap() bool {
 	mx, my := ebiten.CursorPosition()
-	return mx > 1280-MinimapSize-16 && my < MinimapSize+16
+	sw, _ := ebiten.WindowSize()
+	if sw < 960 {
+		sw = 960
+	}
+	return mx > sw-MinimapSize-16 && my < MinimapSize+16
 }
 
 // tryHammer advances the nearest construction site near the player.
@@ -280,7 +284,13 @@ func (s *StatePlaying) tryHammer() {
 func (s *StatePlaying) handleMouse() {
 	pc := s.PC
 	world := s.Status.TM.World
-	sw, sh := 1280, 720
+	sw, sh := ebiten.WindowSize()
+	if sw < 960 {
+		sw = 960
+	}
+	if sh < 540 {
+		sh = 540
+	}
 	mx, my := ebiten.CursorPosition()
 
 	// Context menu has first claim on clicks.

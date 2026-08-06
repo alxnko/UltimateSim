@@ -259,7 +259,15 @@ func (g *Game) Draw(screen *ebiten.Image) {
 }
 
 func (g *Game) Layout(outsideWidth, outsideHeight int) (int, int) {
-	return 1280, 720
+	// Grand Strategy Phase: render at the real window size (crisp text at any
+	// resolution). UI layouts read screen bounds each frame.
+	if outsideWidth < 960 {
+		outsideWidth = 960
+	}
+	if outsideHeight < 540 {
+		outsideHeight = 540
+	}
+	return outsideWidth, outsideHeight
 }
 
 func main() {
