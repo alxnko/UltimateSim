@@ -228,7 +228,7 @@ func BuildSimulation(gridWidth, gridHeight int, seedVal byte, status *render.Loa
 	// the way a grand-strategy start date works. The wilderness spawner above
 	// still adds organic wanderers on tick 1.
 	update(0.9, "Founding Civilizations...")
-	systems.SeedCivilization(world, grid, systems.DefaultGenesis())
+	systems.SeedCivilization(world, grid, hookGraph, systems.DefaultGenesis())
 
 	update(1.0, "Engine Assembly Complete.")
 

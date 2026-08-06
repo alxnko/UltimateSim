@@ -51,7 +51,9 @@ type genesisSite struct {
 
 // SeedCivilization plants villages, countries, capitals, rulers and employed,
 // city-bound families. Returns the number of villages and NPCs created.
-func SeedCivilization(world *ecs.World, grid *engine.MapGrid, cfg GenesisConfig) (int, int) {
+// hooks may be nil (marriage affection hooks are then skipped by Marry's own
+// nil handling — see dynasty.go).
+func SeedCivilization(world *ecs.World, grid *engine.MapGrid, hooks *engine.SparseHookGraph, cfg GenesisConfig) (int, int) {
 	sites := pickGenesisSites(grid, cfg)
 	if len(sites) == 0 {
 		return 0, 0
@@ -82,6 +84,7 @@ func SeedCivilization(world *ecs.World, grid *engine.MapGrid, cfg GenesisConfig)
 	marketID := ecs.ComponentID[components.MarketComponent](world)
 	treasuryID := ecs.ComponentID[components.TreasuryComponent](world)
 	capitalID := ecs.ComponentID[components.CapitalComponent](world)
+	countryCompID := ecs.ComponentID[components.CountryComponent](world)
 	adminID := ecs.ComponentID[components.AdministrationMarker](world)
 	legitID := ecs.ComponentID[components.LegitimacyComponent](world)
 
@@ -142,10 +145,23 @@ func SeedCivilization(world *ecs.World, grid *engine.MapGrid, cfg GenesisConfig)
 		tr := (*components.TreasuryComponent)(world.Get(v, treasuryID))
 		tr.Wealth = 500
 		if i < countries {
+			// A capital is CapitalComponent + CountryComponent + Affiliation
+			// (the convention FindCapitalOf and the macro law systems expect).
 			world.Add(v, capitalID)
+			world.Add(v, countryCompID)
+			ctry := (*components.CountryComponent)(world.Get(v, countryCompID))
+			ctry.StandardCurrencyID = country
+			ctry.Debasement = 0
 		}
 
 		// Families around the village.
+		type genesisAdult struct {
+			ent    ecs.Entity
+			id     uint64
+			intel  uint8
+			famIdx int
+		}
+		var adults []genesisAdult
 		var bestRuler ecs.Entity
 		bestScore := -1
 		for f := 0; f < cfg.FamiliesPerCity; f++ {
@@ -191,18 +207,41 @@ func SeedCivilization(world *ecs.World, grid *engine.MapGrid, cfg GenesisConfig)
 				a.CityID = uint32(cityID)
 				a.CountryID = country
 
+				// Copy values BEFORE any structural Add below: world.Add moves
+				// the archetype row and invalidates ident/g pointers.
+				age := ident.Age
+				identityID := ident.ID
+				strength, intellect := g.Strength, g.Intellect
+
 				// Adults get trades; the eldest family member stays flexible.
-				if ident.Age >= 18 && m > 0 {
+				if age >= 18 && m > 0 {
 					world.Add(e, jobID)
 					j := (*components.JobComponent)(world.Get(e, jobID))
 					j.JobID = jobs[(f+m)%len(jobs)]
 				}
 				npcCount++
 
-				if score := int(g.Strength) + int(g.Intellect); ident.Age >= 18 && score > bestScore {
+				if age >= 18 {
+					adults = append(adults, genesisAdult{ent: e, id: identityID, intel: intellect, famIdx: f})
+				}
+				if score := int(strength) + int(intellect); age >= 18 && score > bestScore {
 					bestScore = score
 					bestRuler = e
 				}
+			}
+		}
+
+		// Marry the two eldest-created adults of each family so dynasties
+		// exist from tick 1 (creation order is deterministic).
+		firstOfFam := map[int]genesisAdult{}
+		for _, a := range adults {
+			if head, ok := firstOfFam[a.famIdx]; ok {
+				if head.ent != (ecs.Entity{}) {
+					_ = Marry(world, hooks, head.ent, a.ent)
+					firstOfFam[a.famIdx] = genesisAdult{} // family sealed
+				}
+			} else {
+				firstOfFam[a.famIdx] = a
 			}
 		}
 
@@ -212,6 +251,29 @@ func SeedCivilization(world *ecs.World, grid *engine.MapGrid, cfg GenesisConfig)
 			world.Add(bestRuler, legitID)
 			lg := (*components.LegitimacyComponent)(world.Get(bestRuler, legitID))
 			lg.Score = 50
+		}
+
+		// Capitals start with a seated council: the four brightest adults
+		// (excluding the ruler) take Steward/Marshal/Diplomat/Spymaster.
+		if i < countries {
+			sort.SliceStable(adults, func(x, y int) bool {
+				if adults[x].intel != adults[y].intel {
+					return adults[x].intel > adults[y].intel
+				}
+				return adults[x].id < adults[y].id
+			})
+			seat := components.SeatSteward
+			for _, a := range adults {
+				if seat > components.SeatSpymaster {
+					break
+				}
+				if a.ent == bestRuler {
+					continue
+				}
+				if err := Appoint(world, country, seat, a.id); err == nil {
+					seat++
+				}
+			}
 		}
 
 		seedVillageStructures(world, grid, site, uint32(cityID), country)

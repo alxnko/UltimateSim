@@ -35,7 +35,7 @@ func seedGenesisWorld(t *testing.T) (*ecs.World, int, int) {
 	cfg.Villages = 6
 	cfg.Countries = 2
 	cfg.MinSiteSeparation = 40
-	v, n := SeedCivilization(&world, genesisTestGrid(), cfg)
+	v, n := SeedCivilization(&world, genesisTestGrid(), engine.NewSparseHookGraph(), cfg)
 	return &world, v, n
 }
 
@@ -103,6 +103,33 @@ func TestSeedCivilizationPlantsPoliticalWorld(t *testing.T) {
 	}
 	if structs < villages*5 {
 		t.Fatalf("want at least %d genesis structures, got %d", villages*5, structs)
+	}
+
+	// Genesis dynasties: married couples exist from tick 1.
+	dynID := ecs.ComponentID[components.DynastyComponent](world)
+	married := 0
+	dq := world.Query(ecs.All(dynID))
+	for dq.Next() {
+		if (*components.DynastyComponent)(dq.Get(dynID)).Married {
+			married++
+		}
+	}
+	if married == 0 {
+		t.Fatal("genesis produced zero married citizens")
+	}
+
+	// Genesis councils: each capital seats four councilors.
+	councilID := ecs.ComponentID[components.CouncilComponent](world)
+	seated := 0
+	cq := world.Query(ecs.All(councilID))
+	for cq.Next() {
+		c := (*components.CouncilComponent)(cq.Get(councilID))
+		if c.Steward != 0 && c.Marshal != 0 && c.Diplomat != 0 && c.Spymaster != 0 {
+			seated++
+		}
+	}
+	if seated != capitals {
+		t.Fatalf("want %d fully seated councils, got %d", capitals, seated)
 	}
 }
 
