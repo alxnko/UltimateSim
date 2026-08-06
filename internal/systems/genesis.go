@@ -213,8 +213,54 @@ func SeedCivilization(world *ecs.World, grid *engine.MapGrid, cfg GenesisConfig)
 			lg := (*components.LegitimacyComponent)(world.Get(bestRuler, legitID))
 			lg.Score = 50
 		}
+
+		seedVillageStructures(world, grid, site, uint32(cityID), country)
 	}
 	return len(sites), npcCount
+}
+
+// seedVillageStructures plants a town-square layout so villages LOOK like
+// villages from tick 1: a ring of houses plus workshop, shrine, tavern and an
+// outlying farm. Offsets are fixed (deterministic); tiles that fall in water
+// are skipped.
+func seedVillageStructures(world *ecs.World, grid *engine.MapGrid, site genesisSite, cityID, country uint32) {
+	structID := ecs.ComponentID[components.StructureComponent](world)
+	posID := ecs.ComponentID[components.Position](world)
+	affID := ecs.ComponentID[components.Affiliation](world)
+	benchID := ecs.ComponentID[components.WorkbenchComponent](world)
+
+	place := func(stype uint8, dx, dy int) {
+		x, y := site.x+dx, site.y+dy
+		if x < 0 || x >= grid.Width || y < 0 || y >= grid.Height ||
+			grid.GetTile(x, y).BiomeID == engine.BiomeOcean {
+			return
+		}
+		e := world.NewEntity(structID, posID, affID)
+		p := (*components.Position)(world.Get(e, posID))
+		p.X, p.Y = float32(x), float32(y)
+		st := (*components.StructureComponent)(world.Get(e, structID))
+		st.StructureType = uint32(stype)
+		st.Integrity = 100
+		a := (*components.Affiliation)(world.Get(e, affID))
+		a.CityID = cityID
+		a.CountryID = country
+		if stype == components.StructureWorkshop {
+			// Workshops carry a co-located workbench (crafting parity with
+			// construction.go completion).
+			b := world.NewEntity(benchID, posID)
+			bp := (*components.Position)(world.Get(b, posID))
+			bp.X, bp.Y = float32(x), float32(y)
+		}
+	}
+
+	houseOffsets := [5][2]int{{3, 0}, {-3, 0}, {0, 3}, {0, -3}, {3, 3}}
+	for _, o := range houseOffsets {
+		place(components.StructureHouse, o[0], o[1])
+	}
+	place(components.StructureWorkshop, -2, 2)
+	place(components.StructureShrine, 2, -3)
+	place(components.StructureTavern, -3, -2)
+	place(components.StructureFarm, 6, 5)
 }
 
 // pickGenesisSites scores the map and greedily picks spaced, fertile,

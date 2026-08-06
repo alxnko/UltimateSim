@@ -93,6 +93,17 @@ func TestSeedCivilizationPlantsPoliticalWorld(t *testing.T) {
 	if rulers != villages {
 		t.Fatalf("want one ruler per village (%d), got %d", villages, rulers)
 	}
+
+	// G4: every village gets a visible town square (houses + civic buildings).
+	structID := ecs.ComponentID[components.StructureComponent](world)
+	structs := 0
+	sq := world.Query(ecs.All(structID))
+	for sq.Next() {
+		structs++
+	}
+	if structs < villages*5 {
+		t.Fatalf("want at least %d genesis structures, got %d", villages*5, structs)
+	}
 }
 
 func TestSeedCivilizationDeterministic(t *testing.T) {
