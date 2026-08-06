@@ -80,6 +80,9 @@ func BuildSimulation(gridWidth, gridHeight int, seedVal byte, status *render.Loa
 	tickManager.AddSystem(systems.NewBanditrySystem(world), engine.PhaseAI)
 	tickManager.AddSystem(systems.NewCourierInterceptionSystem(world), engine.PhaseAI)
 	tickManager.AddSystem(systems.NewWanderSystem(world, grid, pathQueue), engine.PhaseAI)
+	// Grand Strategy P5 L1: employed citizens live visible daily routines;
+	// WanderSystem keeps only the unemployed and the wilderness.
+	tickManager.AddSystem(systems.NewDailyRoutineSystem(world, grid, calendar), engine.PhaseAI)
 	tickManager.AddSystem(systems.NewNavalRoutingSystem(world, grid, pathQueue, calendar), engine.PhaseAI)
 
 	// --- PHASE: MOVEMENT ---

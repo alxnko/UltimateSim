@@ -429,6 +429,8 @@ func (s *StatePlaying) Draw(screen *ebiten.Image) {
 	s.DrawWorld(screen)
 	DrawHurtVignette(screen, s.PC.HurtFlash)
 	s.PC.FX.Draw(screen, &s.PC.Cam)
+	DrawBuildGhost(s, screen) // P5 L2: tile-snapped ghost + cost/reason
+	DrawOverheads(s, screen)  // P5 L2/L3: site bars, health bars, name plate, player marker
 
 	// Chrome.
 	s.DrawHUD(screen)
