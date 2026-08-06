@@ -50,11 +50,18 @@ func (s *BanditrySystem) Update(world *ecs.World) {
 
 	caravanQuery := world.Query(s.caravanFilter)
 
+	// Cache payload VALUES, never component pointers: a *Payload stored in a
+	// heap slice outlives its archetype buffer guarantees and the GC flags it
+	// as a pointer to freed memory ("found pointer to free object" — caught
+	// by GODEBUG=clobberfree once genesis worlds actually spawned caravans).
 	type cData struct {
-		Entity  ecs.Entity
-		X       float32
-		Y       float32
-		Payload *components.Payload
+		Entity ecs.Entity
+		X      float32
+		Y      float32
+		Food   uint32
+		Wood   uint32
+		Stone  uint32
+		Iron   uint32
 	}
 
 	caravans := make([]cData, 0, 100)
@@ -64,10 +71,13 @@ func (s *BanditrySystem) Update(world *ecs.World) {
 		payload := (*components.Payload)(caravanQuery.Get(payloadID))
 
 		caravans = append(caravans, cData{
-			Entity:  caravanQuery.Entity(),
-			X:       pos.X,
-			Y:       pos.Y,
-			Payload: payload,
+			Entity: caravanQuery.Entity(),
+			X:      pos.X,
+			Y:      pos.Y,
+			Food:   uint32(payload.Food),
+			Wood:   uint32(payload.Wood),
+			Stone:  uint32(payload.Stone),
+			Iron:   uint32(payload.Iron),
 		})
 	}
 
@@ -129,9 +139,9 @@ func (s *BanditrySystem) Update(world *ecs.World) {
 				mem := (*components.Memory)(npcQuery.Get(memID))
 
 				// Take food
-				needs.Food += float32(bestC.Payload.Food)
+				needs.Food += float32(bestC.Food)
 				// We could take other resources and convert to wealth, but sticking to basics.
-				needs.Wealth += float32(bestC.Payload.Iron) + float32(bestC.Payload.Stone) + float32(bestC.Payload.Wood)
+				needs.Wealth += float32(bestC.Iron) + float32(bestC.Stone) + float32(bestC.Wood)
 
 				desp.Level = 0
 
@@ -139,7 +149,7 @@ func (s *BanditrySystem) Update(world *ecs.World) {
 				event := components.MemoryEvent{
 					TargetID:        0, // Target is caravan entity which isn't an NPC, so 0 is fine
 					InteractionType: components.InteractionTheft,
-					Value:           int32(bestC.Payload.Food),
+					Value:           int32(bestC.Food),
 					TickStamp:       0,
 				}
 				mem.Events[mem.Head] = event
