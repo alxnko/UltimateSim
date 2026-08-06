@@ -246,6 +246,11 @@ func InitDB(path string) (*sql.DB, error) {
 		relations_json TEXT
 	);
 
+	CREATE TABLE IF NOT EXISTS pending_events (
+		uid INTEGER PRIMARY KEY,
+		events_json TEXT
+	);
+
 	CREATE TABLE IF NOT EXISTS tax_policy (
 		uid INTEGER PRIMARY KEY,
 		rate INTEGER
@@ -532,6 +537,11 @@ func SaveWorld(tm *TickManager, mapGrid *MapGrid, seedVal byte, db *sql.DB) erro
 		return err
 	}
 	defer stmtTaxPolicy.Close()
+	stmtPendingEvents, err := tx.Prepare("INSERT OR REPLACE INTO pending_events (uid, events_json) VALUES (?, ?)")
+	if err != nil {
+		return err
+	}
+	defer stmtPendingEvents.Close()
 
 	// Extract components
 	ambitionsID := ecs.ComponentID[components.AmbitionsComponent](world)
@@ -540,6 +550,7 @@ func SaveWorld(tm *TickManager, mapGrid *MapGrid, seedVal byte, db *sql.DB) erro
 	councilCompID := ecs.ComponentID[components.CouncilComponent](world)
 	diplomacyCompID := ecs.ComponentID[components.DiplomacyComponent](world)
 	taxPolicyCompID := ecs.ComponentID[components.TaxPolicyComponent](world)
+	pendingEventsCompID := ecs.ComponentID[components.PendingEventsComponent](world)
 	idID := ecs.ComponentID[components.Identity](world)
 	posID := ecs.ComponentID[components.Position](world)
 	needsID := ecs.ComponentID[components.Needs](world)
@@ -911,6 +922,20 @@ func SaveWorld(tm *TickManager, mapGrid *MapGrid, seedVal byte, db *sql.DB) erro
 		if world.Has(ent, taxPolicyCompID) {
 			p := (*components.TaxPolicyComponent)(world.Get(ent, taxPolicyCompID))
 			if _, err := stmtTaxPolicy.Exec(uid, p.Rate); err != nil {
+				query.Close()
+				return err
+			}
+		}
+
+		// Pending interactive events (Grand Strategy G1)
+		if world.Has(ent, pendingEventsCompID) {
+			pe := (*components.PendingEventsComponent)(world.Get(ent, pendingEventsCompID))
+			evJson, err := json.Marshal(pe.Events)
+			if err != nil {
+				query.Close()
+				return err
+			}
+			if _, err := stmtPendingEvents.Exec(uid, string(evJson)); err != nil {
 				query.Close()
 				return err
 			}
@@ -1753,6 +1778,25 @@ func LoadWorld(tm *TickManager, db *sql.DB) error {
 		return err
 	}
 
+	// 36. Fetch Pending Events (Grand Strategy G1)
+	pendingEventsMap := make(map[uint64]string)
+	rowsEv, err := db.Query("SELECT uid, events_json FROM pending_events")
+	if err != nil {
+		return err
+	}
+	defer rowsEv.Close()
+	for rowsEv.Next() {
+		var u uint64
+		var evJson string
+		if err := rowsEv.Scan(&u, &evJson); err != nil {
+			return err
+		}
+		pendingEventsMap[u] = evJson
+	}
+	if err := rowsEv.Err(); err != nil {
+		return err
+	}
+
 	// Component IDs
 	idID := ecs.ComponentID[components.Identity](world)
 	posID := ecs.ComponentID[components.Position](world)
@@ -1792,6 +1836,7 @@ func LoadWorld(tm *TickManager, db *sql.DB) error {
 	councilCompID := ecs.ComponentID[components.CouncilComponent](world)
 	diplomacyCompID := ecs.ComponentID[components.DiplomacyComponent](world)
 	taxPolicyCompID := ecs.ComponentID[components.TaxPolicyComponent](world)
+	pendingEventsCompID := ecs.ComponentID[components.PendingEventsComponent](world)
 
 	for _, uid := range uids {
 		ent := world.NewEntity()
@@ -2100,6 +2145,12 @@ func LoadWorld(tm *TickManager, db *sql.DB) error {
 		if rate, ok := taxMap[uid]; ok {
 			world.Add(ent, taxPolicyCompID)
 			(*components.TaxPolicyComponent)(world.Get(ent, taxPolicyCompID)).Rate = rate
+		}
+
+		if evJson, ok := pendingEventsMap[uid]; ok {
+			world.Add(ent, pendingEventsCompID)
+			pe := (*components.PendingEventsComponent)(world.Get(ent, pendingEventsCompID))
+			_ = json.Unmarshal([]byte(evJson), &pe.Events)
 		}
 	}
 

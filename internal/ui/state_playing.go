@@ -89,12 +89,13 @@ func (s *StatePlaying) Update(sm *StateManager) error {
 
 	// Movement lock while any modal/menu owns input.
 	if pc.Bridge != nil {
-		pc.Bridge.MovementLocked = pc.AnyModal()
+		pc.Bridge.MovementLocked = pc.AnyModal() || EventPopupActive(pc)
 	}
 
 	// Advance the simulation (respects its own pause flag). Speed is the
-	// grand-strategy ticks-per-frame multiplier (keys 1-4).
-	if !pc.AnyModal() || s.Status.TM.IsPaused {
+	// grand-strategy ticks-per-frame multiplier (keys 1-4). An open event
+	// popup pauses time, CK-style (spec G5).
+	if (!pc.AnyModal() && !EventPopupActive(pc)) || s.Status.TM.IsPaused {
 		speed := s.Status.TM.Speed
 		if speed < 1 {
 			speed = 1
@@ -153,6 +154,9 @@ func (s *StatePlaying) handleHotkeys() {
 	pc := s.PC
 
 	if inpututil.IsKeyJustPressed(ebiten.KeyEscape) {
+		if EventPopupActive(pc) {
+			return // the event popup's ModalFrame consumes Esc in Draw
+		}
 		if pc.AnyModal() || pc.Mode != ModeNormal {
 			pc.CloseAll()
 		} else {
@@ -470,6 +474,7 @@ func (s *StatePlaying) Draw(screen *ebiten.Image) {
 	s.DrawHeir(screen)
 	s.DrawPauseMenu(screen)
 	s.DrawCharacterSelect(screen)
+	s.DrawEventPopup(screen)
 
 	// Popup menus on top.
 	s.PC.Menu.Draw(screen)
