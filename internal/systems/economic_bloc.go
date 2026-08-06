@@ -13,9 +13,12 @@ import (
 type EconomicBlocSystem struct {
 	world *ecs.World
 
-	// Pre-allocated maps to prevent inner-loop Arche queries
-	cityMarkets  map[uint32]*components.MarketComponent
-	cityStorages map[uint32]*components.StorageComponent
+	// Pre-allocated maps to prevent inner-loop Arche queries.
+	// Cache values, not component pointers — GC corruption class, see
+	// banditry.go. Entity handles are stored and components re-fetched via
+	// world.Get at every use, so writes stay visible across bloc iterations.
+	cityMarkets  map[uint32]ecs.Entity
+	cityStorages map[uint32]ecs.Entity
 
 	// Component IDs
 	unionEntityID ecs.ID
@@ -30,8 +33,8 @@ type EconomicBlocSystem struct {
 func NewEconomicBlocSystem(world *ecs.World) *EconomicBlocSystem {
 	return &EconomicBlocSystem{
 		world:         world,
-		cityMarkets:   make(map[uint32]*components.MarketComponent),
-		cityStorages:  make(map[uint32]*components.StorageComponent),
+		cityMarkets:   make(map[uint32]ecs.Entity),
+		cityStorages:  make(map[uint32]ecs.Entity),
 		unionEntityID: ecs.ComponentID[components.UnionEntity](world),
 		unionCompID:   ecs.ComponentID[components.UnionComponent](world),
 		villageID:     ecs.ComponentID[components.Village](world),
@@ -50,11 +53,10 @@ func (s *EconomicBlocSystem) Update() {
 	cityQuery := s.world.Query(filter.All(s.villageID, s.affilID, s.marketID, s.storageID))
 	for cityQuery.Next() {
 		affil := (*components.Affiliation)(cityQuery.Get(s.affilID))
-		market := (*components.MarketComponent)(cityQuery.Get(s.marketID))
-		storage := (*components.StorageComponent)(cityQuery.Get(s.storageID))
+		ent := cityQuery.Entity()
 
-		s.cityMarkets[affil.CityID] = market
-		s.cityStorages[affil.CityID] = storage
+		s.cityMarkets[affil.CityID] = ent
+		s.cityStorages[affil.CityID] = ent
 	}
 
 	if len(s.cityMarkets) == 0 {
@@ -84,10 +86,13 @@ func (s *EconomicBlocSystem) Update() {
 
 		// 3. Find the most starving city and the city with the largest surplus
 		for _, memberID := range union.MemberIDs {
-			market, hasMarket := s.cityMarkets[memberID]
-			storage, hasStorage := s.cityStorages[memberID]
+			marketEnt, hasMarket := s.cityMarkets[memberID]
+			storageEnt, hasStorage := s.cityStorages[memberID]
 
-			if hasMarket && hasStorage {
+			if hasMarket && hasStorage && s.world.Alive(marketEnt) && s.world.Alive(storageEnt) {
+				market := (*components.MarketComponent)(s.world.Get(marketEnt, s.marketID))
+				storage := (*components.StorageComponent)(s.world.Get(storageEnt, s.storageID))
+
 				// Famine check derived from JobRebalancing System metrics
 				// Now accurately finds the *most* starving city
 				if market.FoodPrice > highestFoodPrice {
@@ -111,11 +116,16 @@ func (s *EconomicBlocSystem) Update() {
 
 			// Prevent minor pointless transfers (e.g. 1 unit)
 			if transferAmount > 10 {
-				richestStorage := s.cityStorages[richestCityID]
-				starvingStorage := s.cityStorages[starvingCityID]
+				richestEnt := s.cityStorages[richestCityID]
+				starvingEnt := s.cityStorages[starvingCityID]
 
-				richestStorage.Food -= transferAmount
-				starvingStorage.Food += transferAmount
+				if s.world.Alive(richestEnt) && s.world.Alive(starvingEnt) {
+					richestStorage := (*components.StorageComponent)(s.world.Get(richestEnt, s.storageID))
+					starvingStorage := (*components.StorageComponent)(s.world.Get(starvingEnt, s.storageID))
+
+					richestStorage.Food -= transferAmount
+					starvingStorage.Food += transferAmount
+				}
 			}
 		}
 	}

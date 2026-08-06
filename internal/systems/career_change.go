@@ -26,14 +26,23 @@ func (s *CareerChangeSystem) Update(world *ecs.World) {
 	villageFilter := ecs.All(villageID, marketID, identityID)
 	villageQuery := world.Query(villageFilter)
 
-	// Use uint32 for CityID matching against Affiliation.CityID
-	marketPrices := make(map[uint32]*components.MarketComponent)
+	// Use uint32 for CityID matching against Affiliation.CityID.
+	// Read-only cache: cache values, not component pointers — GC corruption
+	// class, see banditry.go.
+	type marketPriceData struct {
+		FoodPrice float32
+		WoodPrice float32
+	}
+	marketPrices := make(map[uint32]marketPriceData)
 
 	for villageQuery.Next() {
 		market := (*components.MarketComponent)(villageQuery.Get(marketID))
 		identity := (*components.Identity)(villageQuery.Get(identityID))
 		// Identity.ID represents the CityID for Affiliation maps
-		marketPrices[uint32(identity.ID)] = market
+		marketPrices[uint32(identity.ID)] = marketPriceData{
+			FoodPrice: market.FoodPrice,
+			WoodPrice: market.WoodPrice,
+		}
 	}
 
 	// Step 2: Iterate over NPCs holding jobs and affiliations

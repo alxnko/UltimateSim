@@ -104,12 +104,17 @@ func (s *UnderminingSystem) Update(world *ecs.World) {
 		return
 	}
 
-	// 3. Pre-cache active tunnels to avoid duplicate spawns
+	// 3. Pre-cache active tunnels to avoid duplicate spawns.
+	// Cache values, not component pointers — GC corruption class, see
+	// banditry.go. Entity handles are stored and the TunnelComponent is
+	// re-fetched via world.Get at use time; tunnels deferred for spawn this
+	// tick are tracked separately (their placeholder never had an entity).
 	tunnelQuery := world.Query(ecs.All(s.tunnelID))
-	tunnels := make(map[uint64]*components.TunnelComponent)
+	tunnels := make(map[uint64]ecs.Entity)
+	pendingTunnels := make(map[uint64]bool)
 	for tunnelQuery.Next() {
 		t := (*components.TunnelComponent)(tunnelQuery.Get(s.tunnelID))
-		tunnels[t.TargetID] = t
+		tunnels[t.TargetID] = tunnelQuery.Entity()
 	}
 
 	// 4. Iterate over Miners and execute undermining
@@ -149,10 +154,16 @@ func (s *UnderminingSystem) Update(world *ecs.World) {
 
 		// If a structure is nearby (within 5 tiles)
 		if bestTarget != nil && bestDist <= 25.0 {
-			t, exists := tunnels[bestTarget.ID]
-			if exists {
-				// Tunnel exists, progress it
-				t.Progress += 5.0
+			tunnelEnt, exists := tunnels[bestTarget.ID]
+			if exists || pendingTunnels[bestTarget.ID] {
+				// Tunnel exists (or is pending spawn this tick), progress it.
+				// A pending tunnel has no entity yet; its progress write was
+				// always discarded (the spawned tunnel starts at 0), so only
+				// real tunnels are advanced.
+				if exists && world.Alive(tunnelEnt) {
+					t := (*components.TunnelComponent)(world.Get(tunnelEnt, s.tunnelID))
+					t.Progress += 5.0
+				}
 
 				// Deduct structural integrity structurally or directly (if we have access)
 				// Since we pre-cached structures, we need to modify the actual component.
@@ -178,8 +189,8 @@ func (s *UnderminingSystem) Update(world *ecs.World) {
 					MinerX:   minerPos.X,
 					MinerY:   minerPos.Y,
 				})
-				// Optimistically add to local map to prevent multi-spawns in same tick
-				tunnels[bestTarget.ID] = &components.TunnelComponent{TargetID: bestTarget.ID, Progress: 0}
+				// Optimistically mark as pending to prevent multi-spawns in same tick
+				pendingTunnels[bestTarget.ID] = true
 			}
 		}
 	}

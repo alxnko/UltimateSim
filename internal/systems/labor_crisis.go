@@ -65,8 +65,10 @@ func (s *LaborCrisisSystem) Update(world *ecs.World) {
 		return
 	}
 
-	// Active crisis mapping to avoid nested queries
-	activeCrises := make(map[uint32]*components.MarketComponent)
+	// Active crisis mapping to avoid nested queries.
+	// Read-only cache of the crisis WageRate: cache values, not component
+	// pointers — GC corruption class, see banditry.go.
+	activeCrises := make(map[uint32]float32)
 
 	// 1. Evaluate Demographic shifts in Villages
 	villageQuery := s.world.Query(filter.All(s.villageID, s.popID, s.marketID, s.demoID, s.affilID))
@@ -100,7 +102,7 @@ func (s *LaborCrisisSystem) Update(world *ecs.World) {
 
 		// Cache active crisis cities for worker extortion phase
 		if demo.LaborCrisisActive {
-			activeCrises[affil.CityID] = market
+			activeCrises[affil.CityID] = market.WageRate
 		}
 	}
 
@@ -153,7 +155,7 @@ func (s *LaborCrisisSystem) Update(world *ecs.World) {
 		}
 
 		// Must be in a city undergoing a labor crisis
-		market, exists := activeCrises[affil.CityID]
+		crisisWageRate, exists := activeCrises[affil.CityID]
 		if !exists {
 			continue
 		}
@@ -164,7 +166,7 @@ func (s *LaborCrisisSystem) Update(world *ecs.World) {
 		}
 
 		// If employer cannot afford the new extortionate wage (assume 10 ticks buffer required)
-		if employerWealth < market.WageRate*10.0 {
+		if employerWealth < crisisWageRate*10.0 {
 			// Worker quits
 			oldEmployer := job.EmployerID
 			job.JobID = components.JobNone

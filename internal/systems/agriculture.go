@@ -26,8 +26,10 @@ type AgricultureSystem struct {
 	businessID ecs.ID
 	villageID  ecs.ID
 
-	// Active storage cache
-	activeStorages map[uint64]*components.StorageComponent
+	// Active storage cache — cache values, not component pointers — GC
+	// corruption class, see banditry.go. Holds entity handles that are
+	// re-fetched via world.Get at use time.
+	activeStorages map[uint64]ecs.Entity
 }
 
 // NewAgricultureSystem creates a new AgricultureSystem.
@@ -42,7 +44,7 @@ func NewAgricultureSystem(world *ecs.World, mapGrid *engine.MapGrid) *Agricultur
 		idID:           ecs.ComponentID[components.Identity](world),
 		businessID:     ecs.ComponentID[components.BusinessComponent](world),
 		villageID:      ecs.ComponentID[components.Village](world),
-		activeStorages: make(map[uint64]*components.StorageComponent),
+		activeStorages: make(map[uint64]ecs.Entity),
 	}
 }
 
@@ -62,16 +64,14 @@ func (s *AgricultureSystem) Update(world *ecs.World) {
 	vq := s.world.Query(filter.All(s.villageID, s.storageID, s.idID))
 	for vq.Next() {
 		id := (*components.Identity)(vq.Get(s.idID))
-		storage := (*components.StorageComponent)(vq.Get(s.storageID))
-		s.activeStorages[id.ID] = storage
+		s.activeStorages[id.ID] = vq.Entity()
 	}
 
 	// Query Businesses
 	bq := s.world.Query(filter.All(s.businessID, s.storageID, s.idID))
 	for bq.Next() {
 		id := (*components.Identity)(bq.Get(s.idID))
-		storage := (*components.StorageComponent)(bq.Get(s.storageID))
-		s.activeStorages[id.ID] = storage
+		s.activeStorages[id.ID] = bq.Entity()
 	}
 
 	// 2. Iterate over all Farmers
@@ -83,10 +83,11 @@ func (s *AgricultureSystem) Update(world *ecs.World) {
 			continue
 		}
 
-		storage, exists := s.activeStorages[job.EmployerID]
-		if !exists {
+		storageEnt, exists := s.activeStorages[job.EmployerID]
+		if !exists || !s.world.Alive(storageEnt) {
 			continue
 		}
+		storage := (*components.StorageComponent)(s.world.Get(storageEnt, s.storageID))
 
 		pos := (*components.Position)(eq.Get(s.posID))
 		gridX, gridY := int(pos.X), int(pos.Y)

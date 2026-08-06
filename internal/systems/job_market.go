@@ -58,16 +58,18 @@ func (s *JobMarketSystem) Update() {
 
 // payWages transfers wealth from business treasuries to their employees.
 func (s *JobMarketSystem) payWages() {
-	// 1. Build a map of business treasuries and their affiliations for quick O(1) lookup
-	businessTreasuries := make(map[uint64]*components.TreasuryComponent)
+	// 1. Build a map of business treasuries and their affiliations for quick O(1) lookup.
+	// Cache values, not component pointers — GC corruption class, see
+	// banditry.go. Entity handles are stored and the TreasuryComponent is
+	// re-fetched via world.Get at use time.
+	businessTreasuries := make(map[uint64]ecs.Entity)
 	businessCities := make(map[uint64]uint32)
 
 	bq := s.world.Query(filter.All(s.businessID, s.idID, s.treasuryID, s.affID))
 	for bq.Next() {
 		id := (*components.Identity)(bq.Get(s.idID))
-		treasury := (*components.TreasuryComponent)(bq.Get(s.treasuryID))
 		aff := (*components.Affiliation)(bq.Get(s.affID))
-		businessTreasuries[id.ID] = treasury
+		businessTreasuries[id.ID] = bq.Entity()
 		businessCities[id.ID] = aff.CityID
 	}
 
@@ -97,7 +99,8 @@ func (s *JobMarketSystem) payWages() {
 
 		// If the NPC has a job and an employer
 		if job.JobID != components.JobNone && job.EmployerID != 0 {
-			if treasury, ok := businessTreasuries[job.EmployerID]; ok {
+			if treasEnt, ok := businessTreasuries[job.EmployerID]; ok && s.world.Alive(treasEnt) {
+				treasury := (*components.TreasuryComponent)(s.world.Get(treasEnt, s.treasuryID))
 				// Resolve dynamic wage from city
 				wageAmount := float32(1.0)
 				if cityWage, exists := cityWages[aff.CityID]; exists {

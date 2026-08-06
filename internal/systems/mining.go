@@ -32,9 +32,12 @@ type MiningSystem struct {
 	businessID ecs.ID
 	villageID  ecs.ID
 
-	// Active employer cache
-	activeStorages map[uint64]*components.StorageComponent
-	activeMarkets  map[uint64]*components.MarketComponent
+	// Active employer cache — cache values, not component pointers — GC
+	// corruption class, see banditry.go. These maps live across ticks (and
+	// across other systems' structural changes), so they hold entity handles
+	// that are re-fetched via world.Get at use time, never *components.X.
+	activeStorages map[uint64]ecs.Entity
+	activeMarkets  map[uint64]ecs.Entity
 }
 
 func NewMiningSystem(world *ecs.World, mapGrid *engine.MapGrid) *MiningSystem {
@@ -58,8 +61,8 @@ func NewMiningSystem(world *ecs.World, mapGrid *engine.MapGrid) *MiningSystem {
 		idID:           ecs.ComponentID[components.Identity](world),
 		businessID:     ecs.ComponentID[components.BusinessComponent](world),
 		villageID:      ecs.ComponentID[components.Village](world),
-		activeStorages: make(map[uint64]*components.StorageComponent),
-		activeMarkets:  make(map[uint64]*components.MarketComponent),
+		activeStorages: make(map[uint64]ecs.Entity),
+		activeMarkets:  make(map[uint64]ecs.Entity),
 	}
 }
 
@@ -69,26 +72,24 @@ func (s *MiningSystem) Update(world *ecs.World) {
 	clear(s.activeStorages)
 	clear(s.activeMarkets)
 
-	// Pre-cache Villages
+	// Pre-cache Villages (entity handles only; components re-fetched at use time)
 	vq := s.world.Query(filter.All(s.villageID, s.idID, s.storageID, s.marketID))
 	for vq.Next() {
 		id := (*components.Identity)(vq.Get(s.idID))
-		storage := (*components.StorageComponent)(vq.Get(s.storageID))
-		market := (*components.MarketComponent)(vq.Get(s.marketID))
-		s.activeStorages[id.ID] = storage
-		s.activeMarkets[id.ID] = market
+		ent := vq.Entity()
+		s.activeStorages[id.ID] = ent
+		s.activeMarkets[id.ID] = ent
 	}
 
 	// Pre-cache Businesses
 	bq := s.world.Query(filter.All(s.businessID, s.idID, s.storageID))
 	for bq.Next() {
 		id := (*components.Identity)(bq.Get(s.idID))
-		storage := (*components.StorageComponent)(bq.Get(s.storageID))
-		s.activeStorages[id.ID] = storage
+		ent := bq.Entity()
+		s.activeStorages[id.ID] = ent
 		// Businesses might not always have MarketComponent, but if they do, cache it
-		if s.world.Has(bq.Entity(), s.marketID) {
-			market := (*components.MarketComponent)(s.world.Get(bq.Entity(), s.marketID))
-			s.activeMarkets[id.ID] = market
+		if s.world.Has(ent, s.marketID) {
+			s.activeMarkets[id.ID] = ent
 		}
 	}
 
@@ -107,11 +108,16 @@ func (s *MiningSystem) Update(world *ecs.World) {
 			continue
 		}
 
-		storage, hasStorage := s.activeStorages[job.EmployerID]
-		if !hasStorage {
+		storageEnt, hasStorage := s.activeStorages[job.EmployerID]
+		if !hasStorage || !s.world.Alive(storageEnt) {
 			continue
 		}
-		market := s.activeMarkets[job.EmployerID] // might be nil
+		storage := (*components.StorageComponent)(s.world.Get(storageEnt, s.storageID))
+
+		var market *components.MarketComponent // might stay nil
+		if marketEnt, hasMarket := s.activeMarkets[job.EmployerID]; hasMarket && s.world.Alive(marketEnt) {
+			market = (*components.MarketComponent)(s.world.Get(marketEnt, s.marketID))
+		}
 
 		pos := (*components.Position)(eq.Get(s.posID))
 		gridX, gridY := int(pos.X), int(pos.Y)
