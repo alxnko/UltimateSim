@@ -185,6 +185,13 @@ func (s *StatePlaying) handleHotkeys() {
 	if inpututil.IsKeyJustPressed(ebiten.KeyL) {
 		pc.EventLogOpen = !pc.EventLogOpen
 	}
+	// Grand Strategy chrome hotkeys. P (not D: WASD movement owns D) and M.
+	if inpututil.IsKeyJustPressed(ebiten.KeyP) {
+		s.toggleChromeTab(chromeTabDiplomacy)
+	}
+	if inpututil.IsKeyJustPressed(ebiten.KeyM) {
+		s.toggleChromeTab(chromeTabMarket)
+	}
 	if inpututil.IsKeyJustPressed(ebiten.KeyTab) {
 		pc.Lens = (pc.Lens + 1) % lensCount
 	}
@@ -437,6 +444,7 @@ func (s *StatePlaying) Draw(screen *ebiten.Image) {
 	s.minimap.Draw(screen, s.Status.Grid, s.Status.TM.World, screen.Bounds().Dx(), &s.PC.Cam)
 	s.PC.Notes.Draw(screen, s.Status.TM.Ticks, screen.Bounds().Dx())
 	s.DrawInspector(screen)
+	s.DrawChrome(screen)
 
 	// Panels & modals.
 	s.DrawBuildBar(screen)
@@ -446,6 +454,8 @@ func (s *StatePlaying) Draw(screen *ebiten.Image) {
 	s.DrawAmbitions(screen)
 	s.DrawCharPanel(screen)
 	s.DrawEventLog(screen)
+	s.DrawDiplomacy(screen)
+	s.DrawMarket(screen)
 	s.DrawOrderBar(screen)
 	s.DrawHeir(screen)
 	s.DrawPauseMenu(screen)

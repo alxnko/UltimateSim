@@ -74,6 +74,8 @@ type PlayerContext struct {
 	AmbitionsOpen bool
 	CharOpen      bool
 	EventLogOpen  bool
+	DiploOpen     bool // Grand Strategy: diplomacy panel (chrome tab / hotkey)
+	MarketOpen    bool // Grand Strategy: market & trade panel (chrome tab / hotkey)
 	PauseOpen     bool
 	HeirOpen      bool
 	GameOverOpen  bool
@@ -109,7 +111,7 @@ type PlayerContext struct {
 func (pc *PlayerContext) AnyModal() bool {
 	return pc.DialogOpen || pc.TradeOpen || pc.LawsOpen || pc.AmbitionsOpen ||
 		pc.CharOpen || pc.PauseOpen || pc.HeirOpen || pc.GameOverOpen || pc.EventLogOpen ||
-		pc.SelectOpen
+		pc.SelectOpen || pc.DiploOpen || pc.MarketOpen
 }
 
 // CloseAll dismisses every open window and resets tool modes.
@@ -120,6 +122,8 @@ func (pc *PlayerContext) CloseAll() {
 	pc.AmbitionsOpen = false
 	pc.CharOpen = false
 	pc.EventLogOpen = false
+	pc.DiploOpen = false
+	pc.MarketOpen = false
 	pc.PauseOpen = false
 	pc.Menu.Visible = false
 	pc.SubMenu.Visible = false
