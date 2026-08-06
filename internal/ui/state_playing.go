@@ -1,6 +1,7 @@
 package ui
 
 import (
+	"fmt"
 	"image/color"
 
 	"github.com/ALXNKO/UltimateSim/internal/components"
@@ -195,6 +196,9 @@ func (s *StatePlaying) handleHotkeys() {
 	}
 	if inpututil.IsKeyJustPressed(ebiten.KeyM) {
 		s.toggleChromeTab(chromeTabMarket)
+	}
+	if inpututil.IsKeyJustPressed(ebiten.KeyF5) {
+		showPerf = !showPerf
 	}
 	if inpututil.IsKeyJustPressed(ebiten.KeyTab) {
 		pc.Lens = (pc.Lens + 1) % lensCount
@@ -482,6 +486,23 @@ func (s *StatePlaying) Draw(screen *ebiten.Image) {
 
 	// Queued tooltips render above everything.
 	FlushTooltips(screen)
+
+	// P3.3: F5 perf readout.
+	if showPerf {
+		msg := fmt.Sprintf("FPS %.0f  TPS %.0f  speed %dx", ebiten.ActualFPS(), ebiten.ActualTPS(), maxInt(1, s.Status.TM.Speed))
+		DrawPanel(screen, 8, screen.Bounds().Dy()-HUDHeight-26, MeasureText(msg)+16, 20)
+		DrawText(screen, msg, 16, screen.Bounds().Dy()-HUDHeight-22, AccentCol)
+	}
+}
+
+// showPerf toggles the F5 FPS/TPS readout.
+var showPerf bool
+
+func maxInt(a, b int) int {
+	if a > b {
+		return a
+	}
+	return b
 }
 
 // getBiomeColor maps a biome ID to its terrain color.
