@@ -18,6 +18,14 @@ func (s *StatePlaying) DrawHUD(screen *ebiten.Image) {
 	y := sh - HUDHeight
 	DrawPanel(screen, 0, y, sw, HUDHeight)
 
+	// Detached-camera banner: the single most common way to get "lost".
+	if s.PC.CamFree {
+		msg := "Free camera — press F (or move) to return to your character"
+		bw := MeasureText(msg) + 24
+		DrawPanel(screen, (sw-bw)/2, 34, bw, 22)
+		DrawText(screen, msg, (sw-bw)/2+12, 38, AccentCol)
+	}
+
 	world := s.Status.TM.World
 	player, ok := s.PC.PossessedEntity()
 	if !ok {

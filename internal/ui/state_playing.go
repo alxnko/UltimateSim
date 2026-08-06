@@ -337,8 +337,10 @@ func (s *StatePlaying) handleMouse() {
 	// (buttons, modals) always get first claim on them.
 	cmx, cmy, clicked := TakeWorldClick()
 
-	// Minimap click: jump the camera to that world spot.
-	if clicked && pc.overMinimap() {
+	// Minimap click: jump the camera to that world spot. Only in normal
+	// mode — a stray click while placing a building must not teleport the
+	// view (playtest feedback: "it teleported me and I couldn't get back").
+	if clicked && pc.overMinimap() && pc.Mode == ModeNormal {
 		x0 := sw - MinimapSize - 8
 		y0 := 8
 		if cmx >= x0 && cmx < x0+MinimapSize && cmy >= y0 && cmy < y0+MinimapSize {
@@ -356,6 +358,14 @@ func (s *StatePlaying) handleMouse() {
 
 	wx, wy := pc.Cam.ScreenToWorld(mx, my, sw, sh)
 	cwx, cwy := pc.Cam.ScreenToWorld(cmx, cmy, sw, sh)
+
+	// Right click cancels an armed tool mode (build/order) before anything
+	// else — playtest feedback: no intuitive way out of build mode.
+	if pc.Mode != ModeNormal && inpututil.IsMouseButtonJustPressed(ebiten.MouseButtonRight) {
+		pc.Mode = ModeNormal
+		pc.PushNote("Cancelled.", s.Status.TM.Ticks)
+		return
+	}
 
 	// Build placement.
 	if pc.Mode == ModeBuild {
