@@ -8,11 +8,13 @@ import (
 // Phase 21.1: DesperationSystem
 // Links Economy (Market/Needs) to Justice Engine (Crime).
 
+// cache values + the entity handle, not component pointers — GC corruption
+// class, see banditry.go. Storage is written through (theft), so it is
+// re-fetched via world.Get at use time.
 type vData struct {
-	Entity  ecs.Entity
-	X       float32
-	Y       float32
-	Storage *components.StorageComponent
+	Entity ecs.Entity
+	X      float32
+	Y      float32
 }
 
 type DesperationSystem struct {
@@ -61,12 +63,10 @@ func (s *DesperationSystem) Update(world *ecs.World) {
 
 	for villageStorageQuery.Next() {
 		pos := (*components.Position)(villageStorageQuery.Get(posID))
-		storage := (*components.StorageComponent)(villageStorageQuery.Get(storageID))
 		s.villages = append(s.villages, vData{
-			Entity:  villageStorageQuery.Entity(),
-			X:       pos.X,
-			Y:       pos.Y,
-			Storage: storage,
+			Entity: villageStorageQuery.Entity(),
+			X:      pos.X,
+			Y:      pos.Y,
 		})
 	}
 
@@ -108,7 +108,13 @@ func (s *DesperationSystem) Update(world *ecs.World) {
 
 			for i := 0; i < len(s.villages); i++ {
 				v := &s.villages[i]
-				if v.Storage.Food <= 0 {
+				// Re-fetch storage by entity handle — cache values, not
+				// component pointers (GC corruption class, see banditry.go).
+				if !world.Alive(v.Entity) {
+					continue
+				}
+				storage := (*components.StorageComponent)(world.Get(v.Entity, storageID))
+				if storage.Food <= 0 {
 					continue
 				}
 
@@ -123,13 +129,14 @@ func (s *DesperationSystem) Update(world *ecs.World) {
 
 			if bestV != nil {
 				// We found a target, execute theft
+				storage := (*components.StorageComponent)(world.Get(bestV.Entity, storageID))
 				stealAmount := float32(20.0)
-				if float32(bestV.Storage.Food) < stealAmount {
-					stealAmount = float32(bestV.Storage.Food)
+				if float32(storage.Food) < stealAmount {
+					stealAmount = float32(storage.Food)
 				}
 
 				// Physically move goods
-				bestV.Storage.Food -= uint32(stealAmount)
+				storage.Food -= uint32(stealAmount)
 				needs.Food += stealAmount
 				desp.Level = 0 // Reset after eating
 

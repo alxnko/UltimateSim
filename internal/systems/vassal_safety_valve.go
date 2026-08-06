@@ -14,6 +14,8 @@ import (
 // automatically generate deep negative hooks against the wealthiest member and spread rumors.
 // Bridging Economy (Wealth), Genetics/Traits (Jealousy), Information (Rumors), and Justice (Blood Feuds).
 
+// cache values, not component pointers — GC corruption class, see banditry.go
+// SecretComponent (written) is re-fetched via the entity handle at use time.
 type npcValveData struct {
 	Entity     ecs.Entity
 	IdentityID uint64
@@ -21,7 +23,7 @@ type npcValveData struct {
 	ClanID     uint32
 	Wealth     float32
 	BaseTraits uint32
-	SecretComp *components.SecretComponent
+	HasSecret  bool
 }
 
 type clanWealthData struct {
@@ -74,10 +76,7 @@ func (s *VassalSafetyValveSystem) Update(world *ecs.World) {
 		affil := (*components.Affiliation)(query.Get(s.affilID))
 		needs := (*components.Needs)(query.Get(s.needsID))
 
-		var secret *components.SecretComponent
-		if world.Has(query.Entity(), s.secretID) {
-			secret = (*components.SecretComponent)(world.Get(query.Entity(), s.secretID))
-		}
+		hasSecret := world.Has(query.Entity(), s.secretID)
 
 		// Only track citizens of a city belonging to a Clan
 		if affil.CityID != 0 && affil.ClanID != 0 {
@@ -88,7 +87,7 @@ func (s *VassalSafetyValveSystem) Update(world *ecs.World) {
 				ClanID:     affil.ClanID,
 				Wealth:     needs.Wealth,
 				BaseTraits: ident.BaseTraits,
-				SecretComp: secret,
+				HasSecret:  hasSecret,
 			})
 		}
 	}
@@ -171,15 +170,19 @@ func (s *VassalSafetyValveSystem) Update(world *ecs.World) {
 				s.hooks.AddHook(npc.IdentityID, monopoly.WealthiestID, -50)
 
 				// Generate mutated Secret to ruin reputation (Only generate once per target)
-				if npc.SecretComp != nil && registry != nil {
+				if npc.HasSecret && registry != nil {
 					rumorText := fmt.Sprintf("monopoly_resentment_against_%d_tick_%d", monopoly.WealthiestID, s.tickStamp)
 					secretID := registry.RegisterSecret(rumorText)
 
-					npc.SecretComp.Secrets = append(npc.SecretComp.Secrets, components.Secret{
-						OriginID: npc.IdentityID,
-						SecretID: secretID,
-						Virality: 255, // Highly contagious
-					})
+					// Re-fetch via entity handle at use time (cached pointers do not survive archetype moves)
+					if world.Alive(npc.Entity) {
+						secretComp := (*components.SecretComponent)(world.Get(npc.Entity, s.secretID))
+						secretComp.Secrets = append(secretComp.Secrets, components.Secret{
+							OriginID: npc.IdentityID,
+							SecretID: secretID,
+							Virality: 255, // Highly contagious
+						})
+					}
 				}
 			}
 		}

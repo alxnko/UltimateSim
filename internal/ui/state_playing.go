@@ -1,6 +1,7 @@
 package ui
 
 import (
+	"fmt"
 	"image/color"
 
 	"github.com/ALXNKO/UltimateSim/internal/components"
@@ -40,14 +41,34 @@ func (s *StatePlaying) Update(sm *StateManager) error {
 	s.Status.Mutex.Lock()
 	defer s.Status.Mutex.Unlock()
 
+	BeginUIFrame()
+
 	if !s.Status.Done {
 		return nil
 	}
 	pc := s.PC
 
 	if !pc.Initialized {
-		s.initPlayer()
+		s.bindHandles()
 		pc.Initialized = true
+		if _, ok := pc.PossessedEntity(); ok {
+			pc.Warmup = 0 // loaded save: body already claimed
+		} else {
+			pc.Warmup = warmupTicks
+		}
+	}
+
+	// Fresh world: burst-run the sim so genesis + settlement settle before
+	// the player picks a body. ~20 ticks/frame keeps the UI responsive.
+	if pc.Warmup > 0 {
+		for i := 0; i < 20 && pc.Warmup > 0; i++ {
+			s.Status.TM.Tick()
+			pc.Warmup--
+		}
+		if pc.Warmup == 0 {
+			s.openCharacterSelect()
+		}
+		return nil
 	}
 
 	world := s.Status.TM.World
@@ -59,17 +80,30 @@ func (s *StatePlaying) Update(sm *StateManager) error {
 		pc.Events.Clear()
 	}
 
+	// Character select owns the keyboard while open.
+	if pc.SelectOpen {
+		s.handleSelectKeys()
+	}
+
 	s.handleHotkeys()
 	s.handleMouse()
 
 	// Movement lock while any modal/menu owns input.
 	if pc.Bridge != nil {
-		pc.Bridge.MovementLocked = pc.AnyModal()
+		pc.Bridge.MovementLocked = pc.AnyModal() || EventPopupActive(pc)
 	}
 
-	// Advance the simulation (respects its own pause flag).
-	if !pc.AnyModal() || s.Status.TM.IsPaused {
-		s.Status.TM.Tick()
+	// Advance the simulation (respects its own pause flag). Speed is the
+	// grand-strategy ticks-per-frame multiplier (keys 1-4). An open event
+	// popup pauses time, CK-style (spec G5).
+	if (!pc.AnyModal() && !EventPopupActive(pc)) || s.Status.TM.IsPaused {
+		speed := s.Status.TM.Speed
+		if speed < 1 {
+			speed = 1
+		}
+		for i := 0; i < speed; i++ {
+			s.Status.TM.Tick()
+		}
 	}
 
 	// Drain combat/feedback events into the effects layer.
@@ -78,7 +112,7 @@ func (s *StatePlaying) Update(sm *StateManager) error {
 	}
 
 	// Camera follows the possessed entity unless free-panning.
-	if player, ok := pc.PossessedEntity(); ok {
+	if player, ok := pc.PossessedEntity(); ok && !pc.CamFree {
 		posID := ecs.ComponentID[components.Position](world)
 		if world.Has(player, posID) {
 			pos := (*components.Position)(world.Get(player, posID))
@@ -103,41 +137,17 @@ func (s *StatePlaying) Update(sm *StateManager) error {
 	return nil
 }
 
-// initPlayer sets up sprites, bridge, possession and player components.
-func (s *StatePlaying) initPlayer() {
+// warmupTicks is how long a fresh world simulates before character select:
+// genesis spawns on tick 1; a few seconds of sim binds cities, jobs, leaders.
+const warmupTicks = 240
+
+// bindHandles wires the UI to the engine's shared handles. Possession happens
+// later, through the character-select screen (or a loaded save).
+func (s *StatePlaying) bindHandles() {
 	pc := s.PC
-	world := s.Status.TM.World
 	pc.Sprites = render.NewSpriteCache()
 	pc.Bridge = s.Status.Bridge
 	pc.Events = s.Status.Events
-
-	// Possess a young, family-bound NPC if none possessed yet.
-	if _, ok := pc.PossessedEntity(); !ok {
-		if cand, found := systems.FindStartCandidate(world); found {
-			systems.PossessEntity(world, cand)
-		}
-	}
-	if player, ok := pc.PossessedEntity(); ok {
-		systems.EnsurePlayerStorage(world, player)
-		// Seed starting materials + coin so the player can act immediately.
-		storID := ecs.ComponentID[components.StorageComponent](world)
-		st := (*components.StorageComponent)(world.Get(player, storID))
-		if st.Wood == 0 && st.Stone == 0 {
-			st.Wood, st.Stone, st.Food = 120, 120, 50
-		}
-		needsID := ecs.ComponentID[components.Needs](world)
-		if world.Has(player, needsID) {
-			n := (*components.Needs)(world.Get(player, needsID))
-			if n.Wealth < 100 {
-				n.Wealth = 100
-			}
-		}
-		ambID := ecs.ComponentID[components.AmbitionsComponent](world)
-		if !world.Has(player, ambID) {
-			world.Add(player, ambID)
-		}
-		pc.PushNote("You awaken into the world. Survive. Rise. Endure.", s.Status.TM.Ticks)
-	}
 }
 
 // handleHotkeys processes keyboard shortcuts.
@@ -145,6 +155,9 @@ func (s *StatePlaying) handleHotkeys() {
 	pc := s.PC
 
 	if inpututil.IsKeyJustPressed(ebiten.KeyEscape) {
+		if EventPopupActive(pc) {
+			return // the event popup's ModalFrame consumes Esc in Draw
+		}
 		if pc.AnyModal() || pc.Mode != ModeNormal {
 			pc.CloseAll()
 		} else {
@@ -177,6 +190,19 @@ func (s *StatePlaying) handleHotkeys() {
 	if inpututil.IsKeyJustPressed(ebiten.KeyL) {
 		pc.EventLogOpen = !pc.EventLogOpen
 	}
+	// Grand Strategy chrome hotkeys. P (not D: WASD movement owns D) and M.
+	if inpututil.IsKeyJustPressed(ebiten.KeyP) {
+		s.toggleChromeTab(chromeTabDiplomacy)
+	}
+	if inpututil.IsKeyJustPressed(ebiten.KeyM) {
+		s.toggleChromeTab(chromeTabMarket)
+	}
+	if inpututil.IsKeyJustPressed(ebiten.KeyY) {
+		s.toggleChromeTab(chromeTabDynasty)
+	}
+	if inpututil.IsKeyJustPressed(ebiten.KeyF5) {
+		showPerf = !showPerf
+	}
 	if inpututil.IsKeyJustPressed(ebiten.KeyTab) {
 		pc.Lens = (pc.Lens + 1) % lensCount
 	}
@@ -195,6 +221,42 @@ func (s *StatePlaying) handleHotkeys() {
 	if inpututil.IsKeyJustPressed(ebiten.KeySpace) {
 		s.Status.TM.TogglePause()
 	}
+	// Grand Strategy Phase: sim speed 1/2/4/8 ticks-per-frame on keys 1-4.
+	if inpututil.IsKeyJustPressed(ebiten.Key1) {
+		s.Status.TM.Speed = 1
+	}
+	if inpututil.IsKeyJustPressed(ebiten.Key2) {
+		s.Status.TM.Speed = 2
+	}
+	if inpututil.IsKeyJustPressed(ebiten.Key3) {
+		s.Status.TM.Speed = 4
+	}
+	if inpututil.IsKeyJustPressed(ebiten.Key4) {
+		s.Status.TM.Speed = 8
+	}
+	// Free camera: arrow keys pan; F (or moving your character) re-follows.
+	panStep := 12.0 / pc.Cam.TileSize()
+	if ebiten.IsKeyPressed(ebiten.KeyArrowLeft) {
+		pc.Cam.X -= panStep
+		pc.CamFree = true
+	}
+	if ebiten.IsKeyPressed(ebiten.KeyArrowRight) {
+		pc.Cam.X += panStep
+		pc.CamFree = true
+	}
+	if ebiten.IsKeyPressed(ebiten.KeyArrowUp) {
+		pc.Cam.Y -= panStep
+		pc.CamFree = true
+	}
+	if ebiten.IsKeyPressed(ebiten.KeyArrowDown) {
+		pc.Cam.Y += panStep
+		pc.CamFree = true
+	}
+	if inpututil.IsKeyJustPressed(ebiten.KeyF) ||
+		ebiten.IsKeyPressed(ebiten.KeyW) || ebiten.IsKeyPressed(ebiten.KeyA) ||
+		ebiten.IsKeyPressed(ebiten.KeyS) || ebiten.IsKeyPressed(ebiten.KeyD) {
+		pc.CamFree = false
+	}
 	// Hammer a nearby construction site.
 	if inpututil.IsKeyJustPressed(ebiten.KeyE) {
 		s.tryHammer()
@@ -210,7 +272,11 @@ func (s *StatePlaying) handleHotkeys() {
 
 func (pc *PlayerContext) overMinimap() bool {
 	mx, my := ebiten.CursorPosition()
-	return mx > 1280-MinimapSize-16 && my < MinimapSize+16
+	sw, _ := ebiten.WindowSize()
+	if sw < 960 {
+		sw = 960
+	}
+	return mx > sw-MinimapSize-16 && my < MinimapSize+16
 }
 
 // tryHammer advances the nearest construction site near the player.
@@ -236,7 +302,13 @@ func (s *StatePlaying) tryHammer() {
 func (s *StatePlaying) handleMouse() {
 	pc := s.PC
 	world := s.Status.TM.World
-	sw, sh := 1280, 720
+	sw, sh := ebiten.WindowSize()
+	if sw < 960 {
+		sw = 960
+	}
+	if sh < 540 {
+		sh = 540
+	}
 	mx, my := ebiten.CursorPosition()
 
 	// Context menu has first claim on clicks.
@@ -254,19 +326,63 @@ func (s *StatePlaying) handleMouse() {
 	}
 
 	if pc.AnyModal() {
+		pc.dragging = false
 		return
 	}
+
+	// Middle-mouse drag pans the camera (grand-strategy map scrubbing).
+	if ebiten.IsMouseButtonPressed(ebiten.MouseButtonMiddle) {
+		if pc.dragging {
+			ts := pc.Cam.TileSize()
+			pc.Cam.X -= float64(mx-pc.dragX) / ts
+			pc.Cam.Y -= float64(my-pc.dragY) / ts
+			pc.CamFree = true
+		}
+		pc.dragging = true
+		pc.dragX, pc.dragY = mx, my
+	} else {
+		pc.dragging = false
+	}
+
+	// Left clicks arrive one tick late via TakeWorldClick so drawn widgets
+	// (buttons, modals) always get first claim on them.
+	cmx, cmy, clicked := TakeWorldClick()
+
+	// Minimap click: jump the camera to that world spot. Only in normal
+	// mode — a stray click while placing a building must not teleport the
+	// view (playtest feedback: "it teleported me and I couldn't get back").
+	if clicked && pc.overMinimap() && pc.Mode == ModeNormal {
+		x0 := sw - MinimapSize - 8
+		y0 := 8
+		if cmx >= x0 && cmx < x0+MinimapSize && cmy >= y0 && cmy < y0+MinimapSize {
+			scale := float64(s.Status.Grid.Width) / float64(MinimapSize)
+			pc.Cam.X = float64(cmx-x0) * scale
+			pc.Cam.Y = float64(cmy-y0) * scale
+			pc.CamFree = true
+		}
+		return
+	}
+
 	if pc.UIOccludes(mx, my, sw, sh) {
 		return
 	}
 
 	wx, wy := pc.Cam.ScreenToWorld(mx, my, sw, sh)
+	cwx, cwy := pc.Cam.ScreenToWorld(cmx, cmy, sw, sh)
+
+	// Right click cancels an armed tool mode (build/order) before anything
+	// else — playtest feedback: no intuitive way out of build mode.
+	if pc.Mode != ModeNormal && inpututil.IsMouseButtonJustPressed(ebiten.MouseButtonRight) {
+		pc.Mode = ModeNormal
+		pc.PushNote("Cancelled.", s.Status.TM.Ticks)
+		return
+	}
 
 	// Build placement.
 	if pc.Mode == ModeBuild {
-		if inpututil.IsMouseButtonJustPressed(ebiten.MouseButtonLeft) {
+		if clicked {
 			if player, ok := pc.PossessedEntity(); ok {
-				if _, err := systems.PlaceSite(world, s.Status.Grid, player, pc.BuildType, wx, wy); err != nil {
+				if _, err := systems.PlaceSite(world, s.Status.Grid, player, pc.BuildType, cwx, cwy); err != nil {
 					pc.PushNote("Cannot build: "+err.Error(), s.Status.TM.Ticks)
 				} else {
 					pc.PushNote("Construction site founded.", s.Status.TM.Ticks)
@@ -281,20 +397,20 @@ func (s *StatePlaying) handleMouse() {
 
 	// Order targeting (armed move/attack/build order awaiting a click).
 	if pc.Mode == ModeOrder {
-		if inpututil.IsMouseButtonJustPressed(ebiten.MouseButtonLeft) {
-			s.placeOrderTarget(wx, wy)
+		if clicked {
+			s.placeOrderTarget(cwx, cwy)
 		}
 		return
 	}
 
 	// Left click: attack NPC, or select.
-	if inpututil.IsMouseButtonJustPressed(ebiten.MouseButtonLeft) {
-		ent, kind, found := pc.EntityAt(wx, wy, 1.2)
+	if clicked {
+		ent, kind, found := pc.EntityAt(cwx, cwy, 1.2)
 		shift := ebiten.IsKeyPressed(ebiten.KeyShift)
 		if found && kind == TargetNPC && !shift {
 			// Attack.
 			if pc.Bridge != nil {
-				pc.Bridge.AttackX, pc.Bridge.AttackY, pc.Bridge.AttackValid = wx, wy, true
+				pc.Bridge.AttackX, pc.Bridge.AttackY, pc.Bridge.AttackValid = cwx, cwy, true
 			}
 		} else if found {
 			pc.Select(ent, kind)
@@ -318,17 +434,38 @@ func (s *StatePlaying) Draw(screen *ebiten.Image) {
 		ebitenutil.DebugPrintAt(screen, "Loading: "+s.Status.Message, 10, 10)
 		return
 	}
+	// Draw can run before the first Update on the state-switch frame; the
+	// sprite cache and bridges bind in Update, so wait one frame.
+	if !s.PC.Initialized {
+		screen.Fill(color.RGBA{20, 20, 30, 255})
+		ebitenutil.DebugPrintAt(screen, "Awakening...", 10, 10)
+		return
+	}
 	screen.Fill(color.RGBA{18, 20, 28, 255})
+
+	// Warmup: world visible behind a progress veil, chrome hidden.
+	if s.PC.Warmup > 0 {
+		s.DrawWorld(screen)
+		sw, sh := screen.Bounds().Dx(), screen.Bounds().Dy()
+		DrawPanel(screen, sw/2-160, sh/2-30, 320, 60)
+		DrawText(screen, "The world awakens...", sw/2-70, sh/2-20, AccentCol)
+		frac := 1 - float32(s.PC.Warmup)/float32(warmupTicks)
+		Bar(screen, sw/2-140, sh/2+4, 280, 12, frac, BarBlue, "")
+		return
+	}
 
 	s.DrawWorld(screen)
 	DrawHurtVignette(screen, s.PC.HurtFlash)
 	s.PC.FX.Draw(screen, &s.PC.Cam)
+	DrawBuildGhost(s, screen) // P5 L2: tile-snapped ghost + cost/reason
+	DrawOverheads(s, screen)  // P5 L2/L3: site bars, health bars, name plate, player marker
 
 	// Chrome.
 	s.DrawHUD(screen)
-	s.minimap.Draw(screen, s.Status.Grid, s.Status.TM.World, screen.Bounds().Dx())
+	s.minimap.Draw(screen, s.Status.Grid, s.Status.TM.World, screen.Bounds().Dx(), &s.PC.Cam)
 	s.PC.Notes.Draw(screen, s.Status.TM.Ticks, screen.Bounds().Dx())
 	s.DrawInspector(screen)
+	s.DrawChrome(screen)
 
 	// Panels & modals.
 	s.DrawBuildBar(screen)
@@ -338,13 +475,38 @@ func (s *StatePlaying) Draw(screen *ebiten.Image) {
 	s.DrawAmbitions(screen)
 	s.DrawCharPanel(screen)
 	s.DrawEventLog(screen)
+	s.DrawDiplomacy(screen)
+	s.DrawDynasty(screen)
+	s.DrawMarket(screen)
 	s.DrawOrderBar(screen)
 	s.DrawHeir(screen)
 	s.DrawPauseMenu(screen)
+	s.DrawCharacterSelect(screen)
+	s.DrawEventPopup(screen)
 
 	// Popup menus on top.
 	s.PC.Menu.Draw(screen)
 	s.PC.SubMenu.Draw(screen)
+
+	// Queued tooltips render above everything.
+	FlushTooltips(screen)
+
+	// P3.3: F5 perf readout.
+	if showPerf {
+		msg := fmt.Sprintf("FPS %.0f  TPS %.0f  speed %dx", ebiten.ActualFPS(), ebiten.ActualTPS(), maxInt(1, s.Status.TM.Speed))
+		DrawPanel(screen, 8, screen.Bounds().Dy()-HUDHeight-26, MeasureText(msg)+16, 20)
+		DrawText(screen, msg, 16, screen.Bounds().Dy()-HUDHeight-22, AccentCol)
+	}
+}
+
+// showPerf toggles the F5 FPS/TPS readout.
+var showPerf bool
+
+func maxInt(a, b int) int {
+	if a > b {
+		return a
+	}
+	return b
 }
 
 // getBiomeColor maps a biome ID to its terrain color.

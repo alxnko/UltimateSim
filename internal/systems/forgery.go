@@ -52,9 +52,11 @@ func NewForgerySystem(world *ecs.World, hooks *engine.SparseHookGraph) *ForgeryS
 	}
 }
 
+// forgeryBusinessData caches values + entity handles, not component pointers — GC
+// corruption class, see banditry.go. Ownership writes re-fetch via the handle at use time.
 type forgeryBusinessData struct {
-	entity ecs.Entity
-	comp   *components.BusinessComponent
+	entity  ecs.Entity
+	ownerID uint64
 }
 
 func (s *ForgerySystem) Update(world *ecs.World) {
@@ -65,8 +67,8 @@ func (s *ForgerySystem) Update(world *ecs.World) {
 	for bQuery.Next() {
 		comp := (*components.BusinessComponent)(bQuery.Get(s.businessID))
 		businesses = append(businesses, forgeryBusinessData{
-			entity: bQuery.Entity(),
-			comp:   comp,
+			entity:  bQuery.Entity(),
+			ownerID: comp.OwnerID,
 		})
 	}
 
@@ -116,20 +118,24 @@ func (s *ForgerySystem) Update(world *ecs.World) {
 			}
 
 			// Skip if they already own it
-			if b.comp.OwnerID == fIdent.ID {
+			if b.ownerID == fIdent.ID {
 				continue
 			}
 
-			ownerIntellect, exists := ownerIntellectCache[b.comp.OwnerID]
+			ownerIntellect, exists := ownerIntellectCache[b.ownerID]
 			if !exists {
 				continue // Owner might be dead or not an NPC
 			}
 
 			// If forger's intellect is strictly greater than owner's intellect, steal it!
 			if fGen.Intellect > ownerIntellect {
-				// Steal ownership
-				originalOwnerID := b.comp.OwnerID
-				b.comp.OwnerID = fIdent.ID
+				// Steal ownership (write re-fetched at use time via the entity handle — see banditry.go)
+				originalOwnerID := b.ownerID
+				if world.Alive(b.entity) && world.Has(b.entity, s.businessID) {
+					comp := (*components.BusinessComponent)(world.Get(b.entity, s.businessID))
+					comp.OwnerID = fIdent.ID
+				}
+				b.ownerID = fIdent.ID
 				stolenBusinesses[b.entity] = true
 
 				// Generate a -100 hook against the forger (originalOwner -> forger)

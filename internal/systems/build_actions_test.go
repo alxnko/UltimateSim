@@ -308,6 +308,98 @@ func TestHammerSite(t *testing.T) {
 	}
 }
 
+// TestCanPlaceReason exercises every failure class with its reason string,
+// plus the geometry-only (zero player) and fully-valid paths.
+func TestCanPlaceReason(t *testing.T) {
+	world := ecs.NewWorld()
+	ecs.ComponentID[components.Position](&world)
+	ecs.ComponentID[components.StructureComponent](&world)
+	ecs.ComponentID[components.ConstructionSiteComponent](&world)
+	ecs.ComponentID[components.Village](&world)
+	ecs.ComponentID[components.StorageComponent](&world)
+	ecs.ComponentID[components.Affiliation](&world)
+
+	grid := engine.NewMapGrid(16, 16)
+	fillLand(grid)
+
+	check := func(name string, player ecs.Entity, wx, wy float32, wantReason string, wantOK bool) {
+		t.Helper()
+		reason, ok := CanPlaceReason(&world, grid, player, components.StructureHouse, wx, wy)
+		if ok != wantOK || reason != wantReason {
+			t.Errorf("%s: CanPlaceReason(%v, %v) = (%q, %v), want (%q, %v)",
+				name, wx, wy, reason, ok, wantReason, wantOK)
+		}
+	}
+
+	// Geometry-only path with the zero entity: valid clear land.
+	check("clear land, zero player", ecs.Entity{}, 5, 5, "", true)
+
+	// Out of bounds (negative and beyond extent).
+	check("x negative", ecs.Entity{}, -2, 5, "out of bounds", false)
+	check("y beyond", ecs.Entity{}, 5, 16, "out of bounds", false)
+
+	// Water.
+	grid.Tiles[8*grid.Width+8].BiomeID = engine.BiomeOcean
+	check("ocean tile", ecs.Entity{}, 8, 8, "water", false)
+
+	// Too close to a building.
+	spawnExistingStructure(&world, 5, 5)
+	check("on a structure", ecs.Entity{}, 5, 5, "too close to a building", false)
+
+	// Too close to a construction site.
+	siteID := ecs.ComponentID[components.ConstructionSiteComponent](&world)
+	posID := ecs.ComponentID[components.Position](&world)
+	se := world.NewEntity(siteID, posID)
+	sp := (*components.Position)(world.Get(se, posID))
+	sp.X, sp.Y = 12, 12
+	check("on a site", ecs.Entity{}, 12, 12, "too close to a construction site", false)
+
+	// Too close to a settlement.
+	villageID := ecs.ComponentID[components.Village](&world)
+	ve := world.NewEntity(villageID, posID)
+	vp := (*components.Position)(world.Get(ve, posID))
+	vp.X, vp.Y = 2, 12
+	check("on a village", ecs.Entity{}, 2, 12, "too close to a settlement", false)
+
+	// Not enough materials: a live but broke player on clear land.
+	poor := spawnPlayerEntity(&world, 10, 10, 1)
+	check("broke player", poor, 10, 5, "not enough materials", false)
+
+	// Funded player on clear land: fully valid.
+	rich := spawnPlayerEntity(&world, 200, 200, 1)
+	check("funded player", rich, 10, 5, "", true)
+
+	// Geometry failures outrank the material check (broke player on water).
+	check("broke player on water", poor, 8, 8, "water", false)
+}
+
+// TestCanPlaceReasonMatchesCanPlace pins the refactor: CanPlace must agree
+// with the geometry-only CanPlaceReason verdict at every probed point.
+func TestCanPlaceReasonMatchesCanPlace(t *testing.T) {
+	world := ecs.NewWorld()
+	ecs.ComponentID[components.Position](&world)
+	ecs.ComponentID[components.StructureComponent](&world)
+	ecs.ComponentID[components.ConstructionSiteComponent](&world)
+	ecs.ComponentID[components.Village](&world)
+
+	grid := engine.NewMapGrid(16, 16)
+	fillLand(grid)
+	grid.Tiles[3*grid.Width+3].BiomeID = engine.BiomeOcean
+	spawnExistingStructure(&world, 9, 9)
+
+	points := [][2]float32{{5, 5}, {3, 3}, {9, 9}, {-1, 0}, {15, 15}}
+	for _, p := range points {
+		err := CanPlace(&world, grid, p[0], p[1])
+		reason, ok := CanPlaceReason(&world, grid, ecs.Entity{}, 0, p[0], p[1])
+		if (err == nil) != ok {
+			t.Errorf("point (%v,%v): CanPlace err=%v but CanPlaceReason ok=%v", p[0], p[1], err, ok)
+		}
+		if err != nil && err.Error() != reason {
+			t.Errorf("point (%v,%v): CanPlace error %q != reason %q", p[0], p[1], err.Error(), reason)
+		}
+	}
+}
+
 // TestHammerSiteProgressClamp verifies Progress never exceeds MaxProgress.
 func TestHammerSiteProgressClamp(t *testing.T) {
 	world := ecs.NewWorld()

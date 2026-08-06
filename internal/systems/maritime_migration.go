@@ -9,12 +9,14 @@ import (
 // Evaluates desperate NPCs and moves them onto ShipComponents if they can afford the passage fare.
 // Bridges Phase 13/21 (Desperation/Wealth) directly to Phase 17 (Naval Logistics).
 
+// shipNodeData caches values + entity handles, not component pointers — GC corruption
+// class, see banditry.go. PassengerComponent is re-fetched via the handle at use time
+// because RemoveEntity calls in the boarding loop trigger structural changes.
 type shipNodeData struct {
-	Entity        ecs.Entity
-	OwnerID       uint64
-	X             float32
-	Y             float32
-	PassengerComp *components.PassengerComponent
+	Entity  ecs.Entity
+	OwnerID uint64
+	X       float32
+	Y       float32
 }
 
 type MaritimeMigrationSystem struct {
@@ -59,7 +61,6 @@ func (s *MaritimeMigrationSystem) Update(world *ecs.World) {
 
 	for shipQuery.Next() {
 		pos := (*components.Position)(shipQuery.Get(s.posID))
-		passComp := (*components.PassengerComponent)(shipQuery.Get(s.passengerID))
 
 		var ownerID uint64 = 0
 		if shipQuery.Has(s.businessID) {
@@ -68,11 +69,10 @@ func (s *MaritimeMigrationSystem) Update(world *ecs.World) {
 		}
 
 		s.ships = append(s.ships, shipNodeData{
-			Entity:        shipQuery.Entity(),
-			OwnerID:       ownerID,
-			X:             pos.X,
-			Y:             pos.Y,
-			PassengerComp: passComp,
+			Entity:  shipQuery.Entity(),
+			OwnerID: ownerID,
+			X:       pos.X,
+			Y:       pos.Y,
 		})
 	}
 	// Do not explicitly call shipQuery.Close() if Next() returned false
@@ -154,10 +154,15 @@ func (s *MaritimeMigrationSystem) Update(world *ecs.World) {
 			// But for now, we just deduct it from the NPC to represent the economic sink of buying passage.
 		}
 
-		// Append the NPC identity to the ship's passenger slice
-		shipNode.PassengerComp.Passengers = append(shipNode.PassengerComp.Passengers, components.Passenger{
-			EntityID: ident.ID,
-		})
+		// Append the NPC identity to the ship's passenger slice.
+		// Re-fetch AFTER prior RemoveEntity calls in this loop: structural changes can move
+		// archetype storage, so cached component pointers would dangle — see banditry.go.
+		if world.Alive(shipNode.Entity) && world.Has(shipNode.Entity, s.passengerID) {
+			passComp := (*components.PassengerComponent)(world.Get(shipNode.Entity, s.passengerID))
+			passComp.Passengers = append(passComp.Passengers, components.Passenger{
+				EntityID: ident.ID,
+			})
+		}
 
 		// Despawn the physical NPC from the land map, abstracting them into the Ship's passenger hold.
 		world.RemoveEntity(action.NPCEntity)

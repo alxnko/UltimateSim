@@ -38,11 +38,12 @@ func NewCombatSystem(world *ecs.World) *CombatSystem {
 	}
 }
 
+// targetData caches values + entity handles, not component pointers — GC corruption
+// class, see banditry.go. Vitals are re-fetched via the handle at use time.
 type targetData struct {
 	entity ecs.Entity
 	x      float32
 	y      float32
-	vitals *components.VitalsComponent
 }
 
 func (s *CombatSystem) Update(world *ecs.World) {
@@ -52,13 +53,11 @@ func (s *CombatSystem) Update(world *ecs.World) {
 	for tQuery.Next() {
 		ident := (*components.Identity)(tQuery.Get(s.identID))
 		pos := (*components.Position)(tQuery.Get(s.posID))
-		vitals := (*components.VitalsComponent)(tQuery.Get(s.vitalsID))
 
 		targets[ident.ID] = targetData{
 			entity: tQuery.Entity(),
 			x:      pos.X,
 			y:      pos.Y,
-			vitals: vitals,
 		}
 	}
 
@@ -71,8 +70,17 @@ func (s *CombatSystem) Update(world *ecs.World) {
 		attackerVitals := (*components.VitalsComponent)(cQuery.Get(s.vitalsID))
 
 		target, exists := targets[combat.TargetID]
-		if !exists || !world.Alive(target.entity) || target.vitals.Blood <= 0 {
+		if !exists || !world.Alive(target.entity) {
 			// Target is dead or invalid, end combat
+			markersToRemove = append(markersToRemove, cQuery.Entity())
+			continue
+		}
+
+		// Re-fetch vitals at use time via the entity handle — see banditry.go.
+		// Damage from earlier attackers this tick must remain visible here.
+		targetVitals := (*components.VitalsComponent)(world.Get(target.entity, s.vitalsID))
+		if targetVitals.Blood <= 0 {
+			// Target is dead, end combat
 			markersToRemove = append(markersToRemove, cQuery.Entity())
 			continue
 		}
@@ -96,19 +104,19 @@ func (s *CombatSystem) Update(world *ecs.World) {
 		}
 
 		// Target takes damage
-		target.vitals.Blood -= 10.0
-		if target.vitals.Blood < 0 {
-			target.vitals.Blood = 0
+		targetVitals.Blood -= 10.0
+		if targetVitals.Blood < 0 {
+			targetVitals.Blood = 0
 		}
 
 		// Target suffers pain (which bridges to Psychological Stress Engine)
-		target.vitals.Pain += 15.0
-		if target.vitals.Pain > 100.0 {
-			target.vitals.Pain = 100.0
+		targetVitals.Pain += 15.0
+		if targetVitals.Pain > 100.0 {
+			targetVitals.Pain = 100.0
 		}
 
 		// If target dies from this blow, mark for combat removal
-		if target.vitals.Blood <= 0 {
+		if targetVitals.Blood <= 0 {
 			markersToRemove = append(markersToRemove, cQuery.Entity())
 		}
 	}

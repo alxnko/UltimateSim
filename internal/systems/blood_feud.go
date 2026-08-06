@@ -10,13 +10,13 @@ import (
 // Scans for deep negative hooks between NPCs. If found, one NPC murders the other.
 // Murder triggers an immediate generational negative hook inheritance across entire Clans.
 
+// cache values, not component pointers — GC corruption class, see banditry.go
 type feudNodeData struct {
 	entity ecs.Entity
 	id     uint64
 	clanID uint32
 	x      float32
 	y      float32
-	mem    *components.Memory
 }
 
 type BloodFeudSystem struct {
@@ -63,7 +63,6 @@ func (s *BloodFeudSystem) Update(world *ecs.World) {
 		pos := (*components.Position)(query.Get(s.posID))
 		ident := (*components.Identity)(query.Get(s.identID))
 		aff := (*components.Affiliation)(query.Get(s.affID))
-		mem := (*components.Memory)(query.Get(s.memID))
 
 		nodes = append(nodes, feudNodeData{
 			entity: query.Entity(),
@@ -71,7 +70,6 @@ func (s *BloodFeudSystem) Update(world *ecs.World) {
 			clanID: aff.ClanID,
 			x:      pos.X,
 			y:      pos.Y,
-			mem:    mem,
 		})
 	}
 
@@ -108,13 +106,18 @@ func (s *BloodFeudSystem) Update(world *ecs.World) {
 					// Murder logic execution
 
 					// 1. Log InteractionMurder in Killer's memory
-					idx := killer.mem.Head
-					killer.mem.Events[idx] = components.MemoryEvent{
-						TargetID:        victim.id,
-						TickStamp:       s.tickCounter,
-						InteractionType: components.InteractionMurder,
+					// Re-fetch via entity handle at use time: CombatMarker adds below
+					// trigger archetype moves that invalidate cached pointers.
+					if world.Alive(killer.entity) {
+						killerMem := (*components.Memory)(world.Get(killer.entity, s.memID))
+						idx := killerMem.Head
+						killerMem.Events[idx] = components.MemoryEvent{
+							TargetID:        victim.id,
+							TickStamp:       s.tickCounter,
+							InteractionType: components.InteractionMurder,
+						}
+						killerMem.Head = (idx + 1) % 50
 					}
-					killer.mem.Head = (idx + 1) % 50
 
 					// 2. Add CombatMarker to attacker, targeting victim
 					combatID := ecs.ComponentID[components.CombatMarker](world)

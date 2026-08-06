@@ -11,14 +11,16 @@ import (
 // they revolt by dropping their JobGuard status (switching to JobBandit) and gaining a massive negative hook
 // against the Capital's ruler or country's owner in the SparseHookGraph, triggering the BloodFeudSystem.
 
+// cache values, not component pointers — GC corruption class, see banditry.go
+// secrets holds a copy of the slice header (backing array is GC-managed heap, read-only here);
+// JobComponent (written) is re-fetched via the entity handle at use time.
 type militaryRevoltNodeData struct {
-	entity ecs.Entity
-	id     uint64
-	x      float32
-	y      float32
-	job    *components.JobComponent
-	secret *components.SecretComponent
-	affil  *components.Affiliation
+	entity  ecs.Entity
+	id      uint64
+	x       float32
+	y       float32
+	cityID  uint32
+	secrets []components.Secret
 }
 
 type adminJurisdictionRevoltData struct {
@@ -134,13 +136,12 @@ func (s *MilitaryRevoltSystem) Update(world *ecs.World) {
 
 		// We still process guards with no secrets now, because Legitimacy drop can trigger revolt even without secrets.
 		guards = append(guards, militaryRevoltNodeData{
-			entity: guardQuery.Entity(),
-			id:     ident.ID,
-			x:      pos.X,
-			y:      pos.Y,
-			job:    job,
-			secret: secret,
-			affil:  aff,
+			entity:  guardQuery.Entity(),
+			id:      ident.ID,
+			x:       pos.X,
+			y:       pos.Y,
+			cityID:  aff.CityID,
+			secrets: secret.Secrets,
 		})
 	}
 
@@ -153,7 +154,7 @@ func (s *MilitaryRevoltSystem) Update(world *ecs.World) {
 		var targetJur *adminJurisdictionRevoltData
 		for j := 0; j < len(s.jurisdictions); j++ {
 			jur := &s.jurisdictions[j]
-			if guard.affil.CityID == jur.CityID && jur.CityID != 0 {
+			if guard.cityID == jur.CityID && jur.CityID != 0 {
 				targetJur = jur
 				break
 			}
@@ -170,8 +171,12 @@ func (s *MilitaryRevoltSystem) Update(world *ecs.World) {
 		if targetJur != nil {
 			// Phase 35.1: Revolt due to Low Legitimacy (Score < 20)
 			if targetJur.Legitimacy < 20 {
-				guard.job.JobID = components.JobBandit
-				guard.job.EmployerID = 0
+				// Re-fetch via entity handle at use time (cached pointers do not survive archetype moves)
+				if world.Alive(guard.entity) {
+					job := (*components.JobComponent)(world.Get(guard.entity, s.jobID))
+					job.JobID = components.JobBandit
+					job.EmployerID = 0
+				}
 				if s.hooks != nil {
 					s.hooks.AddHook(guard.id, targetJur.ID, -100)
 				}
@@ -181,16 +186,20 @@ func (s *MilitaryRevoltSystem) Update(world *ecs.World) {
 			// Phase 27.1: Revolt due to Banned Secret
 			if targetJur.BannedSecretID != 0 {
 				hasSecret := false
-				for k := 0; k < len(guard.secret.Secrets); k++ {
-					if guard.secret.Secrets[k].SecretID == targetJur.BannedSecretID {
+				for k := 0; k < len(guard.secrets); k++ {
+					if guard.secrets[k].SecretID == targetJur.BannedSecretID {
 						hasSecret = true
 						break
 					}
 				}
 
 				if hasSecret {
-					guard.job.JobID = components.JobBandit
-					guard.job.EmployerID = 0
+					// Re-fetch via entity handle at use time (cached pointers do not survive archetype moves)
+					if world.Alive(guard.entity) {
+						job := (*components.JobComponent)(world.Get(guard.entity, s.jobID))
+						job.JobID = components.JobBandit
+						job.EmployerID = 0
+					}
 					if s.hooks != nil {
 						s.hooks.AddHook(guard.id, targetJur.ID, -100)
 					}

@@ -10,10 +10,11 @@ import (
 // OstracizationSystem evaluates Memory buffers for unpunished negative interactions.
 // It translates recorded thefts or assaults into deep negative hooks in the SparseHookGraph.
 
+// cache values, not component pointers — GC corruption class, see banditry.go
+// Memory (written) is re-fetched via the entity handle at use time.
 type ostracizationNodeData struct {
 	entity ecs.Entity
 	id     uint64
-	mem    *components.Memory
 }
 
 type OstracizationSystem struct {
@@ -54,21 +55,24 @@ func (s *OstracizationSystem) Update(world *ecs.World) {
 
 	for query.Next() {
 		ident := (*components.Identity)(query.Get(s.identID))
-		mem := (*components.Memory)(query.Get(s.memID))
 
 		nodes = append(nodes, ostracizationNodeData{
 			entity: query.Entity(),
 			id:     ident.ID,
-			mem:    mem,
 		})
 	}
 
 	for i := 0; i < len(nodes); i++ {
 		node := nodes[i]
 
+		if !world.Alive(node.entity) {
+			continue
+		}
+		mem := (*components.Memory)(world.Get(node.entity, s.memID))
+
 		// Evaluate memory buffer
-		for j := 0; j < len(node.mem.Events); j++ {
-			ev := &node.mem.Events[j]
+		for j := 0; j < len(mem.Events); j++ {
+			ev := &mem.Events[j]
 
 			if ev.InteractionType == components.InteractionTheft || ev.InteractionType == components.InteractionAssault {
 				// Translate the negative memory into a concrete grudge

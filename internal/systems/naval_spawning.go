@@ -10,10 +10,13 @@ import (
 // NavalSpawningSystem converts an overland CaravanEntity arriving at a PortComponent
 // into a ShipComponent entity, transferring the Payload and Passengers.
 
+// cache position/payload VALUES, not component pointers — GC corruption class,
+// see banditry.go (the RemoveEntity calls below swap-move surviving caravans'
+// archetype storage, so cached pointers would dangle mid-loop).
 type caravanData struct {
 	entity  ecs.Entity
-	pos     *components.Position
-	payload *components.Payload
+	pos     components.Position
+	payload components.Payload
 }
 
 type NavalSpawningSystem struct {
@@ -66,8 +69,8 @@ func (s *NavalSpawningSystem) Update(world *ecs.World) {
 			payload := (*components.Payload)(caravanQuery.Get(payloadID))
 			s.toConvert = append(s.toConvert, caravanData{
 				entity:  caravanQuery.Entity(),
-				pos:     pos,
-				payload: payload,
+				pos:     *pos,
+				payload: *payload,
 			})
 		}
 	}
@@ -102,7 +105,7 @@ func (s *NavalSpawningSystem) Update(world *ecs.World) {
 
 		// Set Position
 		newPos := (*components.Position)(world.Get(shipEntity, posID))
-		*newPos = *c.pos
+		*newPos = c.pos
 
 		// Set Velocity
 		newVel := (*components.Velocity)(world.Get(shipEntity, velID))
@@ -111,7 +114,7 @@ func (s *NavalSpawningSystem) Update(world *ecs.World) {
 
 		// Set Payload
 		newPayload := (*components.Payload)(world.Get(shipEntity, payloadID))
-		*newPayload = *c.payload
+		*newPayload = c.payload
 
 		// Set Passengers
 		newPassenger := (*components.PassengerComponent)(world.Get(shipEntity, passengerID))

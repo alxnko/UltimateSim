@@ -34,12 +34,13 @@ func TestMoveSpeed(t *testing.T) {
 		})
 	}
 
-	// Explicit assertions from the requested cases.
-	if got := MoveSpeed(90); got != 1.0 {
-		t.Errorf("MoveSpeed(90) = %v, want 1.0", got)
+	// Explicit assertions pinning the tuned constants (playtest: 2.0 was
+	// oversensitive; 0.7 walks, 0.35 limps).
+	if got := MoveSpeed(90); got != painSlowMoveSpeed {
+		t.Errorf("MoveSpeed(90) = %v, want %v", got, painSlowMoveSpeed)
 	}
-	if got := MoveSpeed(10); got != 2.0 {
-		t.Errorf("MoveSpeed(10) = %v, want 2.0", got)
+	if got := MoveSpeed(10); got != baseMoveSpeed {
+		t.Errorf("MoveSpeed(10) = %v, want %v", got, baseMoveSpeed)
 	}
 }
 

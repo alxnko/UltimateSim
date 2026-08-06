@@ -30,37 +30,52 @@ $env:CGO_ENABLED=0; go build -o game.exe ./cmd/game
 
 ## How to Play
 
-You possess a single character in a fully simulated medieval world. Survive, build,
-climb the social hierarchy, rule a city, wage war, and — when you die — continue as
-your heir. The world keeps simulating around you whether or not you act.
+A grand-strategy life-sim: EU-style realms, CK-style dynasties and intrigue,
+Vic-style economy — but you live inside it as ONE character, and you can play
+as ANY character. The world generates as a real planet (continents, oceans,
+seas, islands), starts already political (cities, countries, capitals, rulers,
+councils, married dynasties), and keeps simulating around you whether or not
+you act. Interactive events (tax demands, bandit shakedowns, insults, job
+offers, festivals, wars, successions) arrive as choice popups, CK-style.
+
+### Start
+Press `Enter` at the menu; the world warms up, then the **character select**
+lists real inhabitants — pick anyone (arrows + `Enter`, `R` for random). You
+can switch bodies at any time later: right-click anyone → **Play As**.
 
 ### Controls
 | Input | Action |
 |-------|--------|
-| `WASD` | Move your character |
+| `WASD` | Move your character (camera re-follows) |
+| `Arrows` / `MMB drag` / minimap click | Free camera pan (`F` returns to your character) |
 | `Left Click` | Attack an NPC / select an entity (Shift+Click always selects) |
-| `Right Click` | Open a context menu (Talk, Trade, Attack, Order, Pick up, Build, Inspect) |
+| `Right Click` | Context menu (Talk, Trade, Attack, Play As, Order, Build…) — cancels build/order mode |
 | `Mouse Wheel` | Zoom (below 0.5x switches to the strategic lens map) |
-| `E` | Hammer the nearest construction site |
-| `B` | Toggle build mode (`R` cycles structure, click to place) |
-| `G` | Ambitions panel (optional goals + rewards) |
-| `C` | Character sheet |
-| `L` | Chronicle (event log) |
-| `Tab` / `F1`–`F4` | Cycle / pick strategic lens (Political, Wealth, Crime, Culture) |
-| `Space` | Pause / resume the simulation |
-| `Esc` | Pause menu (Save, Load, Quit) / close panels |
+| `1` `2` `3` `4` | Sim speed 1x / 2x / 4x / 8x (also HUD buttons) |
+| `Space` | Pause / resume |
+| `P` / `Y` / `M` | Diplomacy / Dynasty & intrigue / Market panels (also top tab strip) |
+| `B` | Build mode: ghost preview shows validity + cost (`R` cycles structure) |
+| `E` | Hammer the nearest construction site (builders also auto-work) |
+| `G` / `C` / `L` | Goals / Character sheet / Chronicle |
+| `Tab` / `F1`–`F4` | Strategic lenses (Political, Wealth, Crime, Culture) |
+| `Esc` | Close panels / pause menu (Save, Load, Quit) |
 
 ### Core loops
-- **Survive**: keep Food, Blood and Stamina up; combat depletes vitals, pain slows you.
-- **Society**: Talk to build hooks (favors), Gift, Threaten, or Share rumors. Relationships
-  feed gossip, legitimacy and feuds.
-- **Power**: earn enough positive standing in your city to **Claim Leadership**. As a Ruler
-  you issue Orders (move/work/attack/follow) to subordinates and set Laws; as a Sovereign
-  (capital ruler) you control currency debasement and declare war.
-- **Build**: buy materials at a market, enter build mode, place Houses, Workshops,
-  Storehouses, Shrines, Farms or Taverns. NPC builders (or you, with `E`) complete them.
-- **Legacy**: when you die, pick a family heir to continue your dynasty — inheriting prestige,
-  debt, artifacts and feuds. No heir means a dynasty-end / reincarnate screen.
+- **Live**: keep Food, Blood, Stamina up. Citizens visibly work their jobs —
+  farmers at farms, lumberjacks in forests, guards on patrol — and so can you.
+- **Events**: story beats arrive as popups with choices; the sim pauses while
+  you decide. The chronicle records your saga.
+- **Society & dynasty**: talk, gift, threaten, marry; family and hooks feed
+  legitimacy, plots and succession.
+- **Power**: win standing → **Claim Leadership** of your city → set laws and
+  taxes, appoint a council (Steward/Marshal/Diplomat/Spymaster), issue orders.
+  Rule the capital and you are Sovereign: diplomacy, alliances, war.
+- **Realm**: the diplomacy panel runs opinions, alliances, truces, war score;
+  the market panel runs prices, tax rates and trade routes between cities.
+- **Intrigue**: plot to seize a throne or assassinate a rival — spymasters
+  hunt plotters.
+- **Legacy**: die and continue as your heir, inheriting prestige, debt and
+  feuds. The hint strip above always shows your next step on the ladder.
 
 ---
 

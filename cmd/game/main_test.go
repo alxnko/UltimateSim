@@ -14,34 +14,34 @@ import (
 // Phase 01.6: Telemetry & Profiling
 
 func TestMainComponentsE2E(t *testing.T) {
-	// 1. Verify that the simulation loop runs and computes the Alpha variable
+	// 1. Verify that the simulation loop runs and computes the Alpha variable.
+	// The Run goroutine MUST be joined before the test returns: it kept
+	// running ~1s into the next test before, racing the Alpha field and
+	// leaking a live ticker across -count=2 iterations.
 	tickManager := engine.NewTickManager(60)
 
+	done := make(chan struct{})
 	go func() {
+		defer close(done)
 		runtime.LockOSThread()
-		tickManager.Run(60) // run for 60 ticks
+		tickManager.Run(30) // run for 30 ticks (~0.5s)
 	}()
+	<-done
 
-	// Read Alpha periodically simulating the render loop
-	// We'll wait up to a few cycles for Alpha to be populated
-	var alpha float64
-	for i := 0; i < 10; i++ {
-		alpha = tickManager.Alpha
-		if alpha >= 0 && alpha <= 1 {
-			break
-		}
-		time.Sleep(10 * time.Millisecond)
-	}
+	alpha := tickManager.Alpha
 	if alpha < 0 || alpha > 1 {
 		t.Errorf("Expected Alpha value between 0 and 1, got %v", alpha)
 	}
 
-	// 2. Verify pprof HTTP endpoint is successfully launched and responsive
+	// 2. Verify the pprof HTTP endpoint launches and responds; shut it down
+	// before returning so nothing leaks into later tests or -count=2 reruns.
+	srv := &http.Server{Addr: "localhost:6061"}
 	go func() {
-		if err := http.ListenAndServe("localhost:6061", nil); err != nil {
+		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 			fmt.Printf("pprof server ended with error: %v\n", err)
 		}
 	}()
+	defer srv.Close()
 
 	var resp *http.Response
 	var err error

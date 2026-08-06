@@ -3,6 +3,7 @@ package ui
 import (
 	"github.com/ALXNKO/UltimateSim/internal/components"
 	"github.com/ALXNKO/UltimateSim/internal/systems"
+	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/mlange-42/arche/ecs"
 )
 
@@ -29,13 +30,21 @@ func (s *StatePlaying) openContextMenu(mx, my int, wx, wy float32) {
 	} else {
 		switch kind {
 		case TargetNPC:
-			items = []string{"Inspect", "Talk", "Attack"}
+			items = []string{"Inspect", "Talk", "Attack", "Play As"}
 			if player, ok := pc.PossessedEntity(); ok {
 				rank, cityID, _ := systems.GetRank(world, player)
 				affID := ecs.ComponentID[components.Affiliation](world)
 				if rank >= systems.RankRuler && world.Has(ent, affID) &&
 					(*components.Affiliation)(world.Get(ent, affID)).CityID == cityID {
 					items = append(items, "Give Order")
+				}
+				if player != ent {
+					if canProposeMarriage(world, player, ent) {
+						items = append(items, "Propose Marriage")
+					}
+					if !world.Has(player, ecs.ComponentID[components.PlotComponent](world)) {
+						items = append(items, "Plot Against")
+					}
 				}
 			}
 		case TargetVillage:
@@ -86,8 +95,16 @@ func (s *StatePlaying) runContextAction(idx int) {
 	case "Edit Laws":
 		pc.LawsOpen = true
 		pc.LawsVillage = ctx.entity
+	case "Play As":
+		s.possessAs(ctx.entity, false)
 	case "Give Order":
 		s.openOrderMenu(ctx.entity)
+	case "Propose Marriage":
+		s.proposeMarriageTo(ctx.entity)
+	case "Plot Against":
+		mx, my := orderMenuPos()
+		pc.SubMenuKind = 3 // plot verbs
+		pc.SubMenu.Open(mx, my, []string{"Seize Rule", "Assassinate"})
 	case "Pick up":
 		s.doPickup(ctx.entity)
 	case "Work here":
@@ -159,11 +176,33 @@ func (s *StatePlaying) openOrderMenu(target ecs.Entity) {
 	pc.SubMenu.Open(mx, my, []string{"Move to...", "Follow me", "Attack...", "Work as Builder", "Work as Farmer", "Work as Guard"})
 }
 
-func orderMenuPos() (int, int) { return 1280/2 - 60, 720/2 - 60 }
+func orderMenuPos() (int, int) {
+	sw, sh := ebiten.WindowSize()
+	if sw < 960 {
+		sw = 960
+	}
+	if sh < 540 {
+		sh = 540
+	}
+	return sw/2 - 60, sh/2 - 60
+}
 
-// runSubMenuAction handles order-verb selection.
+// runSubMenuAction handles order-verb and plot-verb selection.
 func (s *StatePlaying) runSubMenuAction(idx int) {
 	pc := s.PC
+	if pc.SubMenuKind == 3 { // plot verbs against s.menuCtx.entity
+		label := ""
+		if idx < len(pc.SubMenu.Items) {
+			label = pc.SubMenu.Items[idx]
+		}
+		switch label {
+		case "Seize Rule":
+			StartPlotAgainst(s, s.menuCtx.entity, components.PlotSeizeRule)
+		case "Assassinate":
+			StartPlotAgainst(s, s.menuCtx.entity, components.PlotAssassinate)
+		}
+		return
+	}
 	if pc.SubMenuKind != 1 {
 		return
 	}

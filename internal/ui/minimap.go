@@ -43,8 +43,8 @@ func (m *Minimap) ensureBase(grid *engine.MapGrid) {
 	m.base = ebiten.NewImageFromImage(img)
 }
 
-// Draw renders the minimap with live markers.
-func (m *Minimap) Draw(screen *ebiten.Image, grid *engine.MapGrid, world *ecs.World, sw int) {
+// Draw renders the minimap with live markers and the camera viewport.
+func (m *Minimap) Draw(screen *ebiten.Image, grid *engine.MapGrid, world *ecs.World, sw int, cam *Camera) {
 	m.ensureBase(grid)
 	x0 := float64(sw - MinimapSize - 8)
 	y0 := 8.0
@@ -53,6 +53,20 @@ func (m *Minimap) Draw(screen *ebiten.Image, grid *engine.MapGrid, world *ecs.Wo
 	op := &ebiten.DrawImageOptions{}
 	op.GeoM.Translate(x0, y0)
 	screen.DrawImage(m.base, op)
+
+	// Camera viewport rectangle.
+	if cam != nil {
+		sh := screen.Bounds().Dy()
+		ts := cam.TileSize()
+		vw := float64(sw) / ts / m.scale
+		vh := float64(sh) / ts / m.scale
+		vx := x0 + cam.X/m.scale - vw/2
+		vy := y0 + cam.Y/m.scale - vh/2
+		ebitenutil.DrawRect(screen, vx, vy, vw, 1, AccentCol)
+		ebitenutil.DrawRect(screen, vx, vy+vh, vw, 1, AccentCol)
+		ebitenutil.DrawRect(screen, vx, vy, 1, vh, AccentCol)
+		ebitenutil.DrawRect(screen, vx+vw, vy, 1, vh, AccentCol)
+	}
 
 	toMini := func(wx, wy float32) (float64, float64) {
 		return x0 + float64(wx)/m.scale, y0 + float64(wy)/m.scale

@@ -11,10 +11,13 @@ import (
 // through the InputBridge so the simulation stays UI-agnostic.
 
 const (
-	attackCooldown    = 30  // ticks between attacks
-	attackRange       = 1.5 // world units
-	baseMoveSpeed     = 2.0
-	painSlowMoveSpeed = 1.0
+	attackCooldown = 30  // ticks between attacks
+	attackRange    = 1.5 // world units
+	// Playtest feedback: 2.0 made WASD feel twitchy/oversensitive — the
+	// player crossed a village in under a second. 0.7 reads as a brisk walk
+	// next to NPC pace and stays controllable at 2x sim speed.
+	baseMoveSpeed     = 0.7
+	painSlowMoveSpeed = 0.35
 )
 
 // MoveSpeed returns the WASD speed given the player's current pain level.

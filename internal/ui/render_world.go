@@ -4,7 +4,6 @@ import (
 	"image/color"
 
 	"github.com/ALXNKO/UltimateSim/internal/components"
-	"github.com/ALXNKO/UltimateSim/internal/systems"
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/ebitenutil"
 	"github.com/mlange-42/arche/ecs"
@@ -47,32 +46,44 @@ func (s *StatePlaying) DrawWorld(screen *ebiten.Image) {
 	}
 	s.drawTiles(screen)
 	s.drawEntities(screen)
-	s.drawBuildGhost(screen)
+	// Build ghost + overhead bars moved to render_overlays.go (P5 L2/L3).
 }
 
-// drawTiles renders visible biome tiles.
+// terrainCache is the whole biome map rasterized once at 1px/tile. Per-frame
+// terrain becomes ONE scaled DrawImage instead of tens of thousands of
+// DrawRect calls (the per-tile loop hit 4-6 FPS at large window sizes).
+var (
+	terrainCache     *ebiten.Image
+	terrainCacheGrid interface{} // grid identity the cache was built from
+)
+
+func (s *StatePlaying) ensureTerrainCache() *ebiten.Image {
+	grid := s.Status.Grid
+	if terrainCache != nil && terrainCacheGrid == interface{}(grid) {
+		return terrainCache
+	}
+	img := ebiten.NewImage(grid.Width, grid.Height)
+	pix := make([]byte, grid.Width*grid.Height*4)
+	for i := 0; i < grid.Width*grid.Height; i++ {
+		clr := getBiomeColor(grid.Tiles[i].BiomeID)
+		pix[i*4], pix[i*4+1], pix[i*4+2], pix[i*4+3] = clr.R, clr.G, clr.B, 255
+	}
+	img.WritePixels(pix)
+	terrainCache = img
+	terrainCacheGrid = grid
+	return terrainCache
+}
+
+// drawTiles renders the visible terrain as one scaled blit from the cache.
 func (s *StatePlaying) drawTiles(screen *ebiten.Image) {
 	cam := &s.PC.Cam
-	tileSize := cam.TileSize()
+	ts := cam.TileSize()
 	sw, sh := screen.Bounds().Dx(), screen.Bounds().Dy()
 
-	cols := int(float64(sw)/tileSize) + 2
-	rows := int(float64(sh)/tileSize) + 2
-	startX := int(cam.X) - cols/2
-	startY := int(cam.Y) - rows/2
-
-	for r := 0; r < rows; r++ {
-		for c := 0; c < cols; c++ {
-			tx, ty := startX+c, startY+r
-			if tx < 0 || tx >= s.Status.Grid.Width || ty < 0 || ty >= s.Status.Grid.Height {
-				continue
-			}
-			tile := s.Status.Grid.GetTile(tx, ty)
-			clr := getBiomeColor(tile.BiomeID)
-			x, y := cam.WorldToScreen(float32(tx), float32(ty), sw, sh)
-			ebitenutil.DrawRect(screen, x, y, tileSize+1, tileSize+1, clr)
-		}
-	}
+	op := &ebiten.DrawImageOptions{}
+	op.GeoM.Scale(ts, ts)
+	op.GeoM.Translate(float64(sw)/2-cam.X*ts, float64(sh)/2-cam.Y*ts)
+	screen.DrawImage(s.ensureTerrainCache(), op)
 }
 
 // onScreen culls world positions outside the viewport.
@@ -120,19 +131,9 @@ func (s *StatePlaying) drawEntities(screen *ebiten.Image) {
 
 	siteID := ecs.ComponentID[components.ConstructionSiteComponent](world)
 	q = world.Query(ecs.All(siteID, posID))
-	type siteBar struct {
-		x, y float64
-		frac float32
-	}
-	var siteBars []siteBar
 	for q.Next() {
 		pos := (*components.Position)(q.Get(posID))
-		site := (*components.ConstructionSiteComponent)(q.Get(siteID))
 		s.drawSpriteAt(screen, sp.Static("site"), pos.X, pos.Y, sw, sh)
-		sx, sy := cam.WorldToScreen(pos.X, pos.Y, sw, sh)
-		if onScreen(sx, sy, sw, sh, 32) && site.MaxProgress > 0 {
-			siteBars = append(siteBars, siteBar{sx, sy, float32(site.Progress) / float32(site.MaxProgress)})
-		}
 	}
 
 	wbID := ecs.ComponentID[components.WorkbenchComponent](world)
@@ -239,13 +240,6 @@ func (s *StatePlaying) drawEntities(screen *ebiten.Image) {
 		s.drawSpriteAt(screen, sp.Char(ident.ID, genome, job, frame), pos.X, pos.Y, sw, sh)
 	}
 
-	// --- Pass 3: overlays ---
-	for _, b := range siteBars {
-		w := 24.0 * cam.Zoom
-		ebitenutil.DrawRect(screen, b.x-w/2, b.y+10*cam.Zoom, w, 3, color.RGBA{40, 40, 40, 255})
-		ebitenutil.DrawRect(screen, b.x-w/2, b.y+10*cam.Zoom, w*float64(b.frac), 3, color.RGBA{110, 200, 110, 255})
-	}
-
 	if s.PC.SelectedValid && world.Alive(s.PC.Selected) && world.Has(s.PC.Selected, posID) {
 		pos := (*components.Position)(world.Get(s.PC.Selected, posID))
 		sx, sy := cam.WorldToScreen(pos.X, pos.Y, sw, sh)
@@ -258,58 +252,20 @@ func (s *StatePlaying) drawEntities(screen *ebiten.Image) {
 	}
 }
 
-// drawBuildGhost previews placement validity under the cursor in build mode.
-func (s *StatePlaying) drawBuildGhost(screen *ebiten.Image) {
-	if s.PC.Mode != ModeBuild {
-		return
-	}
-	sw, sh := screen.Bounds().Dx(), screen.Bounds().Dy()
-	mx, my := ebiten.CursorPosition()
-	wx, wy := s.PC.Cam.ScreenToWorld(mx, my, sw, sh)
-
-	kind := "ghost_ok"
-	if err := systems.CanPlace(s.Status.TM.World, s.Status.Grid, wx, wy); err != nil {
-		kind = "ghost_bad"
-	}
-	s.drawSpriteAt(screen, s.PC.Sprites.Static(structureSprite(uint32(s.PC.BuildType))), wx, wy, sw, sh)
-	s.drawSpriteAt(screen, s.PC.Sprites.Static(kind), wx, wy, sw, sh)
-}
-
 // drawStrategic renders the macro lens view.
 func (s *StatePlaying) drawStrategic(screen *ebiten.Image) {
 	cam := &s.PC.Cam
 	sw, sh := screen.Bounds().Dx(), screen.Bounds().Dy()
 	world := s.Status.TM.World
 
-	// Desaturated terrain backdrop, blocky sampling for speed.
-	tileSize := cam.TileSize()
-	step := 1
-	if tileSize < 4 {
-		step = int(4 / tileSize)
-		if step < 1 {
-			step = 1
-		}
-	}
-	cols := int(float64(sw)/(tileSize*float64(step))) + 2
-	rows := int(float64(sh)/(tileSize*float64(step))) + 2
-	startX := int(cam.X) - cols*step/2
-	startY := int(cam.Y) - rows*step/2
-
-	for r := 0; r < rows; r++ {
-		for c := 0; c < cols; c++ {
-			tx, ty := startX+c*step, startY+r*step
-			if tx < 0 || tx >= s.Status.Grid.Width || ty < 0 || ty >= s.Status.Grid.Height {
-				continue
-			}
-			tile := s.Status.Grid.GetTile(tx, ty)
-			clr := getBiomeColor(tile.BiomeID)
-			gray := (uint16(clr.R) + uint16(clr.G) + uint16(clr.B)) / 3
-			mut := color.RGBA{uint8((uint16(clr.R) + gray) / 2), uint8((uint16(clr.G) + gray) / 2), uint8((uint16(clr.B) + gray) / 2), 255}
-			x, y := cam.WorldToScreen(float32(tx), float32(ty), sw, sh)
-			sz := tileSize*float64(step) + 1
-			ebitenutil.DrawRect(screen, x, y, sz, sz, mut)
-		}
-	}
+	// Terrain backdrop from the cache (one blit), desaturated by a
+	// translucent gray wash so lens overlays pop.
+	ts := cam.TileSize()
+	op := &ebiten.DrawImageOptions{}
+	op.GeoM.Scale(ts, ts)
+	op.GeoM.Translate(float64(sw)/2-cam.X*ts, float64(sh)/2-cam.Y*ts)
+	screen.DrawImage(s.ensureTerrainCache(), op)
+	ebitenutil.DrawRect(screen, 0, 0, float64(sw), float64(sh), color.RGBA{128, 128, 128, 96})
 
 	// City overlays.
 	s.lens.rebuild(world, s.Status.TM.Ticks)

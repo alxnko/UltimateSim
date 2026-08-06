@@ -45,15 +45,17 @@ func NewInformationTradeSystem(world *ecs.World, hookGraph *engine.SparseHookGra
 }
 
 // nodeTradeData is a flat cache for DOD optimized proximity checking
+// cache values, not component pointers — GC corruption class, see banditry.go
+// Mutable components (Secret/Needs/Memory/Culture) are re-fetched via the entity handle at use time.
 type nodeTradeData struct {
-	entity  ecs.Entity
-	pos     *components.Position
-	secret  *components.SecretComponent
-	needs   *components.Needs
-	ident   *components.Identity
-	memory  *components.Memory
-	affil   *components.Affiliation
-	culture *components.CultureComponent
+	entity     ecs.Entity
+	x          float32
+	y          float32
+	identID    uint64
+	baseTraits uint32
+	cityID     uint32
+	hasAffil   bool
+	hasCulture bool
 }
 
 // Update evaluates entities for information trading.
@@ -65,13 +67,14 @@ func (s *InformationTradeSystem) Update(world *ecs.World) {
 		return
 	}
 
-	// Pre-cache Treasuries by CityID
-	cityTreasuries := make(map[uint32]*components.TreasuryComponent)
+	// Pre-cache Treasury wealth by CityID
+	// cache values, not component pointers — GC corruption class, see banditry.go
+	cityTreasuries := make(map[uint32]float32)
 	treasuryQuery := world.Query(ecs.All(s.affilID, s.treasuryID))
 	for treasuryQuery.Next() {
 		affil := (*components.Affiliation)(treasuryQuery.Get(s.affilID))
 		treasury := (*components.TreasuryComponent)(treasuryQuery.Get(s.treasuryID))
-		cityTreasuries[affil.CityID] = treasury
+		cityTreasuries[affil.CityID] = treasury.Wealth
 	}
 
 	filter := ecs.All(s.posID, s.secretID, s.needsID, s.identID, s.memoryID).Without(s.ruinID)
@@ -80,40 +83,49 @@ func (s *InformationTradeSystem) Update(world *ecs.World) {
 	var nodes []nodeTradeData
 
 	for query.Next() {
-		var affil *components.Affiliation
+		hasAffil := false
+		var cityID uint32
 		if world.Has(query.Entity(), s.affilID) {
-			affil = (*components.Affiliation)(query.Get(s.affilID))
+			affil := (*components.Affiliation)(query.Get(s.affilID))
+			hasAffil = true
+			cityID = affil.CityID
 		}
 
-		var culture *components.CultureComponent
-		if world.Has(query.Entity(), s.cultureID) {
-			culture = (*components.CultureComponent)(query.Get(s.cultureID))
-		}
+		hasCulture := world.Has(query.Entity(), s.cultureID)
+
+		pos := (*components.Position)(query.Get(s.posID))
+		ident := (*components.Identity)(query.Get(s.identID))
 
 		nodes = append(nodes, nodeTradeData{
-			entity:  query.Entity(),
-			pos:     (*components.Position)(query.Get(s.posID)),
-			secret:  (*components.SecretComponent)(query.Get(s.secretID)),
-			needs:   (*components.Needs)(query.Get(s.needsID)),
-			ident:   (*components.Identity)(query.Get(s.identID)),
-			memory:  (*components.Memory)(query.Get(s.memoryID)),
-			affil:   affil,
-			culture: culture,
+			entity:     query.Entity(),
+			x:          pos.X,
+			y:          pos.Y,
+			identID:    ident.ID,
+			baseTraits: ident.BaseTraits,
+			cityID:     cityID,
+			hasAffil:   hasAffil,
+			hasCulture: hasCulture,
 		})
 	}
 
 	for i := 0; i < len(nodes); i++ {
 		seller := nodes[i]
 
+		if !world.Alive(seller.entity) {
+			continue
+		}
+		sellerSecret := (*components.SecretComponent)(world.Get(seller.entity, s.secretID))
+		sellerNeeds := (*components.Needs)(world.Get(seller.entity, s.needsID))
+
 		// Must have secrets to sell
-		if len(seller.secret.Secrets) == 0 {
+		if len(sellerSecret.Secrets) == 0 {
 			continue
 		}
 
 		// Information trading is driven by economic necessity or sheer opportunism (Gossip trait).
 		// We only trigger selling if the NPC's wealth is low or they have the Gossip trait.
-		isOpportunist := seller.ident.BaseTraits&components.TraitGossip != 0
-		if seller.needs.Wealth >= 100.0 && !isOpportunist {
+		isOpportunist := seller.baseTraits&components.TraitGossip != 0
+		if sellerNeeds.Wealth >= 100.0 && !isOpportunist {
 			continue
 		}
 
@@ -124,14 +136,19 @@ func (s *InformationTradeSystem) Update(world *ecs.World) {
 
 			buyer := nodes[j]
 
+			if !world.Alive(buyer.entity) {
+				continue
+			}
+			buyerNeeds := (*components.Needs)(world.Get(buyer.entity, s.needsID))
+
 			// Buyer must have wealth to afford information
-			if buyer.needs.Wealth < 10.0 {
+			if buyerNeeds.Wealth < 10.0 {
 				continue
 			}
 
 			// Distance check (Squared to avoid sqrt overhead)
-			dx := seller.pos.X - buyer.pos.X
-			dy := seller.pos.Y - buyer.pos.Y
+			dx := seller.x - buyer.x
+			dy := seller.y - buyer.y
 			distSq := dx*dx + dy*dy
 
 			// Overlap defined as close proximity (e.g., in a tavern or street corner)
@@ -139,8 +156,8 @@ func (s *InformationTradeSystem) Update(world *ecs.World) {
 				// Phase 41: The Ostracization Engine
 				// Check for deep grudges before executing a trade. If they hate each other, no trade occurs.
 				if s.HookGraph != nil {
-					buyerHatesSeller := s.HookGraph.GetHook(buyer.ident.ID, seller.ident.ID)
-					sellerHatesBuyer := s.HookGraph.GetHook(seller.ident.ID, buyer.ident.ID)
+					buyerHatesSeller := s.HookGraph.GetHook(buyer.identID, seller.identID)
+					sellerHatesBuyer := s.HookGraph.GetHook(seller.identID, buyer.identID)
 
 					if buyerHatesSeller <= -40 || sellerHatesBuyer <= -40 {
 						continue // Block trade due to ostracization
@@ -149,10 +166,11 @@ func (s *InformationTradeSystem) Update(world *ecs.World) {
 
 				// Find a secret the buyer doesn't know
 				traded := false
+				buyerSecret := (*components.SecretComponent)(world.Get(buyer.entity, s.secretID))
 
-				for _, secret := range seller.secret.Secrets {
+				for _, secret := range sellerSecret.Secrets {
 					alreadyKnown := false
-					for _, known := range buyer.secret.Secrets {
+					for _, known := range buyerSecret.Secrets {
 						if known.SecretID == secret.SecretID {
 							alreadyKnown = true
 							break
@@ -171,13 +189,13 @@ func (s *InformationTradeSystem) Update(world *ecs.World) {
 					}
 
 					// Can the buyer afford it?
-					if buyer.needs.Wealth >= value {
+					if buyerNeeds.Wealth >= value {
 						// Execute Trade
-						buyer.needs.Wealth -= value
-						seller.needs.Wealth += value
+						buyerNeeds.Wealth -= value
+						sellerNeeds.Wealth += value
 
 						// Transfer Knowledge
-						buyer.secret.Secrets = append(buyer.secret.Secrets, components.Secret{
+						buyerSecret.Secrets = append(buyerSecret.Secrets, components.Secret{
 							OriginID: secret.OriginID,
 							SecretID: secret.SecretID,
 							Virality: secret.Virality,
@@ -185,34 +203,37 @@ func (s *InformationTradeSystem) Update(world *ecs.World) {
 						})
 
 						// Memory Telemetry
-						head := buyer.memory.Head
-						buyer.memory.Events[head] = components.MemoryEvent{
+						buyerMemory := (*components.Memory)(world.Get(buyer.entity, s.memoryID))
+						head := buyerMemory.Head
+						buyerMemory.Events[head] = components.MemoryEvent{
 							TargetID:        uint64(seller.entity.ID()),
 							TickStamp:       s.tickCounter,
 							InteractionType: components.InteractionGossip,
 							LanguageID:      0, // Agnostic for trade
 							Value:           int32(secret.SecretID),
 						}
-						buyer.memory.Head = (head + 1) % 50
+						buyerMemory.Head = (head + 1) % 50
 
 						// Positive Social Feedback (A successful transaction builds rapport)
 						if s.HookGraph != nil {
-							s.HookGraph.AddHook(seller.ident.ID, buyer.ident.ID, 1)
-							s.HookGraph.AddHook(buyer.ident.ID, seller.ident.ID, 1)
+							s.HookGraph.AddHook(seller.identID, buyer.identID, 1)
+							s.HookGraph.AddHook(buyer.identID, seller.identID, 1)
 						}
 
 						// Phase 34.2: The Lingua Franca Engine
 						// If the seller's faction is massively wealthier than the buyer's (> 5000 wealth and > 5x buyer's wealth),
 						// the seller imposes their LanguageID on the buyer.
-						if seller.affil != nil && buyer.affil != nil && seller.culture != nil && buyer.culture != nil {
-							sellerTreasury, sHasTreas := cityTreasuries[seller.affil.CityID]
-							buyerTreasury, bHasTreas := cityTreasuries[buyer.affil.CityID]
+						if seller.hasAffil && buyer.hasAffil && seller.hasCulture && buyer.hasCulture {
+							sellerTreasuryWealth, sHasTreas := cityTreasuries[seller.cityID]
+							buyerTreasuryWealth, bHasTreas := cityTreasuries[buyer.cityID]
 
 							if sHasTreas && bHasTreas {
-								if sellerTreasury.Wealth > 5000.0 && sellerTreasury.Wealth > 5.0*buyerTreasury.Wealth {
+								if sellerTreasuryWealth > 5000.0 && sellerTreasuryWealth > 5.0*buyerTreasuryWealth {
 									// Impose language
-									buyer.culture.ForeignLanguageID = seller.culture.LanguageID
-									buyer.culture.ForeignInteractionTicks += 50
+									sellerCulture := (*components.CultureComponent)(world.Get(seller.entity, s.cultureID))
+									buyerCulture := (*components.CultureComponent)(world.Get(buyer.entity, s.cultureID))
+									buyerCulture.ForeignLanguageID = sellerCulture.LanguageID
+									buyerCulture.ForeignInteractionTicks += 50
 								}
 							}
 						}

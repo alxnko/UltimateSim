@@ -45,20 +45,24 @@ func (s *HolyWarSystem) Update(world *ecs.World) {
 	crusaderFilter := ecs.All(s.crusaderID, s.crusadeCompID, s.posID, s.velID)
 	crusaderQuery := world.Query(&crusaderFilter)
 
+	// Cache values + entity handles, not component pointers — GC corruption class, see banditry.go.
+	// Velocity writes re-fetch through the entity handle at use time.
 	type crusaderData struct {
-		entity  ecs.Entity
-		pos     *components.Position
-		vel     *components.Velocity
-		crusade *components.CrusadeComponent
+		entity       ecs.Entity
+		x            float32
+		y            float32
+		targetCityID uint32
 	}
 
 	var activeCrusaders []crusaderData
 	for crusaderQuery.Next() {
+		pos := (*components.Position)(crusaderQuery.Get(s.posID))
+		crusade := (*components.CrusadeComponent)(crusaderQuery.Get(s.crusadeCompID))
 		activeCrusaders = append(activeCrusaders, crusaderData{
-			entity:  crusaderQuery.Entity(),
-			pos:     (*components.Position)(crusaderQuery.Get(s.posID)),
-			vel:     (*components.Velocity)(crusaderQuery.Get(s.velID)),
-			crusade: (*components.CrusadeComponent)(crusaderQuery.Get(s.crusadeCompID)),
+			entity:       crusaderQuery.Entity(),
+			x:            pos.X,
+			y:            pos.Y,
+			targetCityID: crusade.TargetCityID,
 		})
 	}
 
@@ -66,28 +70,32 @@ func (s *HolyWarSystem) Update(world *ecs.World) {
 	villageFilter := ecs.All(s.villageID, s.identID, s.posID, s.storageID)
 	villageQuery := world.Query(&villageFilter)
 
+	// Cache values + entity handles, not component pointers — GC corruption class, see banditry.go.
+	// Storage writes re-fetch through the entity handle at use time.
 	type villageData struct {
-		entity  ecs.Entity
-		ident   *components.Identity
-		pos     *components.Position
-		storage *components.StorageComponent
+		entity ecs.Entity
+		id     uint64
+		x      float32
+		y      float32
 	}
 	var villages []villageData
 	for villageQuery.Next() {
+		ident := (*components.Identity)(villageQuery.Get(s.identID))
+		pos := (*components.Position)(villageQuery.Get(s.posID))
 		villages = append(villages, villageData{
-			entity:  villageQuery.Entity(),
-			ident:   (*components.Identity)(villageQuery.Get(s.identID)),
-			pos:     (*components.Position)(villageQuery.Get(s.posID)),
-			storage: (*components.StorageComponent)(villageQuery.Get(s.storageID)),
+			entity: villageQuery.Entity(),
+			id:     ident.ID,
+			x:      pos.X,
+			y:      pos.Y,
 		})
 	}
 
 	// Resolve active crusader movement and combat
 	for _, crusader := range activeCrusaders {
 		var targetVillage *villageData
-		for _, v := range villages {
-			if uint32(v.ident.ID) == crusader.crusade.TargetCityID {
-				targetVillage = &v
+		for vi := range villages {
+			if uint32(villages[vi].id) == crusader.targetCityID {
+				targetVillage = &villages[vi]
 				break
 			}
 		}
@@ -99,42 +107,46 @@ func (s *HolyWarSystem) Update(world *ecs.World) {
 		}
 
 		// Move towards target
-		dx := targetVillage.pos.X - crusader.pos.X
-		dy := targetVillage.pos.Y - crusader.pos.Y
+		dx := targetVillage.x - crusader.x
+		dy := targetVillage.y - crusader.y
 		distSq := dx*dx + dy*dy
 
 		// Reached the city
 		if distSq < 4.0 {
-			// Deal damage to storage
-			if targetVillage.storage.Food > 50 {
-				targetVillage.storage.Food -= 50
-			} else {
-				targetVillage.storage.Food = 0
-			}
-			if targetVillage.storage.Wood > 50 {
-				targetVillage.storage.Wood -= 50
-			} else {
-				targetVillage.storage.Wood = 0
+			// Deal damage to storage (re-fetched at use time via the entity handle)
+			if world.Alive(targetVillage.entity) {
+				storage := (*components.StorageComponent)(world.Get(targetVillage.entity, s.storageID))
+				if storage.Food > 50 {
+					storage.Food -= 50
+				} else {
+					storage.Food = 0
+				}
+				if storage.Wood > 50 {
+					storage.Wood -= 50
+				} else {
+					storage.Wood = 0
+				}
 			}
 			// Despawn crusader
 			toRemove = append(toRemove, crusader.entity)
-		} else {
-			// Pure DOD math movement
+		} else if world.Alive(crusader.entity) {
+			// Pure DOD math movement (velocity re-fetched at use time via the entity handle)
+			vel := (*components.Velocity)(world.Get(crusader.entity, s.velID))
 			speed := float32(0.5)
 			if dx > 0 {
-				crusader.vel.X = speed
+				vel.X = speed
 			} else if dx < 0 {
-				crusader.vel.X = -speed
+				vel.X = -speed
 			} else {
-				crusader.vel.X = 0
+				vel.X = 0
 			}
 
 			if dy > 0 {
-				crusader.vel.Y = speed
+				vel.Y = speed
 			} else if dy < 0 {
-				crusader.vel.Y = -speed
+				vel.Y = -speed
 			} else {
-				crusader.vel.Y = 0
+				vel.Y = 0
 			}
 		}
 	}
@@ -155,20 +167,27 @@ func (s *HolyWarSystem) Update(world *ecs.World) {
 	cityFilter := ecs.All(s.villageID, s.identID, s.posID, s.beliefID)
 	cityQuery := world.Query(&cityFilter)
 
+	// Cache values, not component pointers — GC corruption class, see banditry.go.
+	// The beliefs slice header points at Go-heap backing memory, not archetype storage.
 	type cityBeliefData struct {
-		entity ecs.Entity
-		ident  *components.Identity
-		pos    *components.Position
-		belief *components.BeliefComponent
+		entity  ecs.Entity
+		id      uint64
+		x       float32
+		y       float32
+		beliefs []components.Belief
 	}
 
 	var cities []cityBeliefData
 	for cityQuery.Next() {
+		ident := (*components.Identity)(cityQuery.Get(s.identID))
+		pos := (*components.Position)(cityQuery.Get(s.posID))
+		belief := (*components.BeliefComponent)(cityQuery.Get(s.beliefID))
 		cities = append(cities, cityBeliefData{
-			entity: cityQuery.Entity(),
-			ident:  (*components.Identity)(cityQuery.Get(s.identID)),
-			pos:    (*components.Position)(cityQuery.Get(s.posID)),
-			belief: (*components.BeliefComponent)(cityQuery.Get(s.beliefID)),
+			entity:  cityQuery.Entity(),
+			id:      ident.ID,
+			x:       pos.X,
+			y:       pos.Y,
+			beliefs: belief.Beliefs,
 		})
 	}
 
@@ -181,14 +200,14 @@ func (s *HolyWarSystem) Update(world *ecs.World) {
 
 	for i := 0; i < len(cities); i++ {
 		cityA := cities[i]
-		if len(cityA.belief.Beliefs) == 0 {
+		if len(cityA.beliefs) == 0 {
 			continue
 		}
 
 		// Find cityA's dominant belief
 		var dominantBeliefA uint32
 		var maxWeightA int32 = -1
-		for _, b := range cityA.belief.Beliefs {
+		for _, b := range cityA.beliefs {
 			if b.Weight > maxWeightA {
 				maxWeightA = b.Weight
 				dominantBeliefA = b.BeliefID
@@ -204,14 +223,14 @@ func (s *HolyWarSystem) Update(world *ecs.World) {
 				continue
 			}
 			cityB := cities[j]
-			if len(cityB.belief.Beliefs) == 0 {
+			if len(cityB.beliefs) == 0 {
 				continue
 			}
 
 			// Find cityB's dominant belief
 			var dominantBeliefB uint32
 			var maxWeightB int32 = -1
-			for _, b := range cityB.belief.Beliefs {
+			for _, b := range cityB.beliefs {
 				if b.Weight > maxWeightB {
 					maxWeightB = b.Weight
 					dominantBeliefB = b.BeliefID
@@ -219,8 +238,8 @@ func (s *HolyWarSystem) Update(world *ecs.World) {
 			}
 
 			// If beliefs differ and they are within range, start Holy War
-			dx := cityA.pos.X - cityB.pos.X
-			dy := cityA.pos.Y - cityB.pos.Y
+			dx := cityA.x - cityB.x
+			dy := cityA.y - cityB.y
 			distSq := dx*dx + dy*dy
 
 			// Within holy war range (radius 100.0)
@@ -231,9 +250,9 @@ func (s *HolyWarSystem) Update(world *ecs.World) {
 					StartY       float32
 					TargetCityID uint32
 				}{
-					StartX:       cityA.pos.X,
-					StartY:       cityA.pos.Y,
-					TargetCityID: uint32(cityB.ident.ID),
+					StartX:       cityA.x,
+					StartY:       cityA.y,
+					TargetCityID: uint32(cityB.id),
 				})
 			}
 		}

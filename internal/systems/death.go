@@ -20,16 +20,19 @@ type itemSpawnData struct {
 }
 
 // Phase 25.1: Succession Engine cache
+// Caches component VALUES, never component pointers — GC corruption class, see banditry.go.
 type heirData struct {
-	DeadID        uint64
-	FamilyID      uint32
-	Prestige      uint32
-	InheritedDebt uint32
-	OutgoingHooks map[uint64]int
-	IncomingHooks map[uint64]int
-	Artifact      *components.LegendComponent       // Phase 32.1: Artifact Inheritance
-	LoanContract  *components.LoanContractComponent // Phase 46: Generational Debt Engine
-	Beliefs       []components.Belief               // Phase 25.2: Ideological Succession Engine
+	DeadID          uint64
+	FamilyID        uint32
+	Prestige        uint32
+	InheritedDebt   uint32
+	OutgoingHooks   map[uint64]int
+	IncomingHooks   map[uint64]int
+	HasArtifact     bool
+	Artifact        components.LegendComponent // Phase 32.1: Artifact Inheritance
+	HasLoanContract bool
+	LoanContract    components.LoanContractComponent // Phase 46: Generational Debt Engine
+	Beliefs         []components.Belief              // Phase 25.2: Ideological Succession Engine
 }
 
 type DeathSystem struct {
@@ -170,20 +173,22 @@ func (s *DeathSystem) Update(world *ecs.World) {
 					debt = leg.InheritedDebt
 				}
 
-				var artifact *components.LegendComponent
+				var hasArtifact bool
+				var artifact components.LegendComponent
 				if query.Has(equipID) {
 					equip := (*components.EquipmentComponent)(query.Get(equipID))
 					if equip.Equipped {
-						artifactCopy := equip.Weapon // Struct copy to preserve data after despawn
-						artifact = &artifactCopy
+						artifact = equip.Weapon // Struct copy to preserve data after despawn
+						hasArtifact = true
 					}
 				}
 
-				var loanContract *components.LoanContractComponent
+				var hasLoanContract bool
+				var loanContract components.LoanContractComponent
 				if query.Has(loanID) {
 					loan := (*components.LoanContractComponent)(query.Get(loanID))
-					loanCopy := *loan // Struct copy
-					loanContract = &loanCopy
+					loanContract = *loan // Struct copy
+					hasLoanContract = true
 				}
 
 				var inheritedBeliefs []components.Belief
@@ -203,17 +208,19 @@ func (s *DeathSystem) Update(world *ecs.World) {
 				incoming := s.hookGraph.GetAllIncomingHooks(ident.ID)
 
 				// Only trigger succession if there's a reason (hooks or debt or prestige or artifact or active loan)
-				if len(outgoing) > 0 || len(incoming) > 0 || pres > 0 || debt > 0 || artifact != nil || loanContract != nil || len(inheritedBeliefs) > 0 {
+				if len(outgoing) > 0 || len(incoming) > 0 || pres > 0 || debt > 0 || hasArtifact || hasLoanContract || len(inheritedBeliefs) > 0 {
 					s.heirs = append(s.heirs, heirData{
-						DeadID:        ident.ID,
-						FamilyID:      affil.FamilyID,
-						Prestige:      pres,
-						InheritedDebt: debt,
-						OutgoingHooks: outgoing,
-						IncomingHooks: incoming,
-						Artifact:      artifact,
-						LoanContract:  loanContract,
-						Beliefs:       inheritedBeliefs,
+						DeadID:          ident.ID,
+						FamilyID:        affil.FamilyID,
+						Prestige:        pres,
+						InheritedDebt:   debt,
+						OutgoingHooks:   outgoing,
+						IncomingHooks:   incoming,
+						HasArtifact:     hasArtifact,
+						Artifact:        artifact,
+						HasLoanContract: hasLoanContract,
+						LoanContract:    loanContract,
+						Beliefs:         inheritedBeliefs,
 					})
 				}
 			}
@@ -235,19 +242,23 @@ func (s *DeathSystem) Update(world *ecs.World) {
 		posID := ecs.ComponentID[components.Position](world)
 		jurQuery := world.Query(ecs.All(jurID, posID))
 
+		// Cache values + entity handles, not component pointers — GC corruption class, see banditry.go.
+		// Trauma writes re-fetch through the entity handle at use time.
 		type jurData struct {
-			comp *components.JurisdictionComponent
-			x    float32
-			y    float32
+			entity        ecs.Entity
+			x             float32
+			y             float32
+			radiusSquared float32
 		}
 		jurisdictions := make([]jurData, 0, 20)
 		for jurQuery.Next() {
 			jur := (*components.JurisdictionComponent)(jurQuery.Get(jurID))
 			p := (*components.Position)(jurQuery.Get(posID))
 			jurisdictions = append(jurisdictions, jurData{
-				comp: jur,
-				x:    p.X,
-				y:    p.Y,
+				entity:        jurQuery.Entity(),
+				x:             p.X,
+				y:             p.Y,
+				radiusSquared: jur.RadiusSquared,
 			})
 		}
 
@@ -256,9 +267,12 @@ func (s *DeathSystem) Update(world *ecs.World) {
 				j := &jurisdictions[i]
 				dx := dp.X - j.x
 				dy := dp.Y - j.y
-				if dx*dx+dy*dy <= j.comp.RadiusSquared {
-					if j.comp.Trauma < 65535 {
-						j.comp.Trauma++
+				if dx*dx+dy*dy <= j.radiusSquared {
+					if world.Alive(j.entity) && world.Has(j.entity, jurID) {
+						jur := (*components.JurisdictionComponent)(world.Get(j.entity, jurID))
+						if jur.Trauma < 65535 {
+							jur.Trauma++
+						}
 					}
 					break
 				}
@@ -315,12 +329,12 @@ func (s *DeathSystem) Update(world *ecs.World) {
 				}
 
 				// Phase 32.1: Transfer Artifact
-				if h.Artifact != nil {
+				if h.HasArtifact {
 					if !world.Has(heirEnt, equipID) {
 						world.Add(heirEnt, equipID)
 					}
 					equip := (*components.EquipmentComponent)(world.Get(heirEnt, equipID))
-					equip.Weapon = *h.Artifact
+					equip.Weapon = h.Artifact
 					equip.Equipped = true
 
 					// Remove from spawning items pool
@@ -334,12 +348,12 @@ func (s *DeathSystem) Update(world *ecs.World) {
 				}
 
 				// Phase 46: Generational Debt Engine - Transfer Loan Contract directly
-				if h.LoanContract != nil {
+				if h.HasLoanContract {
 					if !world.Has(heirEnt, loanID) {
 						world.Add(heirEnt, loanID)
 					}
 					loan := (*components.LoanContractComponent)(world.Get(heirEnt, loanID))
-					*loan = *h.LoanContract
+					*loan = h.LoanContract
 				}
 
 				// Phase 25.2: Ideological Succession Engine - Transfer beliefs

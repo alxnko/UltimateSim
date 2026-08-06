@@ -32,11 +32,14 @@ func NewWanderSystem(world *ecs.World, mapGrid *engine.MapGrid, pathQueue *engin
 
 	possessedID := ecs.ComponentID[components.Possessed](world)
 	orderID := ecs.ComponentID[components.PlayerOrderComponent](world)
+	routineID := ecs.ComponentID[components.RoutineComponent](world)
 
 	// Phase 11.2: Override the standard WanderSystem AI state-processor for the Possessed target
 	// We skip entities that are Possessed so input cleanly controls movement.
 	// Shell Phase: also skip NPCs under a direct PlayerOrder so order steering wins.
-	mask := ecs.All(posID, idID, needsID, pathID).Without(possessedID, orderID)
+	// Grand Strategy P5 (L1): routine-driven employed citizens are steered by
+	// DailyRoutineSystem; wandering stays for the unemployed/wilderness.
+	mask := ecs.All(posID, idID, needsID, pathID).Without(possessedID, orderID, routineID)
 
 	return &WanderSystem{
 		mapGrid:     mapGrid,

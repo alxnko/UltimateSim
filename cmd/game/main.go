@@ -80,6 +80,9 @@ func BuildSimulation(gridWidth, gridHeight int, seedVal byte, status *render.Loa
 	tickManager.AddSystem(systems.NewBanditrySystem(world), engine.PhaseAI)
 	tickManager.AddSystem(systems.NewCourierInterceptionSystem(world), engine.PhaseAI)
 	tickManager.AddSystem(systems.NewWanderSystem(world, grid, pathQueue), engine.PhaseAI)
+	// Grand Strategy P5 L1: employed citizens live visible daily routines;
+	// WanderSystem keeps only the unemployed and the wilderness.
+	tickManager.AddSystem(systems.NewDailyRoutineSystem(world, grid, calendar), engine.PhaseAI)
 	tickManager.AddSystem(systems.NewNavalRoutingSystem(world, grid, pathQueue, calendar), engine.PhaseAI)
 
 	// --- PHASE: MOVEMENT ---
@@ -100,14 +103,18 @@ func BuildSimulation(gridWidth, gridHeight int, seedVal byte, status *render.Loa
 	tickManager.AddSystem(systems.NewCityBinderSystem(), engine.PhaseResolution)
 	tickManager.AddSystem(systems.NewSettlementRuleSystem(grid), engine.PhaseResolution)
 	tickManager.AddSystem(systems.NewPriceDiscoverySystem(), engine.PhaseResolution)
+	// Grand Strategy P2.6: trade-route goods flow + route income.
+	tickManager.AddSystem(systems.NewTradeRouteSystem(), engine.PhaseResolution)
 	tickManager.AddSystem(systems.NewRuinTransformationSystem(world), engine.PhaseResolution)
 	tickManager.AddSystem(systems.NewAdministrativeDecaySystem(), engine.PhaseResolution)
 
 	// Phase 43: Organic Administration Engine
 	tickManager.AddSystem(systems.NewLeadershipEmergenceSystem(hookGraph), engine.PhaseResolution)
 
-	// Phase 16.1 & 42: Taxation and The Tax Evasion Engine
-	tickManager.AddSystem(systems.NewTaxationSystem(world, hookGraph), engine.PhaseResolution)
+	// Phase 16.1 & 42 & Grand Strategy P2.6: Taxation + Tax Evasion + Tax
+	// Policy rate control. The wrapper owns and drives the base system —
+	// registering both would double-collect.
+	tickManager.AddSystem(systems.NewTaxPolicySystem(systems.NewTaxationSystem(world, hookGraph)), engine.PhaseResolution)
 	tickManager.AddSystem(systems.NewVassalSafetyValveSystem(world, hookGraph), engine.PhaseResolution)
 
 	// Phase 16.4: Administrative Reach & Friction
@@ -126,6 +133,14 @@ func BuildSimulation(gridWidth, gridHeight int, seedVal byte, status *render.Loa
 
 	// Phase 29.1: Geopolitical Resource Wars
 	tickManager.AddSystem(systems.NewResourceWarSystem(world, hookGraph), engine.PhaseResolution)
+
+	// Grand Strategy Phase: opinion/alliance/war-score diplomacy ledger,
+	// synced two-way with the macro WarTracker model. Registered right after
+	// ResourceWarSystem so macro declarations sync on the same cadence.
+	// SetClock binds tick stamps (truces, cooldowns) to the persisted clock.
+	diploSys := systems.NewDiplomacySystem(world)
+	diploSys.SetClock(tickManager)
+	tickManager.AddSystem(diploSys, engine.PhaseResolution)
 
 	// Register Gossip
 	tickManager.AddSystem(systems.NewInformationTradeSystem(world, hookGraph), engine.PhaseResolution)
@@ -200,6 +215,15 @@ func BuildSimulation(gridWidth, gridHeight int, seedVal byte, status *render.Loa
 	tickManager.AddSystem(systems.NewCraftingSystem(world, pathQueue), engine.PhaseResolution)
 	tickManager.AddSystem(systems.NewStructureEffectSystem(), engine.PhaseResolution)
 	tickManager.AddSystem(systems.NewAmbitionSystem(hookGraph), engine.PhaseResolution)
+	// Grand Strategy P2.4/P2.5: intrigue plots + council bonuses.
+	plotSys := systems.NewPlotSystem(world, hookGraph)
+	plotSys.SetClock(tickManager)
+	tickManager.AddSystem(plotSys, engine.PhaseResolution)
+	tickManager.AddSystem(systems.NewCouncilSystem(world), engine.PhaseResolution)
+	// Grand Strategy G1/G2/G6: interactive event director (drama engine).
+	eventSys := systems.NewEventDirectorSystem(world, hookGraph)
+	eventSys.SetClock(tickManager)
+	tickManager.AddSystem(eventSys, engine.PhaseResolution)
 	tickManager.AddSystem(systems.NewPlayerOrderSystem(hookGraph, bridge), engine.PhaseAI)
 
 	// --- PHASE: CLEANUP ---
@@ -211,6 +235,13 @@ func BuildSimulation(gridWidth, gridHeight int, seedVal byte, status *render.Loa
 	// Phase 03.2: Genesis Spawner (Runs once at tick 0)
 	tickManager.AddSystem(systems.NewNPCSpawnerSystem(world, grid), engine.PhaseCleanup)
 
+	// Grand Strategy Phase: plant an already-political world — cities,
+	// countries, capitals, rulers, employed families — before the first tick,
+	// the way a grand-strategy start date works. The wilderness spawner above
+	// still adds organic wanderers on tick 1.
+	update(0.9, "Founding Civilizations...")
+	systems.SeedCivilization(world, grid, hookGraph, systems.DefaultGenesis())
+
 	update(1.0, "Engine Assembly Complete.")
 
 	status.Mutex.Lock()
@@ -219,6 +250,7 @@ func BuildSimulation(gridWidth, gridHeight int, seedVal byte, status *render.Loa
 	status.HookGraph = hookGraph
 	status.Bridge = bridge
 	status.Events = playerEvents
+	status.PathQueue = pathQueue
 	status.Seed = seedVal
 	status.Done = true
 	status.Mutex.Unlock()
@@ -240,7 +272,15 @@ func (g *Game) Draw(screen *ebiten.Image) {
 }
 
 func (g *Game) Layout(outsideWidth, outsideHeight int) (int, int) {
-	return 1280, 720
+	// Grand Strategy Phase: render at the real window size (crisp text at any
+	// resolution). UI layouts read screen bounds each frame.
+	if outsideWidth < 960 {
+		outsideWidth = 960
+	}
+	if outsideHeight < 540 {
+		outsideHeight = 540
+	}
+	return outsideWidth, outsideHeight
 }
 
 func main() {

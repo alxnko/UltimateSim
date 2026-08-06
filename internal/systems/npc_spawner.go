@@ -2,7 +2,6 @@ package systems
 
 import (
 	"log"
-	"strconv"
 
 	"github.com/ALXNKO/UltimateSim/internal/components"
 	"github.com/ALXNKO/UltimateSim/internal/engine"
@@ -98,7 +97,7 @@ func (s *NPCSpawnerSystem) Update(world *ecs.World) {
 			id := (*components.Identity)(world.Get(entity, idID))
 			id.ID = s.nextID
 			s.nextID++
-			id.Name = "NPC-" + strconv.FormatUint(id.ID, 10)
+			id.Name = Name(id.ID, uint8(clanID%nameCultureCount))
 			id.BaseTraits = uint32(engine.GetRandomInt()) // Random bitmask
 			id.Age = uint16(20 + engine.GetRandomInt()%30)
 

@@ -92,6 +92,96 @@ func PossessEntity(world *ecs.World, target ecs.Entity) error {
 	return nil
 }
 
+// StartCandidate describes one pickable body for the character-select screen.
+type StartCandidate struct {
+	HeirInfo
+	CityID uint32
+	Wealth float32
+}
+
+// ListStartCandidates returns a deterministic, varied roster for character
+// select: the wealthiest, the youngest adults, and stable low-ID villagers.
+// Empty when the world has no eligible NPCs yet.
+func ListStartCandidates(world *ecs.World) []StartCandidate {
+	npcID := ecs.ComponentID[components.NPC](world)
+	identID := ecs.ComponentID[components.Identity](world)
+	affID := ecs.ComponentID[components.Affiliation](world)
+	jobID := ecs.ComponentID[components.JobComponent](world)
+	genomeID := ecs.ComponentID[components.GenomeComponent](world)
+	needsID := ecs.ComponentID[components.Needs](world)
+
+	var all []StartCandidate
+	q := world.Query(ecs.All(npcID, identID, affID))
+	for q.Next() {
+		ident := (*components.Identity)(q.Get(identID))
+		if ident.Age < 14 || ident.Age > 70 {
+			continue
+		}
+		aff := (*components.Affiliation)(q.Get(affID))
+		c := StartCandidate{
+			HeirInfo: HeirInfo{Entity: q.Entity(), ID: ident.ID, Name: ident.Name, Age: ident.Age},
+			CityID:   aff.CityID,
+		}
+		if q.Has(jobID) {
+			c.JobID = (*components.JobComponent)(q.Get(jobID)).JobID
+		}
+		if q.Has(genomeID) {
+			g := (*components.GenomeComponent)(q.Get(genomeID))
+			c.Strength, c.Intellect = g.Strength, g.Intellect
+		}
+		if q.Has(needsID) {
+			c.Wealth = (*components.Needs)(q.Get(needsID)).Wealth
+		}
+		all = append(all, c)
+	}
+	if len(all) == 0 {
+		return nil
+	}
+
+	pick := make([]StartCandidate, 0, 12)
+	seen := map[uint64]bool{}
+	take := func(c StartCandidate) {
+		if !seen[c.ID] && len(pick) < 12 {
+			seen[c.ID] = true
+			pick = append(pick, c)
+		}
+	}
+	// 4 wealthiest (ID tiebreak keeps determinism).
+	sort.SliceStable(all, func(i, j int) bool {
+		if all[i].Wealth != all[j].Wealth {
+			return all[i].Wealth > all[j].Wealth
+		}
+		return all[i].ID < all[j].ID
+	})
+	for i := 0; i < len(all) && i < 4; i++ {
+		take(all[i])
+	}
+	// 4 youngest adults.
+	sort.SliceStable(all, func(i, j int) bool {
+		if all[i].Age != all[j].Age {
+			return all[i].Age < all[j].Age
+		}
+		return all[i].ID < all[j].ID
+	})
+	for _, c := range all {
+		if len(pick) >= 8 {
+			break
+		}
+		if c.Age >= 16 {
+			take(c)
+		}
+	}
+	// Fill with stable low-ID villagers.
+	sort.SliceStable(all, func(i, j int) bool { return all[i].ID < all[j].ID })
+	for _, c := range all {
+		if len(pick) >= 12 {
+			break
+		}
+		take(c)
+	}
+	return pick
+}
+
 // FindStartCandidate picks a deterministic young, family-bound NPC to begin as.
 func FindStartCandidate(world *ecs.World) (ecs.Entity, bool) {
 	npcID := ecs.ComponentID[components.NPC](world)

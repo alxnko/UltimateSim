@@ -13,8 +13,12 @@ import (
 type PriceNormalizationSystem struct {
 	world *ecs.World
 
-	// Pre-allocated maps for O(1) matching during iteration to avoid nested queries
-	cityMarkets map[uint32]*components.MarketComponent
+	// Pre-allocated maps for O(1) matching during iteration to avoid nested queries.
+	// Cache values, not component pointers — GC corruption class, see
+	// banditry.go. Entity handles are stored and the MarketComponent is
+	// re-fetched via world.Get at every use, so writes stay visible across
+	// union iterations.
+	cityMarkets map[uint32]ecs.Entity
 
 	// Component IDs
 	unionEntityID ecs.ID
@@ -28,7 +32,7 @@ type PriceNormalizationSystem struct {
 func NewPriceNormalizationSystem(world *ecs.World) *PriceNormalizationSystem {
 	return &PriceNormalizationSystem{
 		world:         world,
-		cityMarkets:   make(map[uint32]*components.MarketComponent),
+		cityMarkets:   make(map[uint32]ecs.Entity),
 		unionEntityID: ecs.ComponentID[components.UnionEntity](world),
 		unionCompID:   ecs.ComponentID[components.UnionComponent](world),
 		villageID:     ecs.ComponentID[components.Village](world),
@@ -47,8 +51,7 @@ func (s *PriceNormalizationSystem) Update() {
 	cityQuery := s.world.Query(filter.All(s.villageID, s.affilID, s.marketID))
 	for cityQuery.Next() {
 		affil := (*components.Affiliation)(cityQuery.Get(s.affilID))
-		market := (*components.MarketComponent)(cityQuery.Get(s.marketID))
-		s.cityMarkets[affil.CityID] = market
+		s.cityMarkets[affil.CityID] = cityQuery.Entity()
 	}
 
 	if len(s.cityMarkets) == 0 {
@@ -77,7 +80,8 @@ func (s *PriceNormalizationSystem) Update() {
 
 		// 3. Gather total prices across valid member cities
 		for _, memberID := range union.MemberIDs {
-			if market, ok := s.cityMarkets[memberID]; ok {
+			if marketEnt, ok := s.cityMarkets[memberID]; ok && s.world.Alive(marketEnt) {
+				market := (*components.MarketComponent)(s.world.Get(marketEnt, s.marketID))
 				totalWoodPrice += market.WoodPrice
 				totalStonePrice += market.StonePrice
 				totalIronPrice += market.IronPrice
@@ -94,7 +98,8 @@ func (s *PriceNormalizationSystem) Update() {
 			avgFoodPrice := totalFoodPrice / activeMembers
 
 			for _, memberID := range union.MemberIDs {
-				if market, ok := s.cityMarkets[memberID]; ok {
+				if marketEnt, ok := s.cityMarkets[memberID]; ok && s.world.Alive(marketEnt) {
+					market := (*components.MarketComponent)(s.world.Get(marketEnt, s.marketID))
 					market.WoodPrice = avgWoodPrice
 					market.StonePrice = avgStonePrice
 					market.IronPrice = avgIronPrice

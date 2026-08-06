@@ -22,5 +22,9 @@ type LoadingStatus struct {
 	Bridge *systems.InputBridge
 	Events *engine.PlayerEvents
 
+	// PathQueue is exposed so tests can Close() the worker pool between
+	// in-process simulation runs instead of leaking goroutines.
+	PathQueue *engine.PathRequestQueue
+
 	Mutex sync.Mutex
 }

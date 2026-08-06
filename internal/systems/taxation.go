@@ -9,8 +9,11 @@ import (
 
 // Phase 16.1: The Country Entity (Macro-State)
 // Evolution: Phase 42 - The Tax Evasion Engine
+// cache values + the capital entity handle, not component pointers — GC
+// corruption class, see banditry.go. The capital treasury is written through,
+// so it is re-fetched via world.Get at use time.
 type capitalTaxData struct {
-	Treasury   *components.TreasuryComponent
+	Capital    ecs.Entity
 	Corruption uint32
 	RulerID    uint64
 }
@@ -93,7 +96,6 @@ func (s *TaxationSystem) Update(world *ecs.World) {
 
 	for capitalQuery.Next() {
 		affil := (*components.Affiliation)(capitalQuery.Get(s.affilID))
-		treasury := (*components.TreasuryComponent)(capitalQuery.Get(s.treasuryID))
 		jur := (*components.JurisdictionComponent)(capitalQuery.Get(s.jurID))
 
 		// Find the true RulerID by scanning for an NPC in this City with the AdministrationMarker
@@ -111,7 +113,7 @@ func (s *TaxationSystem) Update(world *ecs.World) {
 
 		// Map the capital data using the CountryID
 		capitalDataMap[affil.CountryID] = capitalTaxData{
-			Treasury:   treasury,
+			Capital:    capitalQuery.Entity(),
 			Corruption: jur.Corruption,
 			RulerID:    rulerID,
 		}
@@ -164,13 +166,20 @@ func (s *TaxationSystem) Update(world *ecs.World) {
 				// Calculate tax base linearly off current local market prices (e.g. higher demand = higher tax).
 				taxAmount := (market.FoodPrice + market.WoodPrice + market.StonePrice + market.IronPrice) * 1.0
 
+				// Re-fetch the capital treasury by entity handle — cache values,
+				// not component pointers (GC corruption class, see banditry.go).
+				if !s.world.Alive(countryData.Capital) {
+					continue
+				}
+				countryTreasury := (*components.TreasuryComponent)(s.world.Get(countryData.Capital, s.treasuryID))
+
 				// Deduct the tax if the Village has sufficient wealth.
 				if treasury.Wealth >= taxAmount {
 					treasury.Wealth -= taxAmount
-					countryData.Treasury.Wealth += taxAmount
+					countryTreasury.Wealth += taxAmount
 				} else {
 					// If insufficient wealth, drain whatever is left.
-					countryData.Treasury.Wealth += treasury.Wealth
+					countryTreasury.Wealth += treasury.Wealth
 					treasury.Wealth = 0.0
 				}
 			}

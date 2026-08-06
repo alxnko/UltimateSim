@@ -74,10 +74,27 @@ type PlayerContext struct {
 	AmbitionsOpen bool
 	CharOpen      bool
 	EventLogOpen  bool
+	DiploOpen     bool // Grand Strategy: diplomacy panel (chrome tab / hotkey)
+	MarketOpen    bool // Grand Strategy: market & trade panel (chrome tab / hotkey)
+	DynastyOpen   bool // Grand Strategy: dynasty/intrigue/council panel (chrome tab / hotkey)
 	PauseOpen     bool
 	HeirOpen      bool
 	GameOverOpen  bool
 	HeirChoices   []systems.HeirInfo
+
+	// Character select (start-of-game or after full dynasty wipe)
+	SelectOpen    bool
+	SelectChoices []systems.StartCandidate
+	SelIndex      int
+
+	// Warmup ticks remaining before character select opens on a fresh world.
+	Warmup int
+
+	// Free camera: true while the player pans away from their character.
+	CamFree  bool
+	dragging bool
+	dragX    int
+	dragY    int
 
 	// Strategic lens (active below zoom threshold)
 	Lens uint8
@@ -94,7 +111,8 @@ type PlayerContext struct {
 // AnyModal reports whether a window that owns the keyboard is open.
 func (pc *PlayerContext) AnyModal() bool {
 	return pc.DialogOpen || pc.TradeOpen || pc.LawsOpen || pc.AmbitionsOpen ||
-		pc.CharOpen || pc.PauseOpen || pc.HeirOpen || pc.GameOverOpen || pc.EventLogOpen
+		pc.CharOpen || pc.PauseOpen || pc.HeirOpen || pc.GameOverOpen || pc.EventLogOpen ||
+		pc.SelectOpen || pc.DiploOpen || pc.MarketOpen || pc.DynastyOpen
 }
 
 // CloseAll dismisses every open window and resets tool modes.
@@ -105,6 +123,9 @@ func (pc *PlayerContext) CloseAll() {
 	pc.AmbitionsOpen = false
 	pc.CharOpen = false
 	pc.EventLogOpen = false
+	pc.DiploOpen = false
+	pc.MarketOpen = false
+	pc.DynastyOpen = false
 	pc.PauseOpen = false
 	pc.Menu.Visible = false
 	pc.SubMenu.Visible = false

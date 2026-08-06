@@ -1,0 +1,210 @@
+
+//////////////////////////////////////////////////////////////////////////
+
+// Filter{{ .Index }} is a helper for building [Query{{ .Index }}] query iterators.
+//
+// # Example
+//
+//	world := ecs.NewWorld()
+//
+//	filter := NewFilter{{ .Index }}{{ .Types }}()
+//	query := filter.Query(&world)
+//
+//	complexFilter :=
+//		NewFilter{{ .Index }}{{ .Types }}().{{if .Types}}
+//			Optional(T[A]()).{{ end }}
+//			With(T2[V, W]()...).
+//			Without(T3[X, Y, Z]()...).
+type Filter{{ .Index }}{{ .TypesFull }} filter
+
+// NewFilter{{ .Index }} creates a generic Filter{{ .Index }} for {{ .NumberStr }} components.
+//
+// See also [ecs.World.Query].
+func NewFilter{{ .Index }}{{ .TypesFull }}() *Filter{{ .Index }}{{ .Types }} {
+	f := Filter{{ .Index }}{{ .Types }}(newFilter(
+		{{ .Include }}
+	))
+	return &f
+}
+
+{{if .Types}}
+// Optional makes some of the query's components optional.
+//
+// Create the required mask items with [T].
+//
+// Only affects component types that were specified in the query.
+func (f *Filter{{ .Index }}{{ .Types }}) Optional(mask ...Comp) *Filter{{ .Index }}{{ .Types }} {
+	if f.compiled.locked {
+		panic("can't modify a registered filter")
+	}
+	f.optional = append(f.optional, mask...)
+	f.compiled.Reset()
+	return f
+}
+{{ end }}
+
+// With adds components that are required, but not accessible via [Query{{ .Index }}.Get].
+//
+// Create the required mask items with [T].
+func (f *Filter{{ .Index }}{{ .Types }}) With(mask ...Comp) *Filter{{ .Index }}{{ .Types }} {
+	if f.compiled.locked {
+		panic("can't modify a registered filter")
+	}
+	f.include = append(f.include, mask...)
+	f.compiled.Reset()
+	return f
+}
+
+// Without excludes entities with any of the given components from the query.
+//
+// Create the required mask items with [T].
+func (f *Filter{{ .Index }}{{ .Types }}) Without(mask ...Comp) *Filter{{ .Index }}{{ .Types }} {
+	if f.compiled.locked {
+		panic("can't modify a registered filter")
+	}
+	if f.exclusive {
+		panic("filter is already exclusive")
+	}
+	f.exclude = append(f.exclude, mask...)
+	f.compiled.Reset()
+	return f
+}
+
+// Exclusive makes the filter exclusive in the sense that the component composition is matched exactly,
+// and no other components are allowed.
+func (f *Filter{{ .Index }}{{ .Types }}) Exclusive() *Filter{{ .Index }}{{ .Types }} {
+	if f.compiled.locked {
+		panic("can't modify a registered filter")
+	}
+	if len(f.exclude) > 0 {
+		panic("filter already excludes some components")
+	}
+	f.exclusive = true
+	return f
+}
+
+// WithRelation sets the filter's [ecs.Relation] component and optionally
+// restricts the query to entities that have the given relation target.
+//
+// Use without the optional argument to specify the relation target in [Filter{{ .Index }}.Query].
+// If the optional argument is provided, the filter's relation target is set permanently.
+//
+// Create the required component ID with [T].
+func (f *Filter{{ .Index }}{{ .Types }}) WithRelation(comp Comp, target ...ecs.Entity) *Filter{{ .Index }}{{ .Types }} {
+	if f.compiled.locked {
+		panic("can't modify a registered filter")
+	}
+	f.targetType = comp
+	if len(target) > 0 {
+		f.target = target[0]
+		f.hasTarget = true
+	}
+	f.compiled.Reset()
+	return f
+}
+
+// Filter builds an [ecs.Filter], with an optional relation target.
+//
+// A relation target can't be used:
+//   - if [Filter{{ .Index }}.WithRelation] was not called
+//   - if the target was already set via [Filter{{ .Index }}.WithRelation]
+//   - if the filter is registered for caching
+//
+// Panics in these cases.
+func (f *Filter{{ .Index }}{{ .Types }}) Filter(w *ecs.World, target ...ecs.Entity) ecs.Filter {
+	f.compiled.Compile(w, f.include, f.optional, f.exclude, f.exclusive, f.targetType, f.target, f.hasTarget)
+	
+	filter := f.compiled.filter
+	if len(target) > 0 {
+		if f.compiled.locked {
+			panic("can't change relation target on a cached query")
+		}
+		if f.hasTarget {
+			panic("can't change relation target on a query with fixed target")
+		}
+		f.compiled.relationFilter.Filter = &f.compiled.maskFilter
+		f.compiled.relationFilter.Target = target[0]
+		filter = &f.compiled.relationFilter
+	}
+
+	return filter
+}
+
+// Query builds a [Query{{ .Index }}] query for iteration, with an optional relation target.
+//
+// A relation target can't be used:
+//   - if [Filter{{ .Index }}.WithRelation] was not called
+//   - if the target was already set via [Filter{{ .Index }}.WithRelation]
+//   - if the filter is registered for caching
+//
+// Panics in these cases.
+func (f *Filter{{ .Index }}{{ .Types }}) Query(w *ecs.World, target ...ecs.Entity) Query{{ .Index }}{{ .Types }} {
+	filter := f.Filter(w, target...)
+	return Query{{ .Index }}{{ .Types }}{
+		Query: w.Query(filter),
+		relation: f.compiled.Relation,
+		hasRelation: f.compiled.HasRelation,
+		{{ .IDAssign }}
+	}
+}
+
+// Register the filter for caching.
+//
+// See [ecs.Cache] for details on filter caching.
+func (f *Filter{{ .Index }}{{ .Types }}) Register(w *ecs.World) {
+	f.compiled.Compile(w, f.include, f.optional, f.exclude, f.exclusive, f.targetType, f.target, f.hasTarget)
+	f.compiled.Register(w)
+}
+
+// Unregister the filter from caching.
+//
+// See [ecs.Cache] for details on filter caching.
+func (f *Filter{{ .Index }}{{ .Types }}) Unregister(w *ecs.World) {
+	f.compiled.Unregister(w)
+}
+
+// Query{{ .Index }} is a generic query iterator for {{ .NumberStr }} components.
+//
+// Create it with [NewFilter{{ .Index }}] and [Filter{{ .Index }}.Query].
+//
+// Also has all methods of [ecs.Query].
+//
+// # Example
+//
+//	world := ecs.NewWorld()
+//
+//	filter := NewFilter{{ .Index }}{{ .Types }}()
+//	query := filter.Query(&world)
+//	for query.Next() {
+//		entity = query.Entity(){{if .Types}}
+//		{{ .Variables }} := query.Get(){{ end }}
+//	}
+type Query{{ .Index }}{{ .TypesFull }} struct {
+	ecs.Query
+	{{ .IDTypes }}
+	relation ecs.ID
+	hasRelation bool
+}
+
+{{if .ReturnAll}}
+// Get returns all queried components for the current query iterator position.
+//
+// ⚠️ Important: The obtained pointers should not be stored persistently!
+//
+// Use [ecs.Query.Entity] to get the current Entity.
+func (q *Query{{ .Index }}{{ .Types }}) Get() ({{ .TypesReturn }}) {
+	return {{ .ReturnAll }}
+}
+{{ end }}
+
+// Relation returns the target entity for the query's relation.
+//
+// Panics if the entity does not have the given component, or if the component is not an [ecs.Relation].
+// Panics if the underlying [Filter{{ .Index }}] was not prepared for relations
+// using [Filter{{ .Index }}.WithRelation].
+func (q *Query{{ .Index }}{{ .Types }}) Relation() ecs.Entity {
+	if !q.hasRelation {
+		panic("query has no relation")
+	}
+	return q.Query.Relation(q.relation)
+}

@@ -46,11 +46,12 @@ func (s *CourierInterceptionSystem) Update(world *ecs.World) {
 	posID := ecs.ComponentID[components.Position](world)
 	orderCompID := ecs.ComponentID[components.OrderComponent](world)
 
+	// Cache values, not component pointers — GC corruption class, see banditry.go.
 	type oData struct {
-		Entity ecs.Entity
-		X      float32
-		Y      float32
-		Order  *components.OrderComponent
+		Entity       ecs.Entity
+		X            float32
+		Y            float32
+		TargetCityID uint32
 	}
 
 	orders := make([]oData, 0, 100)
@@ -59,10 +60,10 @@ func (s *CourierInterceptionSystem) Update(world *ecs.World) {
 		pos := (*components.Position)(orderQuery.Get(posID))
 		order := (*components.OrderComponent)(orderQuery.Get(orderCompID))
 		orders = append(orders, oData{
-			Entity: orderQuery.Entity(),
-			X:      pos.X,
-			Y:      pos.Y,
-			Order:  order,
+			Entity:       orderQuery.Entity(),
+			X:            pos.X,
+			Y:            pos.Y,
+			TargetCityID: order.TargetCityID,
 		})
 	}
 
@@ -124,7 +125,7 @@ func (s *CourierInterceptionSystem) Update(world *ecs.World) {
 			event := components.MemoryEvent{
 				TargetID:        0, // Target is OrderEntity, 0 is fine
 				InteractionType: components.InteractionTheft,
-				Value:           int32(bestO.Order.TargetCityID), // Secret data value
+				Value:           int32(bestO.TargetCityID), // Secret data value
 				TickStamp:       0,
 			}
 			mem.Events[mem.Head] = event

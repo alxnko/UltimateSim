@@ -10,12 +10,13 @@ import (
 // It also transfers wealth from the Ship's Treasury to the NPC's Needs.Wealth as wages.
 // If the ship cannot pay, the crew quits.
 
+// shipLaborData caches values + entity handles, not component pointers — GC corruption
+// class, see banditry.go. Treasury/ShipComponent writes re-fetch via the handle at use time.
 type shipLaborData struct {
-	entity   ecs.Entity
-	identID  uint64
-	shipComp *components.ShipComponent
-	treasury *components.TreasuryComponent
-	pos      *components.Position
+	entity  ecs.Entity
+	identID uint64
+	x       float32
+	y       float32
 }
 
 type MaritimeLaborSystem struct {
@@ -49,17 +50,14 @@ func (s *MaritimeLaborSystem) Update(world *ecs.World) {
 	shipQuery := world.Query(shipFilter)
 
 	for shipQuery.Next() {
-		shipComp := (*components.ShipComponent)(shipQuery.Get(shipID))
-		treasury := (*components.TreasuryComponent)(shipQuery.Get(treasuryID))
 		pos := (*components.Position)(shipQuery.Get(posID))
 		ident := (*components.Identity)(shipQuery.Get(identID))
 
 		s.ships = append(s.ships, shipLaborData{
-			entity:   shipQuery.Entity(),
-			identID:  ident.ID,
-			shipComp: shipComp,
-			treasury: treasury,
-			pos:      pos,
+			entity:  shipQuery.Entity(),
+			identID: ident.ID,
+			x:       pos.X,
+			y:       pos.Y,
 		})
 	}
 
@@ -84,17 +82,23 @@ func (s *MaritimeLaborSystem) Update(world *ecs.World) {
 				if s.ships[i].identID == job.EmployerID {
 					foundShip = true
 					wage := float32(5.0)
-					if s.ships[i].treasury.Wealth >= wage {
-						s.ships[i].treasury.Wealth -= wage
-						needs.Wealth += wage
-					} else {
-						// Bankrupt! Crew quits.
-						job.JobID = components.JobNone
-						job.EmployerID = 0
-						if s.ships[i].shipComp.CrewCurrent > 0 {
-							s.ships[i].shipComp.CrewCurrent--
+					shipEnt := s.ships[i].entity
+					if world.Alive(shipEnt) {
+						// Re-fetch at use time via the entity handle — see banditry.go.
+						treasury := (*components.TreasuryComponent)(world.Get(shipEnt, treasuryID))
+						if treasury.Wealth >= wage {
+							treasury.Wealth -= wage
+							needs.Wealth += wage
+						} else {
+							// Bankrupt! Crew quits.
+							job.JobID = components.JobNone
+							job.EmployerID = 0
+							shipComp := (*components.ShipComponent)(world.Get(shipEnt, shipID))
+							if shipComp.CrewCurrent > 0 {
+								shipComp.CrewCurrent--
+							}
+							justQuit = true
 						}
-						justQuit = true
 					}
 					break
 				}
@@ -118,9 +122,14 @@ func (s *MaritimeLaborSystem) Update(world *ecs.World) {
 			bestShipIdx := -1
 
 			for i := 0; i < len(s.ships); i++ {
-				if s.ships[i].shipComp.CrewCurrent < s.ships[i].shipComp.CrewRequirements {
-					dx := s.ships[i].pos.X - pos.X
-					dy := s.ships[i].pos.Y - pos.Y
+				if !world.Alive(s.ships[i].entity) {
+					continue
+				}
+				// Re-fetch at use time via the entity handle — see banditry.go.
+				shipComp := (*components.ShipComponent)(world.Get(s.ships[i].entity, shipID))
+				if shipComp.CrewCurrent < shipComp.CrewRequirements {
+					dx := s.ships[i].x - pos.X
+					dy := s.ships[i].y - pos.Y
 					distSq := dx*dx + dy*dy
 
 					if distSq < bestDistSq {
@@ -134,7 +143,8 @@ func (s *MaritimeLaborSystem) Update(world *ecs.World) {
 				// Hire NPC
 				job.JobID = components.JobSailor
 				job.EmployerID = s.ships[bestShipIdx].identID
-				s.ships[bestShipIdx].shipComp.CrewCurrent++
+				shipComp := (*components.ShipComponent)(world.Get(s.ships[bestShipIdx].entity, shipID))
+				shipComp.CrewCurrent++
 			}
 		}
 	}

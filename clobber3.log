@@ -1,0 +1,968 @@
+runtime: marked free object in span 0x1ac49e91238, elemsize=16 freeindex=0 (bad use of unsafe.Pointer or having race conditions? try -d=checkptr or -race)
+0x1b6d10600000 free  unmarked
+0x1b6d10600010 alloc unmarked
+0x1b6d10600020 alloc unmarked
+0x1b6d10600030 free  unmarked
+0x1b6d10600040 free  unmarked
+0x1b6d10600050 alloc unmarked
+0x1b6d10600060 alloc unmarked
+0x1b6d10600070 free  unmarked
+0x1b6d10600080 free  unmarked
+0x1b6d10600090 alloc unmarked
+0x1b6d106000a0 alloc unmarked
+0x1b6d106000b0 alloc unmarked
+0x1b6d106000c0 alloc unmarked
+0x1b6d106000d0 alloc unmarked
+0x1b6d106000e0 free  unmarked
+0x1b6d106000f0 free  unmarked
+0x1b6d10600100 free  unmarked
+0x1b6d10600110 free  unmarked
+0x1b6d10600120 free  unmarked
+0x1b6d10600130 free  unmarked
+0x1b6d10600140 free  unmarked
+0x1b6d10600150 free  unmarked
+0x1b6d10600160 free  unmarked
+0x1b6d10600170 free  unmarked
+0x1b6d10600180 free  unmarked
+0x1b6d10600190 free  unmarked
+0x1b6d106001a0 free  unmarked
+0x1b6d106001b0 free  unmarked
+0x1b6d106001c0 free  unmarked
+0x1b6d106001d0 free  unmarked
+0x1b6d106001e0 free  unmarked
+0x1b6d106001f0 free  unmarked
+0x1b6d10600200 free  unmarked
+0x1b6d10600210 alloc unmarked
+0x1b6d10600220 free  unmarked
+0x1b6d10600230 free  unmarked
+0x1b6d10600240 free  unmarked
+0x1b6d10600250 free  unmarked
+0x1b6d10600260 free  unmarked
+0x1b6d10600270 free  unmarked
+0x1b6d10600280 free  unmarked
+0x1b6d10600290 free  unmarked
+0x1b6d106002a0 free  unmarked
+0x1b6d106002b0 free  unmarked
+0x1b6d106002c0 free  unmarked
+0x1b6d106002d0 free  unmarked
+0x1b6d106002e0 free  unmarked
+0x1b6d106002f0 free  unmarked
+0x1b6d10600300 alloc unmarked
+0x1b6d10600310 free  unmarked
+0x1b6d10600320 free  unmarked
+0x1b6d10600330 free  unmarked
+0x1b6d10600340 free  unmarked
+0x1b6d10600350 free  unmarked
+0x1b6d10600360 free  unmarked
+0x1b6d10600370 free  unmarked
+0x1b6d10600380 free  unmarked
+0x1b6d10600390 free  unmarked
+0x1b6d106003a0 free  unmarked
+0x1b6d106003b0 free  unmarked
+0x1b6d106003c0 free  unmarked
+0x1b6d106003d0 free  unmarked
+0x1b6d106003e0 free  unmarked
+0x1b6d106003f0 alloc unmarked
+0x1b6d10600400 free  unmarked
+0x1b6d10600410 free  unmarked
+0x1b6d10600420 free  unmarked
+0x1b6d10600430 free  unmarked
+0x1b6d10600440 free  unmarked
+0x1b6d10600450 free  unmarked
+0x1b6d10600460 free  unmarked
+0x1b6d10600470 free  unmarked
+0x1b6d10600480 free  unmarked
+0x1b6d10600490 free  unmarked
+0x1b6d106004a0 free  unmarked
+0x1b6d106004b0 free  unmarked
+0x1b6d106004c0 free  unmarked
+0x1b6d106004d0 free  unmarked
+0x1b6d106004e0 free  unmarked
+0x1b6d106004f0 free  unmarked
+0x1b6d10600500 free  unmarked
+0x1b6d10600510 free  unmarked
+0x1b6d10600520 free  unmarked
+0x1b6d10600530 free  unmarked
+0x1b6d10600540 free  unmarked
+0x1b6d10600550 free  unmarked
+0x1b6d10600560 free  unmarked
+0x1b6d10600570 free  unmarked
+0x1b6d10600580 free  unmarked
+0x1b6d10600590 free  unmarked
+0x1b6d106005a0 free  unmarked
+0x1b6d106005b0 free  unmarked
+0x1b6d106005c0 free  unmarked
+0x1b6d106005d0 free  unmarked
+0x1b6d106005e0 free  unmarked
+0x1b6d106005f0 free  unmarked
+0x1b6d10600600 free  unmarked
+0x1b6d10600610 free  unmarked
+0x1b6d10600620 free  unmarked
+0x1b6d10600630 free  unmarked
+0x1b6d10600640 free  unmarked
+0x1b6d10600650 free  unmarked
+0x1b6d10600660 free  unmarked
+0x1b6d10600670 free  unmarked
+0x1b6d10600680 free  unmarked
+0x1b6d10600690 free  unmarked
+0x1b6d106006a0 free  unmarked
+0x1b6d106006b0 free  unmarked
+0x1b6d106006c0 free  unmarked
+0x1b6d106006d0 free  unmarked
+0x1b6d106006e0 free  unmarked
+0x1b6d106006f0 free  unmarked
+0x1b6d10600700 free  unmarked
+0x1b6d10600710 free  unmarked
+0x1b6d10600720 free  unmarked
+0x1b6d10600730 free  unmarked
+0x1b6d10600740 free  unmarked
+0x1b6d10600750 free  unmarked
+0x1b6d10600760 free  unmarked
+0x1b6d10600770 free  unmarked
+0x1b6d10600780 free  unmarked
+0x1b6d10600790 free  unmarked
+0x1b6d106007a0 free  unmarked
+0x1b6d106007b0 free  unmarked
+0x1b6d106007c0 free  unmarked
+0x1b6d106007d0 alloc unmarked
+0x1b6d106007e0 free  unmarked
+0x1b6d106007f0 free  unmarked
+0x1b6d10600800 free  unmarked
+0x1b6d10600810 free  unmarked
+0x1b6d10600820 free  unmarked
+0x1b6d10600830 free  unmarked
+0x1b6d10600840 free  unmarked
+0x1b6d10600850 free  unmarked
+0x1b6d10600860 free  unmarked
+0x1b6d10600870 free  unmarked
+0x1b6d10600880 free  unmarked
+0x1b6d10600890 free  unmarked
+0x1b6d106008a0 free  unmarked
+0x1b6d106008b0 free  unmarked
+0x1b6d106008c0 free  unmarked
+0x1b6d106008d0 free  unmarked
+0x1b6d106008e0 free  unmarked
+0x1b6d106008f0 free  unmarked
+0x1b6d10600900 free  unmarked
+0x1b6d10600910 alloc unmarked
+0x1b6d10600920 free  unmarked
+0x1b6d10600930 free  unmarked
+0x1b6d10600940 free  unmarked
+0x1b6d10600950 free  unmarked
+0x1b6d10600960 free  unmarked
+0x1b6d10600970 free  unmarked
+0x1b6d10600980 free  unmarked
+0x1b6d10600990 free  unmarked
+0x1b6d106009a0 alloc unmarked
+0x1b6d106009b0 free  unmarked
+0x1b6d106009c0 free  unmarked
+0x1b6d106009d0 free  unmarked
+0x1b6d106009e0 free  unmarked
+0x1b6d106009f0 free  unmarked
+0x1b6d10600a00 free  unmarked
+0x1b6d10600a10 free  unmarked
+0x1b6d10600a20 free  unmarked
+0x1b6d10600a30 free  unmarked
+0x1b6d10600a40 free  unmarked
+0x1b6d10600a50 free  unmarked
+0x1b6d10600a60 free  unmarked
+0x1b6d10600a70 free  unmarked
+0x1b6d10600a80 free  unmarked
+0x1b6d10600a90 free  unmarked
+0x1b6d10600aa0 alloc unmarked
+0x1b6d10600ab0 alloc unmarked
+0x1b6d10600ac0 alloc unmarked
+0x1b6d10600ad0 alloc unmarked
+0x1b6d10600ae0 free  unmarked
+0x1b6d10600af0 alloc unmarked
+0x1b6d10600b00 alloc unmarked
+0x1b6d10600b10 alloc unmarked
+0x1b6d10600b20 alloc unmarked
+0x1b6d10600b30 alloc unmarked
+0x1b6d10600b40 alloc unmarked
+0x1b6d10600b50 alloc unmarked
+0x1b6d10600b60 alloc unmarked
+0x1b6d10600b70 alloc unmarked
+0x1b6d10600b80 alloc unmarked
+0x1b6d10600b90 alloc unmarked
+0x1b6d10600ba0 alloc unmarked
+0x1b6d10600bb0 alloc unmarked
+0x1b6d10600bc0 alloc unmarked
+0x1b6d10600bd0 alloc unmarked
+0x1b6d10600be0 alloc unmarked
+0x1b6d10600bf0 alloc unmarked
+0x1b6d10600c00 alloc unmarked
+0x1b6d10600c10 alloc unmarked
+0x1b6d10600c20 alloc unmarked
+0x1b6d10600c30 alloc unmarked
+0x1b6d10600c40 alloc unmarked
+0x1b6d10600c50 alloc unmarked
+0x1b6d10600c60 alloc unmarked
+0x1b6d10600c70 alloc unmarked
+0x1b6d10600c80 alloc unmarked
+0x1b6d10600c90 alloc unmarked
+0x1b6d10600ca0 alloc unmarked
+0x1b6d10600cb0 alloc unmarked
+0x1b6d10600cc0 alloc unmarked
+0x1b6d10600cd0 alloc unmarked
+0x1b6d10600ce0 alloc unmarked
+0x1b6d10600cf0 alloc unmarked
+0x1b6d10600d00 alloc unmarked
+0x1b6d10600d10 alloc unmarked
+0x1b6d10600d20 alloc unmarked
+0x1b6d10600d30 alloc unmarked
+0x1b6d10600d40 alloc unmarked
+0x1b6d10600d50 alloc unmarked
+0x1b6d10600d60 alloc unmarked
+0x1b6d10600d70 alloc unmarked
+0x1b6d10600d80 alloc unmarked
+0x1b6d10600d90 alloc unmarked
+0x1b6d10600da0 alloc unmarked
+0x1b6d10600db0 alloc unmarked
+0x1b6d10600dc0 alloc unmarked
+0x1b6d10600dd0 alloc unmarked
+0x1b6d10600de0 alloc unmarked
+0x1b6d10600df0 alloc unmarked
+0x1b6d10600e00 alloc unmarked
+0x1b6d10600e10 alloc unmarked
+0x1b6d10600e20 alloc unmarked
+0x1b6d10600e30 alloc unmarked
+0x1b6d10600e40 alloc unmarked
+0x1b6d10600e50 alloc unmarked
+0x1b6d10600e60 free  unmarked
+0x1b6d10600e70 alloc unmarked
+0x1b6d10600e80 free  unmarked
+0x1b6d10600e90 alloc unmarked
+0x1b6d10600ea0 alloc unmarked
+0x1b6d10600eb0 alloc unmarked
+0x1b6d10600ec0 free  unmarked
+0x1b6d10600ed0 alloc unmarked
+0x1b6d10600ee0 free  unmarked
+0x1b6d10600ef0 alloc unmarked
+0x1b6d10600f00 free  unmarked
+0x1b6d10600f10 alloc unmarked
+0x1b6d10600f20 free  unmarked
+0x1b6d10600f30 alloc unmarked
+0x1b6d10600f40 alloc unmarked
+0x1b6d10600f50 free  unmarked
+0x1b6d10600f60 free  unmarked
+0x1b6d10600f70 alloc unmarked
+0x1b6d10600f80 free  unmarked
+0x1b6d10600f90 alloc unmarked
+0x1b6d10600fa0 free  unmarked
+0x1b6d10600fb0 free  unmarked
+0x1b6d10600fc0 alloc unmarked
+0x1b6d10600fd0 free  unmarked
+0x1b6d10600fe0 alloc unmarked
+0x1b6d10600ff0 free  unmarked
+0x1b6d10601000 free  unmarked
+0x1b6d10601010 alloc unmarked
+0x1b6d10601020 alloc unmarked
+0x1b6d10601030 free  unmarked
+0x1b6d10601040 alloc unmarked
+0x1b6d10601050 free  unmarked
+0x1b6d10601060 alloc unmarked
+0x1b6d10601070 free  unmarked
+0x1b6d10601080 free  unmarked
+0x1b6d10601090 alloc unmarked
+0x1b6d106010a0 free  unmarked
+0x1b6d106010b0 free  unmarked
+0x1b6d106010c0 alloc unmarked
+0x1b6d106010d0 alloc unmarked
+0x1b6d106010e0 alloc unmarked
+0x1b6d106010f0 alloc unmarked
+0x1b6d10601100 alloc unmarked
+0x1b6d10601110 alloc unmarked
+0x1b6d10601120 alloc unmarked
+0x1b6d10601130 alloc unmarked
+0x1b6d10601140 alloc unmarked
+0x1b6d10601150 alloc unmarked
+0x1b6d10601160 alloc unmarked
+0x1b6d10601170 alloc unmarked
+0x1b6d10601180 alloc unmarked
+0x1b6d10601190 alloc unmarked
+0x1b6d106011a0 alloc unmarked
+0x1b6d106011b0 alloc unmarked
+0x1b6d106011c0 alloc unmarked
+0x1b6d106011d0 alloc unmarked
+0x1b6d106011e0 alloc unmarked
+0x1b6d106011f0 alloc unmarked
+0x1b6d10601200 alloc unmarked
+0x1b6d10601210 alloc unmarked
+0x1b6d10601220 alloc unmarked
+0x1b6d10601230 alloc unmarked
+0x1b6d10601240 free  unmarked
+0x1b6d10601250 alloc unmarked
+0x1b6d10601260 free  unmarked
+0x1b6d10601270 alloc unmarked
+0x1b6d10601280 free  unmarked
+0x1b6d10601290 alloc unmarked
+0x1b6d106012a0 free  unmarked
+0x1b6d106012b0 alloc unmarked
+0x1b6d106012c0 free  unmarked
+0x1b6d106012d0 alloc unmarked
+0x1b6d106012e0 free  unmarked
+0x1b6d106012f0 alloc unmarked
+0x1b6d10601300 free  unmarked
+0x1b6d10601310 free  unmarked
+0x1b6d10601320 alloc unmarked
+0x1b6d10601330 free  unmarked
+0x1b6d10601340 alloc unmarked
+0x1b6d10601350 free  unmarked
+0x1b6d10601360 alloc unmarked
+0x1b6d10601370 free  unmarked
+0x1b6d10601380 free  unmarked
+0x1b6d10601390 alloc unmarked
+0x1b6d106013a0 free  unmarked
+0x1b6d106013b0 free  unmarked
+0x1b6d106013c0 alloc unmarked
+0x1b6d106013d0 free  unmarked
+0x1b6d106013e0 free  unmarked
+0x1b6d106013f0 alloc unmarked
+0x1b6d10601400 alloc unmarked
+0x1b6d10601410 free  unmarked
+0x1b6d10601420 alloc unmarked
+0x1b6d10601430 free  unmarked
+0x1b6d10601440 alloc unmarked
+0x1b6d10601450 free  unmarked
+0x1b6d10601460 free  unmarked
+0x1b6d10601470 alloc unmarked
+0x1b6d10601480 alloc unmarked
+0x1b6d10601490 free  unmarked
+0x1b6d106014a0 alloc unmarked
+0x1b6d106014b0 free  unmarked
+0x1b6d106014c0 free  unmarked
+0x1b6d106014d0 alloc unmarked
+0x1b6d106014e0 alloc unmarked
+0x1b6d106014f0 alloc unmarked
+0x1b6d10601500 alloc unmarked
+0x1b6d10601510 alloc unmarked
+0x1b6d10601520 alloc unmarked
+0x1b6d10601530 alloc unmarked
+0x1b6d10601540 free  unmarked
+0x1b6d10601550 free  unmarked
+0x1b6d10601560 alloc unmarked
+0x1b6d10601570 free  unmarked
+0x1b6d10601580 alloc unmarked
+0x1b6d10601590 free  unmarked
+0x1b6d106015a0 alloc unmarked
+0x1b6d106015b0 free  unmarked
+0x1b6d106015c0 alloc unmarked
+0x1b6d106015d0 free  unmarked
+0x1b6d106015e0 alloc unmarked
+0x1b6d106015f0 alloc unmarked
+0x1b6d10601600 alloc unmarked
+0x1b6d10601610 alloc unmarked
+0x1b6d10601620 alloc unmarked
+0x1b6d10601630 alloc unmarked
+0x1b6d10601640 alloc unmarked
+0x1b6d10601650 alloc unmarked
+0x1b6d10601660 alloc unmarked
+0x1b6d10601670 alloc unmarked
+0x1b6d10601680 alloc unmarked
+0x1b6d10601690 alloc unmarked
+0x1b6d106016a0 alloc unmarked
+0x1b6d106016b0 alloc unmarked
+0x1b6d106016c0 alloc unmarked
+0x1b6d106016d0 alloc unmarked
+0x1b6d106016e0 alloc unmarked
+0x1b6d106016f0 alloc unmarked
+0x1b6d10601700 alloc unmarked
+0x1b6d10601710 alloc unmarked
+0x1b6d10601720 alloc unmarked
+0x1b6d10601730 alloc unmarked
+0x1b6d10601740 alloc unmarked
+0x1b6d10601750 alloc unmarked
+0x1b6d10601760 alloc unmarked
+0x1b6d10601770 alloc unmarked
+0x1b6d10601780 alloc unmarked
+0x1b6d10601790 alloc unmarked
+0x1b6d106017a0 alloc unmarked
+0x1b6d106017b0 alloc unmarked
+0x1b6d106017c0 alloc unmarked
+0x1b6d106017d0 alloc unmarked
+0x1b6d106017e0 alloc unmarked
+0x1b6d106017f0 alloc unmarked
+0x1b6d10601800 alloc unmarked
+0x1b6d10601810 alloc unmarked
+0x1b6d10601820 alloc unmarked
+0x1b6d10601830 free  unmarked
+0x1b6d10601840 free  unmarked
+0x1b6d10601850 free  unmarked
+0x1b6d10601860 free  unmarked
+0x1b6d10601870 free  unmarked
+0x1b6d10601880 free  unmarked
+0x1b6d10601890 free  unmarked
+0x1b6d106018a0 free  unmarked
+0x1b6d106018b0 free  unmarked
+0x1b6d106018c0 free  unmarked
+0x1b6d106018d0 free  unmarked
+0x1b6d106018e0 free  unmarked
+0x1b6d106018f0 free  unmarked
+0x1b6d10601900 free  unmarked
+0x1b6d10601910 free  unmarked
+0x1b6d10601920 free  unmarked
+0x1b6d10601930 free  unmarked
+0x1b6d10601940 free  unmarked
+0x1b6d10601950 free  unmarked
+0x1b6d10601960 free  unmarked
+0x1b6d10601970 free  unmarked
+0x1b6d10601980 free  unmarked
+0x1b6d10601990 free  unmarked
+0x1b6d106019a0 free  unmarked
+0x1b6d106019b0 free  unmarked
+0x1b6d106019c0 free  unmarked
+0x1b6d106019d0 free  unmarked
+0x1b6d106019e0 free  unmarked
+0x1b6d106019f0 free  unmarked
+0x1b6d10601a00 free  unmarked
+0x1b6d10601a10 free  unmarked
+0x1b6d10601a20 free  unmarked
+0x1b6d10601a30 free  unmarked
+0x1b6d10601a40 free  unmarked
+0x1b6d10601a50 free  unmarked
+0x1b6d10601a60 free  unmarked
+0x1b6d10601a70 free  unmarked
+0x1b6d10601a80 free  unmarked
+0x1b6d10601a90 free  unmarked
+0x1b6d10601aa0 free  unmarked
+0x1b6d10601ab0 free  unmarked
+0x1b6d10601ac0 free  unmarked
+0x1b6d10601ad0 free  unmarked
+0x1b6d10601ae0 free  unmarked
+0x1b6d10601af0 free  unmarked
+0x1b6d10601b00 free  unmarked
+0x1b6d10601b10 free  unmarked
+0x1b6d10601b20 free  unmarked
+0x1b6d10601b30 free  unmarked
+0x1b6d10601b40 free  unmarked
+0x1b6d10601b50 free  unmarked
+0x1b6d10601b60 free  unmarked
+0x1b6d10601b70 free  unmarked
+0x1b6d10601b80 free  unmarked
+0x1b6d10601b90 free  unmarked
+0x1b6d10601ba0 free  unmarked
+0x1b6d10601bb0 free  unmarked
+0x1b6d10601bc0 free  unmarked
+0x1b6d10601bd0 free  unmarked
+0x1b6d10601be0 free  unmarked
+0x1b6d10601bf0 free  unmarked
+0x1b6d10601c00 free  unmarked
+0x1b6d10601c10 free  unmarked
+0x1b6d10601c20 free  unmarked
+0x1b6d10601c30 free  unmarked
+0x1b6d10601c40 free  unmarked
+0x1b6d10601c50 free  unmarked
+0x1b6d10601c60 free  unmarked
+0x1b6d10601c70 free  unmarked
+0x1b6d10601c80 free  unmarked
+0x1b6d10601c90 free  unmarked
+0x1b6d10601ca0 free  unmarked
+0x1b6d10601cb0 free  unmarked
+0x1b6d10601cc0 free  unmarked
+0x1b6d10601cd0 free  unmarked
+0x1b6d10601ce0 free  unmarked
+0x1b6d10601cf0 free  unmarked
+0x1b6d10601d00 free  unmarked
+0x1b6d10601d10 free  unmarked
+0x1b6d10601d20 free  unmarked
+0x1b6d10601d30 free  unmarked
+0x1b6d10601d40 free  unmarked
+0x1b6d10601d50 free  unmarked
+0x1b6d10601d60 free  unmarked
+0x1b6d10601d70 free  unmarked
+0x1b6d10601d80 free  unmarked
+0x1b6d10601d90 free  unmarked
+0x1b6d10601da0 free  unmarked
+0x1b6d10601db0 free  unmarked
+0x1b6d10601dc0 free  unmarked
+0x1b6d10601dd0 free  unmarked
+0x1b6d10601de0 free  unmarked
+0x1b6d10601df0 free  unmarked
+0x1b6d10601e00 free  unmarked
+0x1b6d10601e10 free  unmarked
+0x1b6d10601e20 free  unmarked
+0x1b6d10601e30 free  unmarked
+0x1b6d10601e40 free  unmarked
+0x1b6d10601e50 free  unmarked
+0x1b6d10601e60 free  unmarked
+0x1b6d10601e70 free  unmarked
+0x1b6d10601e80 free  unmarked
+0x1b6d10601e90 free  unmarked
+0x1b6d10601ea0 free  unmarked
+0x1b6d10601eb0 free  unmarked
+0x1b6d10601ec0 free  unmarked
+0x1b6d10601ed0 free  unmarked
+0x1b6d10601ee0 free  unmarked
+0x1b6d10601ef0 free  unmarked
+0x1b6d10601f00 free  unmarked
+0x1b6d10601f10 free  unmarked
+0x1b6d10601f20 free  unmarked
+0x1b6d10601f30 free  unmarked
+0x1b6d10601f40 free  unmarked
+0x1b6d10601f50 free  unmarked
+0x1b6d10601f60 free  unmarked
+0x1b6d10601f70 free  unmarked
+fatal error: found pointer to free object
+
+goroutine 3 gp=0x1b6d10028b40 m=13 mp=0x1b6d10418808 [running]:
+runtime.throw({0x7ff6037965bb?, 0x1b6d1002de00?})
+	C:/Program Files/Go/src/runtime/panic.go:1229 +0x4d fp=0x1b6d1002dd90 sp=0x1b6d1002dd60 pc=0x7ff602e6a5ad
+runtime.(*mspan).reportZombies(0x1ac49e91238)
+	C:/Program Files/Go/src/runtime/mgcsweep.go:893 +0x325 fp=0x1b6d1002de10 sp=0x1b6d1002dd90 pc=0x7ff602e1c705
+runtime.(*sweepLocked).sweep(0x7ff603f016a0?, 0x0)
+	C:/Program Files/Go/src/runtime/mgcsweep.go:673 +0xc88 fp=0x1b6d1002df38 sp=0x1b6d1002de10 pc=0x7ff602e1be28
+runtime.sweepone()
+	C:/Program Files/Go/src/runtime/mgcsweep.go:396 +0xdd fp=0x1b6d1002df88 sp=0x1b6d1002df38 pc=0x7ff602e1aebd
+runtime.bgsweep(0x1b6d10038000)
+	C:/Program Files/Go/src/runtime/mgcsweep.go:300 +0xa6 fp=0x1b6d1002dfc8 sp=0x1b6d1002df88 pc=0x7ff602e1ac46
+runtime.gcenable.gowrap1()
+	C:/Program Files/Go/src/runtime/mgc.go:214 +0x17 fp=0x1b6d1002dfe0 sp=0x1b6d1002dfc8 pc=0x7ff602e0c037
+runtime.goexit({})
+	C:/Program Files/Go/src/runtime/asm_amd64.s:1771 +0x1 fp=0x1b6d1002dfe8 sp=0x1b6d1002dfe0 pc=0x7ff602e72161
+created by runtime.gcenable in goroutine 1
+	C:/Program Files/Go/src/runtime/mgc.go:214 +0x66
+
+goroutine 1 gp=0x1b6d10028000 m=nil [chan receive, locked to thread]:
+runtime.gopark(0x7ff602e71dbf?, 0x3006d100959f0?, 0x78?, 0x29?, 0x1ac04664e70?)
+	C:/Program Files/Go/src/runtime/proc.go:462 +0xce fp=0x1b6d100959a8 sp=0x1b6d10095988 pc=0x7ff602e6a6ce
+runtime.chanrecv(0x1b6d10446000, 0x1b6d10095a8f, 0x1)
+	C:/Program Files/Go/src/runtime/chan.go:667 +0x4ae fp=0x1b6d10095a20 sp=0x1b6d100959a8 pc=0x7ff602dfa38e
+runtime.chanrecv1(0x7ff603ef1720?, 0x7ff6037f16e0?)
+	C:/Program Files/Go/src/runtime/chan.go:509 +0x12 fp=0x1b6d10095a48 sp=0x1b6d10095a20 pc=0x7ff602df9eb2
+testing.(*T).Run(0x1b6d10132200, {0x7ff6037904ac?, 0x1b6d10095b38?}, 0x7ff6037cad20)
+	C:/Program Files/Go/src/testing/testing.go:2109 +0x4c7 fp=0x1b6d10095b10 sp=0x1b6d10095a48 pc=0x7ff602f44487
+testing.runTests.func1(0x1b6d10132200)
+	C:/Program Files/Go/src/testing/testing.go:2585 +0x37 fp=0x1b6d10095b50 sp=0x1b6d10095b10 pc=0x7ff602f46877
+testing.tRunner(0x1b6d10132200, 0x1b6d10095c58)
+	C:/Program Files/Go/src/testing/testing.go:2036 +0xc3 fp=0x1b6d10095ba0 sp=0x1b6d10095b50 pc=0x7ff602f434c3
+testing.runTests({0x7ff6037973bb, 0x1d}, {0x7ff6037a0300, 0x26}, 0x1b6d10436408, {0x7ff603ee6580, 0x3, 0x3}, {0xc295500398dff864, 0xd18e81d23d, ...})
+	C:/Program Files/Go/src/testing/testing.go:2583 +0x4f0 fp=0x1b6d10095c88 sp=0x1b6d10095ba0 pc=0x7ff602f46730
+testing.(*M).Run(0x1b6d103748c0)
+	C:/Program Files/Go/src/testing/testing.go:2443 +0x6ac fp=0x1b6d10095ec8 sp=0x1b6d10095c88 pc=0x7ff602f450ec
+main.main()
+	_testmain.go:50 +0x9b fp=0x1b6d10095f48 sp=0x1b6d10095ec8 pc=0x7ff603593d3b
+runtime.main()
+	C:/Program Files/Go/src/runtime/proc.go:290 +0x2c7 fp=0x1b6d10095fe0 sp=0x1b6d10095f48 pc=0x7ff602e350c7
+runtime.goexit({})
+	C:/Program Files/Go/src/runtime/asm_amd64.s:1771 +0x1 fp=0x1b6d10095fe8 sp=0x1b6d10095fe0 pc=0x7ff602e72161
+
+goroutine 2 gp=0x1b6d10028780 m=nil [force gc (idle)]:
+runtime.gopark(0x0?, 0x0?, 0x0?, 0x0?, 0x0?)
+	C:/Program Files/Go/src/runtime/proc.go:462 +0xce fp=0x1b6d1002bfa8 sp=0x1b6d1002bf88 pc=0x7ff602e6a6ce
+runtime.goparkunlock(...)
+	C:/Program Files/Go/src/runtime/proc.go:468
+runtime.forcegchelper()
+	C:/Program Files/Go/src/runtime/proc.go:375 +0xb8 fp=0x1b6d1002bfe0 sp=0x1b6d1002bfa8 pc=0x7ff602e353b8
+runtime.goexit({})
+	C:/Program Files/Go/src/runtime/asm_amd64.s:1771 +0x1 fp=0x1b6d1002bfe8 sp=0x1b6d1002bfe0 pc=0x7ff602e72161
+created by runtime.init.7 in goroutine 1
+	C:/Program Files/Go/src/runtime/proc.go:363 +0x1a
+
+goroutine 4 gp=0x1b6d10028d20 m=nil [sleep]:
+runtime.gopark(0x1b6d0fff6060?, 0x2c8518faeac8?, 0x0?, 0x0?, 0x0?)
+	C:/Program Files/Go/src/runtime/proc.go:462 +0xce fp=0x1b6d1003ff38 sp=0x1b6d1003ff18 pc=0x7ff602e6a6ce
+runtime.goparkunlock(...)
+	C:/Program Files/Go/src/runtime/proc.go:468
+runtime.(*scavengerState).sleep(0x7ff603ef2520, 0x4131170000000000)
+	C:/Program Files/Go/src/runtime/mgcscavenge.go:504 +0xfb fp=0x1b6d1003ffa8 sp=0x1b6d1003ff38 pc=0x7ff602e1893b
+runtime.bgscavenge(0x1b6d10038000)
+	C:/Program Files/Go/src/runtime/mgcscavenge.go:662 +0x74 fp=0x1b6d1003ffc8 sp=0x1b6d1003ffa8 pc=0x7ff602e18d14
+runtime.gcenable.gowrap2()
+	C:/Program Files/Go/src/runtime/mgc.go:215 +0x17 fp=0x1b6d1003ffe0 sp=0x1b6d1003ffc8 pc=0x7ff602e0bff7
+runtime.goexit({})
+	C:/Program Files/Go/src/runtime/asm_amd64.s:1771 +0x1 fp=0x1b6d1003ffe8 sp=0x1b6d1003ffe0 pc=0x7ff602e72161
+created by runtime.gcenable in goroutine 1
+	C:/Program Files/Go/src/runtime/mgc.go:215 +0xa5
+
+goroutine 5 gp=0x1b6d100290e0 m=nil [GOMAXPROCS updater (idle)]:
+runtime.gopark(0x0?, 0x0?, 0x0?, 0x0?, 0x0?)
+	C:/Program Files/Go/src/runtime/proc.go:462 +0xce fp=0x1b6d10041f88 sp=0x1b6d10041f68 pc=0x7ff602e6a6ce
+runtime.goparkunlock(...)
+	C:/Program Files/Go/src/runtime/proc.go:468
+runtime.updateMaxProcsGoroutine()
+	C:/Program Files/Go/src/runtime/proc.go:7095 +0xe7 fp=0x1b6d10041fe0 sp=0x1b6d10041f88 pc=0x7ff602e43967
+runtime.goexit({})
+	C:/Program Files/Go/src/runtime/asm_amd64.s:1771 +0x1 fp=0x1b6d10041fe8 sp=0x1b6d10041fe0 pc=0x7ff602e72161
+created by runtime.defaultGOMAXPROCSUpdateEnable in goroutine 1
+	C:/Program Files/Go/src/runtime/proc.go:7083 +0x37
+
+goroutine 6 gp=0x1b6d100292c0 m=nil [finalizer wait]:
+runtime.gopark(0x0?, 0x7ff6037cae50?, 0x0?, 0x20?, 0x1000000010?)
+	C:/Program Files/Go/src/runtime/proc.go:462 +0xce fp=0x1b6d1003be20 sp=0x1b6d1003be00 pc=0x7ff602e6a6ce
+runtime.runFinalizers()
+	C:/Program Files/Go/src/runtime/mfinal.go:210 +0x107 fp=0x1b6d1003bfe0 sp=0x1b6d1003be20 pc=0x7ff602e0af47
+runtime.goexit({})
+	C:/Program Files/Go/src/runtime/asm_amd64.s:1771 +0x1 fp=0x1b6d1003bfe8 sp=0x1b6d1003bfe0 pc=0x7ff602e72161
+created by runtime.createfing in goroutine 1
+	C:/Program Files/Go/src/runtime/mfinal.go:172 +0x3d
+
+goroutine 7 gp=0x1b6d102943c0 m=nil [GC worker (idle)]:
+runtime.gopark(0x2c84b6e5e75c?, 0x1?, 0x54?, 0x71?, 0x0?)
+	C:/Program Files/Go/src/runtime/proc.go:462 +0xce fp=0x1b6d1003df40 sp=0x1b6d1003df20 pc=0x7ff602e6a6ce
+runtime.gcBgMarkWorker(0x1b6d0ffd24d0)
+	C:/Program Files/Go/src/runtime/mgc.go:1791 +0xeb fp=0x1b6d1003dfc8 sp=0x1b6d1003df40 pc=0x7ff602e0eb6b
+runtime.gcBgMarkStartWorkers.gowrap1()
+	C:/Program Files/Go/src/runtime/mgc.go:1695 +0x17 fp=0x1b6d1003dfe0 sp=0x1b6d1003dfc8 pc=0x7ff602e0ea57
+runtime.goexit({})
+	C:/Program Files/Go/src/runtime/asm_amd64.s:1771 +0x1 fp=0x1b6d1003dfe8 sp=0x1b6d1003dfe0 pc=0x7ff602e72161
+created by runtime.gcBgMarkStartWorkers in goroutine 1
+	C:/Program Files/Go/src/runtime/mgc.go:1695 +0x105
+
+goroutine 18 gp=0x1b6d10402000 m=nil [GC worker (idle)]:
+runtime.gopark(0x2c8431ad5e08?, 0x0?, 0x0?, 0x0?, 0x0?)
+	C:/Program Files/Go/src/runtime/proc.go:462 +0xce fp=0x1b6d10409f40 sp=0x1b6d10409f20 pc=0x7ff602e6a6ce
+runtime.gcBgMarkWorker(0x1b6d0ffd24d0)
+	C:/Program Files/Go/src/runtime/mgc.go:1791 +0xeb fp=0x1b6d10409fc8 sp=0x1b6d10409f40 pc=0x7ff602e0eb6b
+runtime.gcBgMarkStartWorkers.gowrap1()
+	C:/Program Files/Go/src/runtime/mgc.go:1695 +0x17 fp=0x1b6d10409fe0 sp=0x1b6d10409fc8 pc=0x7ff602e0ea57
+runtime.goexit({})
+	C:/Program Files/Go/src/runtime/asm_amd64.s:1771 +0x1 fp=0x1b6d10409fe8 sp=0x1b6d10409fe0 pc=0x7ff602e72161
+created by runtime.gcBgMarkStartWorkers in goroutine 1
+	C:/Program Files/Go/src/runtime/mgc.go:1695 +0x105
+
+goroutine 19 gp=0x1b6d104021e0 m=nil [GC worker (idle)]:
+runtime.gopark(0x2c84b6e5e75c?, 0x1?, 0xc8?, 0x4d?, 0x0?)
+	C:/Program Files/Go/src/runtime/proc.go:462 +0xce fp=0x1b6d1040bf40 sp=0x1b6d1040bf20 pc=0x7ff602e6a6ce
+runtime.gcBgMarkWorker(0x1b6d0ffd24d0)
+	C:/Program Files/Go/src/runtime/mgc.go:1791 +0xeb fp=0x1b6d1040bfc8 sp=0x1b6d1040bf40 pc=0x7ff602e0eb6b
+runtime.gcBgMarkStartWorkers.gowrap1()
+	C:/Program Files/Go/src/runtime/mgc.go:1695 +0x17 fp=0x1b6d1040bfe0 sp=0x1b6d1040bfc8 pc=0x7ff602e0ea57
+runtime.goexit({})
+	C:/Program Files/Go/src/runtime/asm_amd64.s:1771 +0x1 fp=0x1b6d1040bfe8 sp=0x1b6d1040bfe0 pc=0x7ff602e72161
+created by runtime.gcBgMarkStartWorkers in goroutine 1
+	C:/Program Files/Go/src/runtime/mgc.go:1695 +0x105
+
+goroutine 8 gp=0x1b6d102945a0 m=nil [GC worker (idle)]:
+runtime.gopark(0x2c84d6411bd0?, 0x3?, 0x0?, 0x0?, 0x0?)
+	C:/Program Files/Go/src/runtime/proc.go:462 +0xce fp=0x1b6d10405f40 sp=0x1b6d10405f20 pc=0x7ff602e6a6ce
+runtime.gcBgMarkWorker(0x1b6d0ffd24d0)
+	C:/Program Files/Go/src/runtime/mgc.go:1791 +0xeb fp=0x1b6d10405fc8 sp=0x1b6d10405f40 pc=0x7ff602e0eb6b
+runtime.gcBgMarkStartWorkers.gowrap1()
+	C:/Program Files/Go/src/runtime/mgc.go:1695 +0x17 fp=0x1b6d10405fe0 sp=0x1b6d10405fc8 pc=0x7ff602e0ea57
+runtime.goexit({})
+	C:/Program Files/Go/src/runtime/asm_amd64.s:1771 +0x1 fp=0x1b6d10405fe8 sp=0x1b6d10405fe0 pc=0x7ff602e72161
+created by runtime.gcBgMarkStartWorkers in goroutine 1
+	C:/Program Files/Go/src/runtime/mgc.go:1695 +0x105
+
+goroutine 9 gp=0x1b6d10294780 m=nil [GC worker (idle)]:
+runtime.gopark(0x2c84d63912c8?, 0x1?, 0x44?, 0x63?, 0x0?)
+	C:/Program Files/Go/src/runtime/proc.go:462 +0xce fp=0x1b6d10407f40 sp=0x1b6d10407f20 pc=0x7ff602e6a6ce
+runtime.gcBgMarkWorker(0x1b6d0ffd24d0)
+	C:/Program Files/Go/src/runtime/mgc.go:1791 +0xeb fp=0x1b6d10407fc8 sp=0x1b6d10407f40 pc=0x7ff602e0eb6b
+runtime.gcBgMarkStartWorkers.gowrap1()
+	C:/Program Files/Go/src/runtime/mgc.go:1695 +0x17 fp=0x1b6d10407fe0 sp=0x1b6d10407fc8 pc=0x7ff602e0ea57
+runtime.goexit({})
+	C:/Program Files/Go/src/runtime/asm_amd64.s:1771 +0x1 fp=0x1b6d10407fe8 sp=0x1b6d10407fe0 pc=0x7ff602e72161
+created by runtime.gcBgMarkStartWorkers in goroutine 1
+	C:/Program Files/Go/src/runtime/mgc.go:1695 +0x105
+
+goroutine 20 gp=0x1b6d104023c0 m=nil [GC worker (idle)]:
+runtime.gopark(0x2c84d6411bd0?, 0x1?, 0x24?, 0x92?, 0x0?)
+	C:/Program Files/Go/src/runtime/proc.go:462 +0xce fp=0x1b6d10415f40 sp=0x1b6d10415f20 pc=0x7ff602e6a6ce
+runtime.gcBgMarkWorker(0x1b6d0ffd24d0)
+	C:/Program Files/Go/src/runtime/mgc.go:1791 +0xeb fp=0x1b6d10415fc8 sp=0x1b6d10415f40 pc=0x7ff602e0eb6b
+runtime.gcBgMarkStartWorkers.gowrap1()
+	C:/Program Files/Go/src/runtime/mgc.go:1695 +0x17 fp=0x1b6d10415fe0 sp=0x1b6d10415fc8 pc=0x7ff602e0ea57
+runtime.goexit({})
+	C:/Program Files/Go/src/runtime/asm_amd64.s:1771 +0x1 fp=0x1b6d10415fe8 sp=0x1b6d10415fe0 pc=0x7ff602e72161
+created by runtime.gcBgMarkStartWorkers in goroutine 1
+	C:/Program Files/Go/src/runtime/mgc.go:1695 +0x105
+
+goroutine 21 gp=0x1b6d104025a0 m=nil [GC worker (idle)]:
+runtime.gopark(0x7ff603f41f60?, 0x1?, 0x8?, 0x9?, 0x0?)
+	C:/Program Files/Go/src/runtime/proc.go:462 +0xce fp=0x1b6d10417f40 sp=0x1b6d10417f20 pc=0x7ff602e6a6ce
+runtime.gcBgMarkWorker(0x1b6d0ffd24d0)
+	C:/Program Files/Go/src/runtime/mgc.go:1791 +0xeb fp=0x1b6d10417fc8 sp=0x1b6d10417f40 pc=0x7ff602e0eb6b
+runtime.gcBgMarkStartWorkers.gowrap1()
+	C:/Program Files/Go/src/runtime/mgc.go:1695 +0x17 fp=0x1b6d10417fe0 sp=0x1b6d10417fc8 pc=0x7ff602e0ea57
+runtime.goexit({})
+	C:/Program Files/Go/src/runtime/asm_amd64.s:1771 +0x1 fp=0x1b6d10417fe8 sp=0x1b6d10417fe0 pc=0x7ff602e72161
+created by runtime.gcBgMarkStartWorkers in goroutine 1
+	C:/Program Files/Go/src/runtime/mgc.go:1695 +0x105
+
+goroutine 10 gp=0x1b6d10294960 m=nil [GC worker (idle)]:
+runtime.gopark(0x2c84a17353dc?, 0x1?, 0x0?, 0x0?, 0x0?)
+	C:/Program Files/Go/src/runtime/proc.go:462 +0xce fp=0x1b6d10411f40 sp=0x1b6d10411f20 pc=0x7ff602e6a6ce
+runtime.gcBgMarkWorker(0x1b6d0ffd24d0)
+	C:/Program Files/Go/src/runtime/mgc.go:1791 +0xeb fp=0x1b6d10411fc8 sp=0x1b6d10411f40 pc=0x7ff602e0eb6b
+runtime.gcBgMarkStartWorkers.gowrap1()
+	C:/Program Files/Go/src/runtime/mgc.go:1695 +0x17 fp=0x1b6d10411fe0 sp=0x1b6d10411fc8 pc=0x7ff602e0ea57
+runtime.goexit({})
+	C:/Program Files/Go/src/runtime/asm_amd64.s:1771 +0x1 fp=0x1b6d10411fe8 sp=0x1b6d10411fe0 pc=0x7ff602e72161
+created by runtime.gcBgMarkStartWorkers in goroutine 1
+	C:/Program Files/Go/src/runtime/mgc.go:1695 +0x105
+
+goroutine 11 gp=0x1b6d10294b40 m=nil [GC worker (idle)]:
+runtime.gopark(0x2c84d6411bd0?, 0x1?, 0x58?, 0x4f?, 0x0?)
+	C:/Program Files/Go/src/runtime/proc.go:462 +0xce fp=0x1b6d10413f40 sp=0x1b6d10413f20 pc=0x7ff602e6a6ce
+runtime.gcBgMarkWorker(0x1b6d0ffd24d0)
+	C:/Program Files/Go/src/runtime/mgc.go:1791 +0xeb fp=0x1b6d10413fc8 sp=0x1b6d10413f40 pc=0x7ff602e0eb6b
+runtime.gcBgMarkStartWorkers.gowrap1()
+	C:/Program Files/Go/src/runtime/mgc.go:1695 +0x17 fp=0x1b6d10413fe0 sp=0x1b6d10413fc8 pc=0x7ff602e0ea57
+runtime.goexit({})
+	C:/Program Files/Go/src/runtime/asm_amd64.s:1771 +0x1 fp=0x1b6d10413fe8 sp=0x1b6d10413fe0 pc=0x7ff602e72161
+created by runtime.gcBgMarkStartWorkers in goroutine 1
+	C:/Program Files/Go/src/runtime/mgc.go:1695 +0x105
+
+goroutine 34 gp=0x1b6d100881e0 m=nil [GC worker (idle)]:
+runtime.gopark(0x2c84d6411bd0?, 0x1?, 0x0?, 0x0?, 0x0?)
+	C:/Program Files/Go/src/runtime/proc.go:462 +0xce fp=0x1b6d10093f40 sp=0x1b6d10093f20 pc=0x7ff602e6a6ce
+runtime.gcBgMarkWorker(0x1b6d0ffd24d0)
+	C:/Program Files/Go/src/runtime/mgc.go:1791 +0xeb fp=0x1b6d10093fc8 sp=0x1b6d10093f40 pc=0x7ff602e0eb6b
+runtime.gcBgMarkStartWorkers.gowrap1()
+	C:/Program Files/Go/src/runtime/mgc.go:1695 +0x17 fp=0x1b6d10093fe0 sp=0x1b6d10093fc8 pc=0x7ff602e0ea57
+runtime.goexit({})
+	C:/Program Files/Go/src/runtime/asm_amd64.s:1771 +0x1 fp=0x1b6d10093fe8 sp=0x1b6d10093fe0 pc=0x7ff602e72161
+created by runtime.gcBgMarkStartWorkers in goroutine 1
+	C:/Program Files/Go/src/runtime/mgc.go:1695 +0x105
+
+goroutine 22 gp=0x1b6d10402780 m=nil [GC worker (idle)]:
+runtime.gopark(0x2c8431ad5e08?, 0x1?, 0xc0?, 0x35?, 0x0?)
+	C:/Program Files/Go/src/runtime/proc.go:462 +0xce fp=0x1b6d1008ff40 sp=0x1b6d1008ff20 pc=0x7ff602e6a6ce
+runtime.gcBgMarkWorker(0x1b6d0ffd24d0)
+	C:/Program Files/Go/src/runtime/mgc.go:1791 +0xeb fp=0x1b6d1008ffc8 sp=0x1b6d1008ff40 pc=0x7ff602e0eb6b
+runtime.gcBgMarkStartWorkers.gowrap1()
+	C:/Program Files/Go/src/runtime/mgc.go:1695 +0x17 fp=0x1b6d1008ffe0 sp=0x1b6d1008ffc8 pc=0x7ff602e0ea57
+runtime.goexit({})
+	C:/Program Files/Go/src/runtime/asm_amd64.s:1771 +0x1 fp=0x1b6d1008ffe8 sp=0x1b6d1008ffe0 pc=0x7ff602e72161
+created by runtime.gcBgMarkStartWorkers in goroutine 1
+	C:/Program Files/Go/src/runtime/mgc.go:1695 +0x105
+
+goroutine 12 gp=0x1b6d10294d20 m=nil [GC worker (idle)]:
+runtime.gopark(0x2c84b3371b1c?, 0x1?, 0xd8?, 0x44?, 0x0?)
+	C:/Program Files/Go/src/runtime/proc.go:462 +0xce fp=0x1b6d10485f40 sp=0x1b6d10485f20 pc=0x7ff602e6a6ce
+runtime.gcBgMarkWorker(0x1b6d0ffd24d0)
+	C:/Program Files/Go/src/runtime/mgc.go:1791 +0xeb fp=0x1b6d10485fc8 sp=0x1b6d10485f40 pc=0x7ff602e0eb6b
+runtime.gcBgMarkStartWorkers.gowrap1()
+	C:/Program Files/Go/src/runtime/mgc.go:1695 +0x17 fp=0x1b6d10485fe0 sp=0x1b6d10485fc8 pc=0x7ff602e0ea57
+runtime.goexit({})
+	C:/Program Files/Go/src/runtime/asm_amd64.s:1771 +0x1 fp=0x1b6d10485fe8 sp=0x1b6d10485fe0 pc=0x7ff602e72161
+created by runtime.gcBgMarkStartWorkers in goroutine 1
+	C:/Program Files/Go/src/runtime/mgc.go:1695 +0x105
+
+goroutine 35 gp=0x1b6d105081e0 m=nil [cleanup wait]:
+runtime.gopark(0x101000000000000?, 0x9f?, 0x3?, 0x0?, 0x7ff603e27a00?)
+	C:/Program Files/Go/src/runtime/proc.go:462 +0xce fp=0x1b6d1002ff68 sp=0x1b6d1002ff48 pc=0x7ff602e6a6ce
+runtime.goparkunlock(...)
+	C:/Program Files/Go/src/runtime/proc.go:468
+runtime.(*cleanupQueue).dequeue(0x7ff603ef2a40)
+	C:/Program Files/Go/src/runtime/mcleanup.go:522 +0xd4 fp=0x1b6d1002ffa0 sp=0x1b6d1002ff68 pc=0x7ff602e07f34
+runtime.runCleanups()
+	C:/Program Files/Go/src/runtime/mcleanup.go:718 +0x45 fp=0x1b6d1002ffe0 sp=0x1b6d1002ffa0 pc=0x7ff602e085a5
+runtime.goexit({})
+	C:/Program Files/Go/src/runtime/asm_amd64.s:1771 +0x1 fp=0x1b6d1002ffe8 sp=0x1b6d1002ffe0 pc=0x7ff602e72161
+created by runtime.(*cleanupQueue).createGs in goroutine 1
+	C:/Program Files/Go/src/runtime/mcleanup.go:672 +0xa5
+
+goroutine 42 gp=0x1b6d10402b40 m=nil [chan receive]:
+runtime.gopark(0x60?, 0x1b6d10501008?, 0xc0?, 0x0?, 0x1b6d10461e80?)
+	C:/Program Files/Go/src/runtime/proc.go:462 +0xce fp=0x1b6d10461e38 sp=0x1b6d10461e18 pc=0x7ff602e6a6ce
+runtime.chanrecv(0x1b6d10794000, 0x1b6d10461f68, 0x1)
+	C:/Program Files/Go/src/runtime/chan.go:667 +0x4ae fp=0x1b6d10461eb0 sp=0x1b6d10461e38 pc=0x7ff602dfa38e
+runtime.chanrecv2(0x6a74c50f?, 0x7ff60dc60040?)
+	C:/Program Files/Go/src/runtime/chan.go:514 +0x12 fp=0x1b6d10461ed8 sp=0x1b6d10461eb0 pc=0x7ff602df9ed2
+github.com/ALXNKO/UltimateSim/internal/engine.(*PathRequestQueue).workerProcess(0x1b6d10436090)
+	C:/code/games/UltimateSim/.claude/worktrees/grand-strategy/internal/engine/path_queue.go:69 +0x9f fp=0x1b6d10461fc8 sp=0x1b6d10461ed8 pc=0x7ff60350529f
+github.com/ALXNKO/UltimateSim/internal/engine.(*PathRequestQueue).StartWorkers.gowrap1()
+	C:/code/games/UltimateSim/.claude/worktrees/grand-strategy/internal/engine/path_queue.go:53 +0x17 fp=0x1b6d10461fe0 sp=0x1b6d10461fc8 pc=0x7ff603505117
+runtime.goexit({})
+	C:/Program Files/Go/src/runtime/asm_amd64.s:1771 +0x1 fp=0x1b6d10461fe8 sp=0x1b6d10461fe0 pc=0x7ff602e72161
+created by github.com/ALXNKO/UltimateSim/internal/engine.(*PathRequestQueue).StartWorkers in goroutine 40
+	C:/code/games/UltimateSim/.claude/worktrees/grand-strategy/internal/engine/path_queue.go:53 +0x25
+
+goroutine 40 gp=0x1b6d10402f00 m=nil [runnable]:
+runtime.mapaccess1_fast64(0x7ff6036b6340?, 0x1b6d109fde18?, 0x7100000063?)
+	C:/Program Files/Go/src/internal/runtime/maps/runtime_fast64.go:15 +0x1e8 fp=0x1b6d109fdb08 sp=0x1b6d109fdb00 pc=0x7ff602decae8
+github.com/ALXNKO/UltimateSim/internal/systems.(*NavalSpawningSystem).Update(0x1b6d10436210, 0x1b6d106a8008)
+	C:/code/games/UltimateSim/.claude/worktrees/grand-strategy/internal/systems/naval_spawning.go:68 +0x5e7 fp=0x1b6d109fde58 sp=0x1b6d109fdb08 pc=0x7ff60354a927
+github.com/ALXNKO/UltimateSim/internal/engine.(*TickManager).Tick(0x1b6d103d63f0)
+	C:/code/games/UltimateSim/.claude/worktrees/grand-strategy/internal/engine/tick_manager.go:119 +0x136 fp=0x1b6d109fdec8 sp=0x1b6d109fde58 pc=0x7ff603507436
+github.com/ALXNKO/UltimateSim/cmd/game.TestSoakFullSimulation(0x1b6d100b6000)
+	C:/code/games/UltimateSim/.claude/worktrees/grand-strategy/cmd/game/soak_test.go:48 +0x285 fp=0x1b6d109fdf70 sp=0x1b6d109fdec8 pc=0x7ff603593605
+testing.tRunner(0x1b6d100b6000, 0x7ff6037cad20)
+	C:/Program Files/Go/src/testing/testing.go:2036 +0xc3 fp=0x1b6d109fdfc0 sp=0x1b6d109fdf70 pc=0x7ff602f434c3
+testing.(*T).Run.gowrap1()
+	C:/Program Files/Go/src/testing/testing.go:2101 +0x1b fp=0x1b6d109fdfe0 sp=0x1b6d109fdfc0 pc=0x7ff602f445fb
+runtime.goexit({})
+	C:/Program Files/Go/src/runtime/asm_amd64.s:1771 +0x1 fp=0x1b6d109fdfe8 sp=0x1b6d109fdfe0 pc=0x7ff602e72161
+created by testing.(*T).Run in goroutine 1
+	C:/Program Files/Go/src/testing/testing.go:2101 +0x4a9
+
+goroutine 45 gp=0x1b6d10508960 m=nil [chan receive]:
+runtime.gopark(0x1b6d102648c0?, 0x1001b6d1078e4b0?, 0x80?, 0xe4?, 0x3?)
+	C:/Program Files/Go/src/runtime/proc.go:462 +0xce fp=0x1b6d105f9e38 sp=0x1b6d105f9e18 pc=0x7ff602e6a6ce
+runtime.chanrecv(0x1b6d10794000, 0x1b6d105f9f68, 0x1)
+	C:/Program Files/Go/src/runtime/chan.go:667 +0x4ae fp=0x1b6d105f9eb0 sp=0x1b6d105f9e38 pc=0x7ff602dfa38e
+runtime.chanrecv2(0x7ff603593be0?, 0x1b6d1078a060?)
+	C:/Program Files/Go/src/runtime/chan.go:514 +0x12 fp=0x1b6d105f9ed8 sp=0x1b6d105f9eb0 pc=0x7ff602df9ed2
+github.com/ALXNKO/UltimateSim/internal/engine.(*PathRequestQueue).workerProcess(0x1b6d10436090)
+	C:/code/games/UltimateSim/.claude/worktrees/grand-strategy/internal/engine/path_queue.go:69 +0x9f fp=0x1b6d105f9fc8 sp=0x1b6d105f9ed8 pc=0x7ff60350529f
+github.com/ALXNKO/UltimateSim/internal/engine.(*PathRequestQueue).StartWorkers.gowrap1()
+	C:/code/games/UltimateSim/.claude/worktrees/grand-strategy/internal/engine/path_queue.go:53 +0x17 fp=0x1b6d105f9fe0 sp=0x1b6d105f9fc8 pc=0x7ff603505117
+runtime.goexit({})
+	C:/Program Files/Go/src/runtime/asm_amd64.s:1771 +0x1 fp=0x1b6d105f9fe8 sp=0x1b6d105f9fe0 pc=0x7ff602e72161
+created by github.com/ALXNKO/UltimateSim/internal/engine.(*PathRequestQueue).StartWorkers in goroutine 40
+	C:/code/games/UltimateSim/.claude/worktrees/grand-strategy/internal/engine/path_queue.go:53 +0x25
+
+goroutine 44 gp=0x1b6d10508b40 m=nil [chan receive]:
+runtime.gopark(0x1b6d10264930?, 0xdeadbeefdeadbeef?, 0xef?, 0xbe?, 0xdeadbeefdeadbeef?)
+	C:/Program Files/Go/src/runtime/proc.go:462 +0xce fp=0x1b6d10721e38 sp=0x1b6d10721e18 pc=0x7ff602e6a6ce
+runtime.chanrecv(0x1b6d10794000, 0x1b6d10721f68, 0x1)
+	C:/Program Files/Go/src/runtime/chan.go:667 +0x4ae fp=0x1b6d10721eb0 sp=0x1b6d10721e38 pc=0x7ff602dfa38e
+runtime.chanrecv2(0xdeadbeefdeadbeef?, 0xdeadbeefdeadbeef?)
+	C:/Program Files/Go/src/runtime/chan.go:514 +0x12 fp=0x1b6d10721ed8 sp=0x1b6d10721eb0 pc=0x7ff602df9ed2
+github.com/ALXNKO/UltimateSim/internal/engine.(*PathRequestQueue).workerProcess(0x1b6d10436090)
+	C:/code/games/UltimateSim/.claude/worktrees/grand-strategy/internal/engine/path_queue.go:69 +0x9f fp=0x1b6d10721fc8 sp=0x1b6d10721ed8 pc=0x7ff60350529f
+github.com/ALXNKO/UltimateSim/internal/engine.(*PathRequestQueue).StartWorkers.gowrap1()
+	C:/code/games/UltimateSim/.claude/worktrees/grand-strategy/internal/engine/path_queue.go:53 +0x17 fp=0x1b6d10721fe0 sp=0x1b6d10721fc8 pc=0x7ff603505117
+runtime.goexit({})
+	C:/Program Files/Go/src/runtime/asm_amd64.s:1771 +0x1 fp=0x1b6d10721fe8 sp=0x1b6d10721fe0 pc=0x7ff602e72161
+created by github.com/ALXNKO/UltimateSim/internal/engine.(*PathRequestQueue).StartWorkers in goroutine 40
+	C:/code/games/UltimateSim/.claude/worktrees/grand-strategy/internal/engine/path_queue.go:53 +0x25
+
+goroutine 48 gp=0x1b6d10508d20 m=nil [chan receive]:
+runtime.gopark(0x1b6d102649a0?, 0xdeadbeefdeadbeef?, 0xef?, 0xbe?, 0xdeadbeefdeadbeef?)
+	C:/Program Files/Go/src/runtime/proc.go:462 +0xce fp=0x1b6d1072be38 sp=0x1b6d1072be18 pc=0x7ff602e6a6ce
+runtime.chanrecv(0x1b6d10794000, 0x1b6d1072bf68, 0x1)
+	C:/Program Files/Go/src/runtime/chan.go:667 +0x4ae fp=0x1b6d1072beb0 sp=0x1b6d1072be38 pc=0x7ff602dfa38e
+runtime.chanrecv2(0xdeadbeefdeadbeef?, 0xdeadbeefdeadbeef?)
+	C:/Program Files/Go/src/runtime/chan.go:514 +0x12 fp=0x1b6d1072bed8 sp=0x1b6d1072beb0 pc=0x7ff602df9ed2
+github.com/ALXNKO/UltimateSim/internal/engine.(*PathRequestQueue).workerProcess(0x1b6d10436090)
+	C:/code/games/UltimateSim/.claude/worktrees/grand-strategy/internal/engine/path_queue.go:69 +0x9f fp=0x1b6d1072bfc8 sp=0x1b6d1072bed8 pc=0x7ff60350529f
+github.com/ALXNKO/UltimateSim/internal/engine.(*PathRequestQueue).StartWorkers.gowrap1()
+	C:/code/games/UltimateSim/.claude/worktrees/grand-strategy/internal/engine/path_queue.go:53 +0x17 fp=0x1b6d1072bfe0 sp=0x1b6d1072bfc8 pc=0x7ff603505117
+runtime.goexit({})
+	C:/Program Files/Go/src/runtime/asm_amd64.s:1771 +0x1 fp=0x1b6d1072bfe8 sp=0x1b6d1072bfe0 pc=0x7ff602e72161
+created by github.com/ALXNKO/UltimateSim/internal/engine.(*PathRequestQueue).StartWorkers in goroutine 40
+	C:/code/games/UltimateSim/.claude/worktrees/grand-strategy/internal/engine/path_queue.go:53 +0x25
+
+goroutine 46 gp=0x1b6d10508f00 m=nil [chan receive]:
+runtime.gopark(0x1b6d10264a10?, 0xdeadbeefdeadbeef?, 0xef?, 0xbe?, 0xdeadbeefdeadbeef?)
+	C:/Program Files/Go/src/runtime/proc.go:462 +0xce fp=0x1b6d1072de38 sp=0x1b6d1072de18 pc=0x7ff602e6a6ce
+runtime.chanrecv(0x1b6d10794000, 0x1b6d1072df68, 0x1)
+	C:/Program Files/Go/src/runtime/chan.go:667 +0x4ae fp=0x1b6d1072deb0 sp=0x1b6d1072de38 pc=0x7ff602dfa38e
+runtime.chanrecv2(0xdeadbeefdeadbeef?, 0xdeadbeefdeadbeef?)
+	C:/Program Files/Go/src/runtime/chan.go:514 +0x12 fp=0x1b6d1072ded8 sp=0x1b6d1072deb0 pc=0x7ff602df9ed2
+github.com/ALXNKO/UltimateSim/internal/engine.(*PathRequestQueue).workerProcess(0x1b6d10436090)
+	C:/code/games/UltimateSim/.claude/worktrees/grand-strategy/internal/engine/path_queue.go:69 +0x9f fp=0x1b6d1072dfc8 sp=0x1b6d1072ded8 pc=0x7ff60350529f
+github.com/ALXNKO/UltimateSim/internal/engine.(*PathRequestQueue).StartWorkers.gowrap1()
+	C:/code/games/UltimateSim/.claude/worktrees/grand-strategy/internal/engine/path_queue.go:53 +0x17 fp=0x1b6d1072dfe0 sp=0x1b6d1072dfc8 pc=0x7ff603505117
+runtime.goexit({})
+	C:/Program Files/Go/src/runtime/asm_amd64.s:1771 +0x1 fp=0x1b6d1072dfe8 sp=0x1b6d1072dfe0 pc=0x7ff602e72161
+created by github.com/ALXNKO/UltimateSim/internal/engine.(*PathRequestQueue).StartWorkers in goroutine 40
+	C:/code/games/UltimateSim/.claude/worktrees/grand-strategy/internal/engine/path_queue.go:53 +0x25
+
+goroutine 47 gp=0x1b6d105090e0 m=nil [chan receive]:
+runtime.gopark(0x1b6d10264a80?, 0xdeadbeefdeadbeef?, 0xef?, 0xbe?, 0xdeadbeefdeadbeef?)
+	C:/Program Files/Go/src/runtime/proc.go:462 +0xce fp=0x1b6d104ffe38 sp=0x1b6d104ffe18 pc=0x7ff602e6a6ce
+runtime.chanrecv(0x1b6d10794000, 0x1b6d104fff68, 0x1)
+	C:/Program Files/Go/src/runtime/chan.go:667 +0x4ae fp=0x1b6d104ffeb0 sp=0x1b6d104ffe38 pc=0x7ff602dfa38e
+runtime.chanrecv2(0xdeadbeefdeadbeef?, 0xdeadbeefdeadbeef?)
+	C:/Program Files/Go/src/runtime/chan.go:514 +0x12 fp=0x1b6d104ffed8 sp=0x1b6d104ffeb0 pc=0x7ff602df9ed2
+github.com/ALXNKO/UltimateSim/internal/engine.(*PathRequestQueue).workerProcess(0x1b6d10436090)
+	C:/code/games/UltimateSim/.claude/worktrees/grand-strategy/internal/engine/path_queue.go:69 +0x9f fp=0x1b6d104fffc8 sp=0x1b6d104ffed8 pc=0x7ff60350529f
+github.com/ALXNKO/UltimateSim/internal/engine.(*PathRequestQueue).StartWorkers.gowrap1()
+	C:/code/games/UltimateSim/.claude/worktrees/grand-strategy/internal/engine/path_queue.go:53 +0x17 fp=0x1b6d104fffe0 sp=0x1b6d104fffc8 pc=0x7ff603505117
+runtime.goexit({})
+	C:/Program Files/Go/src/runtime/asm_amd64.s:1771 +0x1 fp=0x1b6d104fffe8 sp=0x1b6d104fffe0 pc=0x7ff602e72161
+created by github.com/ALXNKO/UltimateSim/internal/engine.(*PathRequestQueue).StartWorkers in goroutine 40
+	C:/code/games/UltimateSim/.claude/worktrees/grand-strategy/internal/engine/path_queue.go:53 +0x25
+
+goroutine 43 gp=0x1b6d105092c0 m=nil [chan receive]:
+runtime.gopark(0x1b6d100441c0?, 0xdeadbeefdeadbeef?, 0xef?, 0xbe?, 0xdeadbeefdeadbeef?)
+	C:/Program Files/Go/src/runtime/proc.go:462 +0xce fp=0x1b6d10729e38 sp=0x1b6d10729e18 pc=0x7ff602e6a6ce
+runtime.chanrecv(0x1b6d10794000, 0x1b6d10729f68, 0x1)
+	C:/Program Files/Go/src/runtime/chan.go:667 +0x4ae fp=0x1b6d10729eb0 sp=0x1b6d10729e38 pc=0x7ff602dfa38e
+runtime.chanrecv2(0xdeadbeefdeadbeef?, 0xdeadbeefdeadbeef?)
+	C:/Program Files/Go/src/runtime/chan.go:514 +0x12 fp=0x1b6d10729ed8 sp=0x1b6d10729eb0 pc=0x7ff602df9ed2
+github.com/ALXNKO/UltimateSim/internal/engine.(*PathRequestQueue).workerProcess(0x1b6d10436090)
+	C:/code/games/UltimateSim/.claude/worktrees/grand-strategy/internal/engine/path_queue.go:69 +0x9f fp=0x1b6d10729fc8 sp=0x1b6d10729ed8 pc=0x7ff60350529f
+github.com/ALXNKO/UltimateSim/internal/engine.(*PathRequestQueue).StartWorkers.gowrap1()
+	C:/code/games/UltimateSim/.claude/worktrees/grand-strategy/internal/engine/path_queue.go:53 +0x17 fp=0x1b6d10729fe0 sp=0x1b6d10729fc8 pc=0x7ff603505117
+runtime.goexit({})
+	C:/Program Files/Go/src/runtime/asm_amd64.s:1771 +0x1 fp=0x1b6d10729fe8 sp=0x1b6d10729fe0 pc=0x7ff602e72161
+created by github.com/ALXNKO/UltimateSim/internal/engine.(*PathRequestQueue).StartWorkers in goroutine 40
+	C:/code/games/UltimateSim/.claude/worktrees/grand-strategy/internal/engine/path_queue.go:53 +0x25
+
+goroutine 49 gp=0x1b6d105094a0 m=nil [chan receive]:
+runtime.gopark(0x1b6d10264b60?, 0xdeadbeefdeadbeef?, 0xef?, 0xbe?, 0xdeadbeefdeadbeef?)
+	C:/Program Files/Go/src/runtime/proc.go:462 +0xce fp=0x1b6d104fbe38 sp=0x1b6d104fbe18 pc=0x7ff602e6a6ce
+runtime.chanrecv(0x1b6d10794000, 0x1b6d104fbf68, 0x1)
+	C:/Program Files/Go/src/runtime/chan.go:667 +0x4ae fp=0x1b6d104fbeb0 sp=0x1b6d104fbe38 pc=0x7ff602dfa38e
+runtime.chanrecv2(0xdeadbeefdeadbeef?, 0xdeadbeefdeadbeef?)
+	C:/Program Files/Go/src/runtime/chan.go:514 +0x12 fp=0x1b6d104fbed8 sp=0x1b6d104fbeb0 pc=0x7ff602df9ed2
+github.com/ALXNKO/UltimateSim/internal/engine.(*PathRequestQueue).workerProcess(0x1b6d10436090)
+	C:/code/games/UltimateSim/.claude/worktrees/grand-strategy/internal/engine/path_queue.go:69 +0x9f fp=0x1b6d104fbfc8 sp=0x1b6d104fbed8 pc=0x7ff60350529f
+github.com/ALXNKO/UltimateSim/internal/engine.(*PathRequestQueue).StartWorkers.gowrap1()
+	C:/code/games/UltimateSim/.claude/worktrees/grand-strategy/internal/engine/path_queue.go:53 +0x17 fp=0x1b6d104fbfe0 sp=0x1b6d104fbfc8 pc=0x7ff603505117
+runtime.goexit({})
+	C:/Program Files/Go/src/runtime/asm_amd64.s:1771 +0x1 fp=0x1b6d104fbfe8 sp=0x1b6d104fbfe0 pc=0x7ff602e72161
+created by github.com/ALXNKO/UltimateSim/internal/engine.(*PathRequestQueue).StartWorkers in goroutine 40
+	C:/code/games/UltimateSim/.claude/worktrees/grand-strategy/internal/engine/path_queue.go:53 +0x25
+
+goroutine 146 gp=0x1b6d10509680 m=nil [chan receive]:
+runtime.gopark(0x1b6d102640e0?, 0xdeadbeefdeadbeef?, 0xef?, 0xbe?, 0xdeadbeefdeadbeef?)
+	C:/Program Files/Go/src/runtime/proc.go:462 +0xce fp=0x1b6d104fde38 sp=0x1b6d104fde18 pc=0x7ff602e6a6ce
+runtime.chanrecv(0x1b6d10794000, 0x1b6d104fdf68, 0x1)
+	C:/Program Files/Go/src/runtime/chan.go:667 +0x4ae fp=0x1b6d104fdeb0 sp=0x1b6d104fde38 pc=0x7ff602dfa38e
+runtime.chanrecv2(0xdeadbeefdeadbeef?, 0xdeadbeefdeadbeef?)
+	C:/Program Files/Go/src/runtime/chan.go:514 +0x12 fp=0x1b6d104fded8 sp=0x1b6d104fdeb0 pc=0x7ff602df9ed2
+github.com/ALXNKO/UltimateSim/internal/engine.(*PathRequestQueue).workerProcess(0x1b6d10436090)
+	C:/code/games/UltimateSim/.claude/worktrees/grand-strategy/internal/engine/path_queue.go:69 +0x9f fp=0x1b6d104fdfc8 sp=0x1b6d104fded8 pc=0x7ff60350529f
+github.com/ALXNKO/UltimateSim/internal/engine.(*PathRequestQueue).StartWorkers.gowrap1()
+	C:/code/games/UltimateSim/.claude/worktrees/grand-strategy/internal/engine/path_queue.go:53 +0x17 fp=0x1b6d104fdfe0 sp=0x1b6d104fdfc8 pc=0x7ff603505117
+runtime.goexit({})
+	C:/Program Files/Go/src/runtime/asm_amd64.s:1771 +0x1 fp=0x1b6d104fdfe8 sp=0x1b6d104fdfe0 pc=0x7ff602e72161
+created by github.com/ALXNKO/UltimateSim/internal/engine.(*PathRequestQueue).StartWorkers in goroutine 40
+	C:/code/games/UltimateSim/.claude/worktrees/grand-strategy/internal/engine/path_queue.go:53 +0x25
+
+goroutine 147 gp=0x1b6d10509a40 m=nil [chan receive]:
+runtime.gopark(0x1b6d10264bd0?, 0xdeadbeefdeadbeef?, 0xef?, 0xbe?, 0xdeadbeefdeadbeef?)
+	C:/Program Files/Go/src/runtime/proc.go:462 +0xce fp=0x1b6d104f9e38 sp=0x1b6d104f9e18 pc=0x7ff602e6a6ce
+runtime.chanrecv(0x1b6d10794000, 0x1b6d104f9f68, 0x1)
+	C:/Program Files/Go/src/runtime/chan.go:667 +0x4ae fp=0x1b6d104f9eb0 sp=0x1b6d104f9e38 pc=0x7ff602dfa38e
+runtime.chanrecv2(0xdeadbeefdeadbeef?, 0xdeadbeefdeadbeef?)
+	C:/Program Files/Go/src/runtime/chan.go:514 +0x12 fp=0x1b6d104f9ed8 sp=0x1b6d104f9eb0 pc=0x7ff602df9ed2
+github.com/ALXNKO/UltimateSim/internal/engine.(*PathRequestQueue).workerProcess(0x1b6d10436090)
+	C:/code/games/UltimateSim/.claude/worktrees/grand-strategy/internal/engine/path_queue.go:69 +0x9f fp=0x1b6d104f9fc8 sp=0x1b6d104f9ed8 pc=0x7ff60350529f
+github.com/ALXNKO/UltimateSim/internal/engine.(*PathRequestQueue).StartWorkers.gowrap1()
+	C:/code/games/UltimateSim/.claude/worktrees/grand-strategy/internal/engine/path_queue.go:53 +0x17 fp=0x1b6d104f9fe0 sp=0x1b6d104f9fc8 pc=0x7ff603505117
+runtime.goexit({})
+	C:/Program Files/Go/src/runtime/asm_amd64.s:1771 +0x1 fp=0x1b6d104f9fe8 sp=0x1b6d104f9fe0 pc=0x7ff602e72161
+created by github.com/ALXNKO/UltimateSim/internal/engine.(*PathRequestQueue).StartWorkers in goroutine 40
+	C:/code/games/UltimateSim/.claude/worktrees/grand-strategy/internal/engine/path_queue.go:53 +0x25
+
+goroutine 148 gp=0x1b6d10509c20 m=nil [chan receive]:
+runtime.gopark(0x1b6d10044230?, 0xdeadbeefdeadbeef?, 0xef?, 0xbe?, 0xdeadbeefdeadbeef?)
+	C:/Program Files/Go/src/runtime/proc.go:462 +0xce fp=0x1b6d10511e38 sp=0x1b6d10511e18 pc=0x7ff602e6a6ce
+runtime.chanrecv(0x1b6d10794000, 0x1b6d10511f68, 0x1)
+	C:/Program Files/Go/src/runtime/chan.go:667 +0x4ae fp=0x1b6d10511eb0 sp=0x1b6d10511e38 pc=0x7ff602dfa38e
+runtime.chanrecv2(0xdeadbeefdeadbeef?, 0xdeadbeefdeadbeef?)
+	C:/Program Files/Go/src/runtime/chan.go:514 +0x12 fp=0x1b6d10511ed8 sp=0x1b6d10511eb0 pc=0x7ff602df9ed2
+github.com/ALXNKO/UltimateSim/internal/engine.(*PathRequestQueue).workerProcess(0x1b6d10436090)
+	C:/code/games/UltimateSim/.claude/worktrees/grand-strategy/internal/engine/path_queue.go:69 +0x9f fp=0x1b6d10511fc8 sp=0x1b6d10511ed8 pc=0x7ff60350529f
+github.com/ALXNKO/UltimateSim/internal/engine.(*PathRequestQueue).StartWorkers.gowrap1()
+	C:/code/games/UltimateSim/.claude/worktrees/grand-strategy/internal/engine/path_queue.go:53 +0x17 fp=0x1b6d10511fe0 sp=0x1b6d10511fc8 pc=0x7ff603505117
+runtime.goexit({})
+	C:/Program Files/Go/src/runtime/asm_amd64.s:1771 +0x1 fp=0x1b6d10511fe8 sp=0x1b6d10511fe0 pc=0x7ff602e72161
+created by github.com/ALXNKO/UltimateSim/internal/engine.(*PathRequestQueue).StartWorkers in goroutine 40
+	C:/code/games/UltimateSim/.claude/worktrees/grand-strategy/internal/engine/path_queue.go:53 +0x25
+
+goroutine 41 gp=0x1b6d10029c20 m=nil [chan receive]:
+runtime.gopark(0x7ff603762801?, 0x1b6d0ffa0400?, 0x40?, 0x4?, 0x0?)
+	C:/Program Files/Go/src/runtime/proc.go:462 +0xce fp=0x1b6d1045de38 sp=0x1b6d1045de18 pc=0x7ff602e6a6ce
+runtime.chanrecv(0x1b6d10794000, 0x1b6d1045df68, 0x1)
+	C:/Program Files/Go/src/runtime/chan.go:667 +0x4ae fp=0x1b6d1045deb0 sp=0x1b6d1045de38 pc=0x7ff602dfa38e
+runtime.chanrecv2(0x7ff6031d4b00?, 0x1b6d0ffa0400?)
+	C:/Program Files/Go/src/runtime/chan.go:514 +0x12 fp=0x1b6d1045ded8 sp=0x1b6d1045deb0 pc=0x7ff602df9ed2
+github.com/ALXNKO/UltimateSim/internal/engine.(*PathRequestQueue).workerProcess(0x1b6d10436090)
+	C:/code/games/UltimateSim/.claude/worktrees/grand-strategy/internal/engine/path_queue.go:69 +0x9f fp=0x1b6d1045dfc8 sp=0x1b6d1045ded8 pc=0x7ff60350529f
+github.com/ALXNKO/UltimateSim/internal/engine.(*PathRequestQueue).StartWorkers.gowrap1()
+	C:/code/games/UltimateSim/.claude/worktrees/grand-strategy/internal/engine/path_queue.go:53 +0x17 fp=0x1b6d1045dfe0 sp=0x1b6d1045dfc8 pc=0x7ff603505117
+runtime.goexit({})
+	C:/Program Files/Go/src/runtime/asm_amd64.s:1771 +0x1 fp=0x1b6d1045dfe8 sp=0x1b6d1045dfe0 pc=0x7ff602e72161
+created by github.com/ALXNKO/UltimateSim/internal/engine.(*PathRequestQueue).StartWorkers in goroutine 40
+	C:/code/games/UltimateSim/.claude/worktrees/grand-strategy/internal/engine/path_queue.go:53 +0x25
+FAIL	github.com/ALXNKO/UltimateSim/cmd/game	7.776s
+FAIL

@@ -11,13 +11,14 @@ import (
 // This temporarily relieves the Jurisdiction's Trauma but flags the minority believers
 // as criminals in the JusticeSystem, creating a pipeline to Banishment and Blood Feuds.
 
+// cache values, not component pointers — GC corruption class, see banditry.go
+// (s.jurisdictions persists across ticks; Scapegoat/Jurisdiction components are
+// re-fetched via the entity handle at use time)
 type adminScapegoatData struct {
 	Entity        ecs.Entity
 	X             float32
 	Y             float32
 	RadiusSquared float32
-	Comp          *components.ScapegoatComponent
-	Jur           *components.JurisdictionComponent
 }
 
 type ScapegoatSystem struct {
@@ -59,8 +60,6 @@ func (s *ScapegoatSystem) Update(world *ecs.World) {
 				X:             pos.X,
 				Y:             pos.Y,
 				RadiusSquared: jur.RadiusSquared,
-				Comp:          scape,
-				Jur:           jur,
 			})
 		}
 	}
@@ -137,16 +136,23 @@ func (s *ScapegoatSystem) Update(world *ecs.World) {
 			continue // Ghost town
 		}
 
+		// Re-fetch via entity handle at use time (cached pointers do not survive archetype moves)
+		if !world.Alive(j.Entity) {
+			continue
+		}
+		scape := (*components.ScapegoatComponent)(world.Get(j.Entity, scapeID))
+		jur := (*components.JurisdictionComponent)(world.Get(j.Entity, jurID))
+
 		// Phase 49: The Witch Hunt Engine - Esoteric Scapegoating
 		if totalEsoteric > 0 {
-			j.Comp.TargetEsoteric = true
-			j.Comp.Active = true
+			scape.TargetEsoteric = true
+			scape.Active = true
 
 			// Catharsis: The state feels temporary relief by blaming the esoteric minorities
-			if j.Jur.Trauma >= 10 {
-				j.Jur.Trauma -= 10
+			if jur.Trauma >= 10 {
+				jur.Trauma -= 10
 			} else {
-				j.Jur.Trauma = 0
+				jur.Trauma = 0
 			}
 			continue // Skip minority belief logic
 		}
@@ -166,14 +172,14 @@ func (s *ScapegoatSystem) Update(world *ecs.World) {
 
 		// If a minority belief is found, set the Scapegoat and reduce trauma
 		if minorityID != 0 {
-			j.Comp.TargetBeliefID = minorityID
-			j.Comp.Active = true
+			scape.TargetBeliefID = minorityID
+			scape.Active = true
 
 			// Catharsis: The state feels temporary relief by blaming the minority
-			if j.Jur.Trauma >= 10 {
-				j.Jur.Trauma -= 10
+			if jur.Trauma >= 10 {
+				jur.Trauma -= 10
 			} else {
-				j.Jur.Trauma = 0
+				jur.Trauma = 0
 			}
 		}
 	}

@@ -48,6 +48,11 @@ type TickManager struct {
 	IsPaused      bool // Phase 12: Simulation Controls
 	IsFastForward bool // Phase 31: Performance mode for history simulation
 
+	// Grand Strategy Phase: game speed as ticks-per-frame (1, 2, 4, 8).
+	// The UI loop calls Tick() Speed times per rendered frame. 0 is
+	// normalized to 1 so zero-valued TickManagers keep working.
+	Speed int
+
 	Ticks uint64 // Global tick counter exposed for UI
 
 	lastTick time.Time
