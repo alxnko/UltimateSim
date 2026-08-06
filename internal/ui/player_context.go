@@ -82,6 +82,7 @@ type PlayerContext struct {
 	// Character select (start-of-game or after full dynasty wipe)
 	SelectOpen    bool
 	SelectChoices []systems.StartCandidate
+	SelIndex      int
 
 	// Warmup ticks remaining before character select opens on a fresh world.
 	Warmup int

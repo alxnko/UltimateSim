@@ -79,6 +79,11 @@ func (s *StatePlaying) Update(sm *StateManager) error {
 		pc.Events.Clear()
 	}
 
+	// Character select owns the keyboard while open.
+	if pc.SelectOpen {
+		s.handleSelectKeys()
+	}
+
 	s.handleHotkeys()
 	s.handleMouse()
 

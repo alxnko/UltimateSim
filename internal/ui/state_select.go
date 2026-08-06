@@ -6,6 +6,7 @@ import (
 	"github.com/ALXNKO/UltimateSim/internal/components"
 	"github.com/ALXNKO/UltimateSim/internal/systems"
 	"github.com/hajimehoshi/ebiten/v2"
+	"github.com/hajimehoshi/ebiten/v2/inpututil"
 	"github.com/mlange-42/arche/ecs"
 )
 
@@ -18,6 +19,29 @@ func (s *StatePlaying) openCharacterSelect() {
 	pc := s.PC
 	pc.SelectChoices = systems.ListStartCandidates(s.Status.TM.World)
 	pc.SelectOpen = true
+	pc.SelIndex = 0
+}
+
+// handleSelectKeys drives the roster with the keyboard: arrows move, Enter
+// possesses, R rolls a surprise. Runs from Update while the modal is open.
+func (s *StatePlaying) handleSelectKeys() {
+	pc := s.PC
+	n := len(pc.SelectChoices)
+	if n == 0 {
+		return
+	}
+	if inpututil.IsKeyJustPressed(ebiten.KeyArrowDown) || inpututil.IsKeyJustPressed(ebiten.KeyS) {
+		pc.SelIndex = (pc.SelIndex + 1) % n
+	}
+	if inpututil.IsKeyJustPressed(ebiten.KeyArrowUp) || inpututil.IsKeyJustPressed(ebiten.KeyW) {
+		pc.SelIndex = (pc.SelIndex + n - 1) % n
+	}
+	if inpututil.IsKeyJustPressed(ebiten.KeyEnter) {
+		s.possessAs(pc.SelectChoices[pc.SelIndex].Entity, true)
+	}
+	if inpututil.IsKeyJustPressed(ebiten.KeyR) {
+		s.possessAs(pc.SelectChoices[int(s.Status.TM.Ticks)%n].Entity, true)
+	}
 }
 
 // DrawCharacterSelect renders the pick-your-body modal.
@@ -42,8 +66,13 @@ func (s *StatePlaying) DrawCharacterSelect(screen *ebiten.Image) {
 		if cy+26 > y+h-40 {
 			break
 		}
+		rowCol := TextCol
+		if i == pc.SelIndex {
+			DrawText(screen, ">", x+6, cy+4, AccentCol)
+			rowCol = AccentCol
+		}
 		label := fmt.Sprintf("%s, %d — %s — %s", c.Name, c.Age, JobName(c.JobID), CityName(s.Status.TM.World, c.CityID))
-		DrawText(screen, label, x+16, cy+4, TextCol)
+		DrawText(screen, label, x+16, cy+4, rowCol)
 		DrawText(screen, fmt.Sprintf("STR %d  INT %d  %dg", c.Strength, c.Intellect, int(c.Wealth)), x+340, cy+4, TextDim)
 		if Button(screen, "Live as", x+w-88, cy, 74, 22) {
 			s.possessAs(c.Entity, true)
@@ -61,7 +90,7 @@ func (s *StatePlaying) DrawCharacterSelect(screen *ebiten.Image) {
 		}
 		return
 	}
-	DrawText(screen, "You can switch bodies later: right-click anyone -> Play As.", x+140, y+h-28, TextDim)
+	DrawText(screen, "Arrows+Enter pick, R random. Later: right-click anyone -> Play As.", x+140, y+h-28, TextDim)
 }
 
 // possessAs transfers control to target. fresh grants the starter kit and the
