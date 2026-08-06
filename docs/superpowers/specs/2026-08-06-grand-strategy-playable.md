@@ -83,6 +83,28 @@ polished. Language stays **Go** (decided after Rust discussion; evidence: tick
 - [ ] U9 Notifications: stacked toasts, non-overlapping, click-to-focus event.
 - [ ] U10 Onboarding: first-run hint strip (move/attack/menu/build/goals).
 
+## P4 — GAMEPLAY LOOP (user verdict on first playtest: "gameplay is kinda
+## awful" — walking around is not a game; the sim must become a STORY)
+
+- [ ] G1 Interactive events engine (the CK3 heart): sim-state-driven popup
+      events with 2-3 choices and real consequences. Generators at minimum:
+      marriage proposal, plot invitation, ruler tax demand, rival insult,
+      bandit shakedown (pay/fight/flee), job offer, festival, ruler died /
+      succession, war declared/peace. Effects hit gold, opinion hooks,
+      legitimacy, jobs, health. Deterministic (seeded RNG + sim state).
+- [ ] G2 Drama surfaced: wars, coups, deaths of rulers, plagues, famines pop
+      as toasts + chronicle entries with city/actor names. The world must feel
+      alive WITHOUT opening panels.
+- [ ] G3 Progression ladder always visible: HUD shows current rank + concrete
+      next step ("Win 3 more friends to claim leadership of Greenfork").
+- [ ] G4 Villages LOOK like villages: genesis places houses/workshop/shrine
+      structures around each center; town square feel.
+- [ ] G5 Game-feel defaults: start at 2x, first ambition auto-granted and
+      tracked on HUD, event popup pauses the sim (CK-style), attack/interact
+      feedback (flash + floater already exist — verify wired).
+- [ ] G6 An event every ~30-90s of play at 1x in a living city; never a dead
+      stretch over 3 minutes.
+
 ## P3 — Polish + perf
 
 - [ ] P3.1 DiseaseVectorSystem optimization (58% of tick) — target <20%.

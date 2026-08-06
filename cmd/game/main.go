@@ -100,14 +100,18 @@ func BuildSimulation(gridWidth, gridHeight int, seedVal byte, status *render.Loa
 	tickManager.AddSystem(systems.NewCityBinderSystem(), engine.PhaseResolution)
 	tickManager.AddSystem(systems.NewSettlementRuleSystem(grid), engine.PhaseResolution)
 	tickManager.AddSystem(systems.NewPriceDiscoverySystem(), engine.PhaseResolution)
+	// Grand Strategy P2.6: trade-route goods flow + route income.
+	tickManager.AddSystem(systems.NewTradeRouteSystem(), engine.PhaseResolution)
 	tickManager.AddSystem(systems.NewRuinTransformationSystem(world), engine.PhaseResolution)
 	tickManager.AddSystem(systems.NewAdministrativeDecaySystem(), engine.PhaseResolution)
 
 	// Phase 43: Organic Administration Engine
 	tickManager.AddSystem(systems.NewLeadershipEmergenceSystem(hookGraph), engine.PhaseResolution)
 
-	// Phase 16.1 & 42: Taxation and The Tax Evasion Engine
-	tickManager.AddSystem(systems.NewTaxationSystem(world, hookGraph), engine.PhaseResolution)
+	// Phase 16.1 & 42 & Grand Strategy P2.6: Taxation + Tax Evasion + Tax
+	// Policy rate control. The wrapper owns and drives the base system —
+	// registering both would double-collect.
+	tickManager.AddSystem(systems.NewTaxPolicySystem(systems.NewTaxationSystem(world, hookGraph)), engine.PhaseResolution)
 	tickManager.AddSystem(systems.NewVassalSafetyValveSystem(world, hookGraph), engine.PhaseResolution)
 
 	// Phase 16.4: Administrative Reach & Friction
