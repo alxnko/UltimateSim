@@ -1,0 +1,8 @@
+*.out
+*.pprof
+*.csv
+*.svg
+*.png
+go.work.sum
+.hugo_build.lock
+/docs/public/
