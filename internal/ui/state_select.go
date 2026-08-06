@@ -123,6 +123,21 @@ func (s *StatePlaying) possessAs(target ecs.Entity, fresh bool) {
 	if !world.Has(target, ambID) {
 		world.Add(target, ambID)
 	}
+	if fresh {
+		// G5: a fresh life starts with a purpose already on the tracker.
+		amb := (*components.AmbitionsComponent)(world.Get(target, ambID))
+		if len(amb.Ambitions) == 0 {
+			amb.Offers = systems.GenerateOffers(world, s.Status.HookGraph, target, s.Status.TM.Ticks)
+			amb = (*components.AmbitionsComponent)(world.Get(target, ambID))
+			if len(amb.Offers) > 0 && systems.AcceptOffer(amb, 0) {
+				pc.PushNote("Your first ambition is set — press G to see it.", s.Status.TM.Ticks)
+			}
+		}
+		// Grand-strategy pace: default to 2x once you inhabit a body.
+		if s.Status.TM.Speed < 2 {
+			s.Status.TM.Speed = 2
+		}
+	}
 
 	// Snap camera to the new body and reset hurt detection.
 	posID := ecs.ComponentID[components.Position](world)
