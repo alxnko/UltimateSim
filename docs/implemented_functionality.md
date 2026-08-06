@@ -1,3 +1,32 @@
+## Grand Strategy Phase: EU/CK/Vic-style layer over a living world
+Spec: `docs/superpowers/specs/2026-08-06-grand-strategy-playable.md`; plan: `docs/superpowers/plans/2026-08-06-grand-strategy-waves.md`.
+
+**Playable-core fixes**
+- Input snapshot (`ui/widgets.go BeginUIFrame`): Draw-time widgets consume clicks captured on the Update tick timeline (FPS != TPS lost every click before — the game-breaking bug); unclaimed clicks promote to world clicks one tick later; keyboard runes/backspace/arrows/Enter/Esc/wheel ride the same snapshot.
+- Character select (`ui/state_select.go` + `systems.ListStartCandidates`): warmup ticks then pick any real inhabitant (keyboard nav, surprise-me); `possessAs` also backs the context-menu **Play As** verb (switch bodies anytime).
+- Free camera: MMB drag / arrows / minimap click-jump + viewport rect; `F` or moving re-follows; detached-camera banner; native-resolution resizable window (min 960x540).
+- `TickManager.Speed`: 1/2/4/8 ticks-per-frame (keys 1–4 + HUD buttons); fresh possession defaults to 2x and auto-grants a first ambition.
+
+**World**
+- Worldgen v2 (`engine/map_generator.go`): 3–5 continents, ocean channels, seas, carved lakes, island arcs, ridged mountain ranges, latitude+moisture climate belts; seed-variable, deterministic, invariant-tested, ~0.26s at 1024x1024.
+- Genesis civilization (`systems/genesis.go`): pre-tick seeded villages (spaced, fertile, coastal-favoring) with town squares (houses/workshop/shrine/tavern/farm), countries with true capital entities (Capital+Country+Affiliation), crowned rulers, seated councils, married dynasties, employed citizens, treasuries. Name generator (`systems/names.go`) gives every person and settlement a deterministic syllable name.
+
+**Politics & economy**
+- Diplomacy (`systems/diplomacy.go` + `DiplomacyComponent`): opinion drift, border friction, AI war/peace, war score, truces, tribute; player actions ImproveRelations/FormAlliance/BreakAlliance/DeclareWarAction/SueForPeace; two-way parity with the macro WarTracker.
+- Dynasty/intrigue/council (`systems/dynasty.go`, `plots.go`, `council.go`): Marry + ListDynasty; plots (seize rule / assassinate) with spymaster-aware discovery resolving through the legitimate rank/death paths; council seats with cross-system bonuses (GetCouncilBonus).
+- Economy (`systems/economy_actions.go`): TaxPolicySystem wraps TaxationSystem (rate-scaled, evasion-exact), TradeRouteSystem moves goods along price gradients paying city+sovereign cuts, MarketSnapshot for the UI.
+
+**Living world & events**
+- DailyRoutineSystem (`systems/daily_routine.go` + `RoutineComponent`): employed citizens commute to job anchors (farm/forest/mine/patrol/center), work with idle-wiggle, return at dusk, rest at night; guards patrol rings; wander reserved for the unemployed.
+- Events engine (`systems/events.go` + `PendingEventsComponent`, `ui/panel_events.go`): deterministic EventDirectorSystem pulses story beats (tax demand, bandit shakedown, job offer, insult, festival, war/peace news, ruler died); one ResolveEvent applies choice effects; CK-style pause-on-popup + event badge.
+
+**UI v2**
+- Typography (`ui/theme.go`): goregular TTF via text/v2, four size tiers, real advance-width measurement.
+- Widget kit (`ui/widgets_kit.go`): Tabs, SearchableList (typed filter + keyboard nav), sortable Table, delayed tooltips + FlushTooltips, ModalFrame (dim backdrop, X/Esc).
+- Chrome (`ui/chrome.go`): top tab strip (Diplomacy/Market/Laws/Goals/Character/Chronicle) + always-on progression hint (rank + concrete next step).
+- Panels: `panel_diplomacy.go` (sortable relations table + sovereign actions), `panel_market.go` (prices, tax control, treasury, trade-route establishment), build ghost + overhead bars/nameplates/health bars (`ui/render_overlays.go`, `CanPlaceReason`).
+- Save parity: dynasty, plot, council, diplomacy relations, tax policy, trade routes, pending events tables in `engine/save_load.go`.
+
 ## Shell Phase: Playable Game Layer (Streets of Rogue / RimWorld UI)
 Spec: `docs/superpowers/specs/2026-06-11-playable-game-design.md`. Turns the simulation backend into a fully playable single-character action-RPG + grand-strategy hybrid.
 
