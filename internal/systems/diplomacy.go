@@ -5,6 +5,7 @@ import (
 	"slices"
 
 	"github.com/ALXNKO/UltimateSim/internal/components"
+	"github.com/ALXNKO/UltimateSim/internal/engine"
 	"github.com/mlange-42/arche/ecs"
 )
 
@@ -75,6 +76,7 @@ type diploCountryData struct {
 // DiplomacySystem runs the pulse described in the package comment.
 type DiplomacySystem struct {
 	tickCounter uint64
+	clock       *engine.TickManager // shared persisted clock; nil in unit tests
 
 	// Component IDs
 	capID         ecs.ID
@@ -101,13 +103,21 @@ func NewDiplomacySystem(world *ecs.World) *DiplomacySystem {
 	}
 }
 
+// SetClock binds the shared TickManager clock so tick stamps (truces,
+// cooldowns) live in the same persisted domain the UI and saves use.
+// Without it (unit tests) the private counter keeps the old semantics.
+func (s *DiplomacySystem) SetClock(tm *engine.TickManager) { s.clock = tm }
+
 // Update evaluates macro diplomacy once every DiplomacyPulseTicks ticks.
 func (s *DiplomacySystem) Update(world *ecs.World) {
 	s.tickCounter++
-	if s.tickCounter%DiplomacyPulseTicks != 0 {
+	tick := s.tickCounter
+	if s.clock != nil {
+		tick = s.clock.Ticks
+	}
+	if tick%DiplomacyPulseTicks != 0 {
 		return
 	}
-	tick := s.tickCounter
 
 	// 1. Snapshot capitals (query fully consumed; no mutations inside).
 	population := make(map[uint32]int64)
@@ -219,9 +229,13 @@ func (s *DiplomacySystem) Update(world *ecs.World) {
 				ra.Opinion = clampOpinion(ra.Opinion - WarWearinessStep)
 				rb.Opinion = ra.Opinion
 
-				// Deterministic WarScore from relative strength.
-				step := (a.strength - b.strength) * WarScoreStepScale /
-					(a.strength + b.strength + 1)
+				// Deterministic WarScore from relative strength. A seated
+				// Marshal grants their country a strength edge (P2.5 —
+				// council bonuses must be live, per review).
+				strA := a.strength + a.strength*int64(GetCouncilBonus(world, a.countryID, components.SeatMarshal))/100
+				strB := b.strength + b.strength*int64(GetCouncilBonus(world, b.countryID, components.SeatMarshal))/100
+				step := (strA - strB) * WarScoreStepScale /
+					(strA + strB + 1)
 				scoreA := int64(ra.WarScore) + step
 				if scoreA >= WarScoreCap || scoreA <= -WarScoreCap {
 					winIdx, loseIdx := i, j
@@ -241,8 +255,15 @@ func (s *DiplomacySystem) Update(world *ecs.World) {
 				continue
 			}
 
-			// Peacetime: drift toward 0, then border friction.
+			// Peacetime: drift toward 0, then border friction. A seated
+			// Diplomat softens relations each pulse (P2.5 — council bonuses
+			// must be live, per review).
 			ra.Opinion = driftTowardZero(ra.Opinion)
+			diploBonus := int16(GetCouncilBonus(world, a.countryID, components.SeatDiplomat) +
+				GetCouncilBonus(world, b.countryID, components.SeatDiplomat))
+			if diploBonus > 0 {
+				ra.Opinion = clampOpinion(ra.Opinion + diploBonus)
+			}
 			if !ra.Alliance && a.hasPos && b.hasPos {
 				dx, dy := a.x-b.x, a.y-b.y
 				if dx*dx+dy*dy <= BorderRadiusSq {

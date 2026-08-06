@@ -326,6 +326,12 @@ var tableDeleteQueries = map[string]string{
 	"culture":           "DELETE FROM culture",
 	"extra_tags":        "DELETE FROM extra_tags",
 	"ambitions":         "DELETE FROM ambitions",
+	"dynasty":           "DELETE FROM dynasty",
+	"plot":              "DELETE FROM plot",
+	"council":           "DELETE FROM council",
+	"diplomacy":         "DELETE FROM diplomacy",
+	"tax_policy":        "DELETE FROM tax_policy",
+	"pending_events":    "DELETE FROM pending_events",
 }
 
 // SaveWorld serializes the core ECS state into SQLite.
@@ -350,7 +356,7 @@ func SaveWorld(tm *TickManager, mapGrid *MapGrid, seedVal byte, db *sql.DB) erro
 	}
 
 	// Clear out old entity rows to prevent resurrecting dead entities
-	tables := []string{"entities", "identity", "position", "needs", "affiliation", "tags", "storage", "velocity", "job", "memory", "beliefs", "genome", "vitals", "population", "desperation", "secrets", "equipment", "sanity", "treasury", "market", "legitimacy", "loyalty", "jurisdiction", "structure", "construction_site", "demographics", "workbench", "culture", "extra_tags", "ambitions"}
+	tables := []string{"entities", "identity", "position", "needs", "affiliation", "tags", "storage", "velocity", "job", "memory", "beliefs", "genome", "vitals", "population", "desperation", "secrets", "equipment", "sanity", "treasury", "market", "legitimacy", "loyalty", "jurisdiction", "structure", "construction_site", "demographics", "workbench", "culture", "extra_tags", "ambitions", "dynasty", "plot", "council", "diplomacy", "tax_policy", "pending_events"}
 	for _, table := range tables {
 		query, ok := tableDeleteQueries[table]
 		if !ok {

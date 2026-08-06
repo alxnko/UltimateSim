@@ -89,6 +89,7 @@ type eventNPC struct {
 type EventDirectorSystem struct {
 	hooks       *engine.SparseHookGraph
 	tick        uint64
+	clock       *engine.TickManager // shared persisted clock; nil in unit tests
 	nextEventID uint64
 
 	// Diff caches for news events (war/peace flips, dead rulers). primed is
@@ -116,6 +117,10 @@ type EventDirectorSystem struct {
 	diploID       ecs.ID
 	pendID        ecs.ID
 }
+
+// SetClock binds the shared TickManager clock so GameEvent.Tick stamps live
+// in the persisted tick domain (survives save/load).
+func (s *EventDirectorSystem) SetClock(tm *engine.TickManager) { s.clock = tm }
 
 // NewEventDirectorSystem binds the director to the world's component IDs.
 func NewEventDirectorSystem(world *ecs.World, hooks *engine.SparseHookGraph) *EventDirectorSystem {
@@ -147,6 +152,9 @@ func NewEventDirectorSystem(world *ecs.World, hooks *engine.SparseHookGraph) *Ev
 // call pattern is a pure function of the tick counter (determinism law).
 func (s *EventDirectorSystem) Update(world *ecs.World) {
 	s.tick++
+	if s.clock != nil {
+		s.tick = s.clock.Ticks
+	}
 	pulse := s.tick%EventPulseTicks == 0
 	if !pulse && s.tick%eventJitterTicks == 0 {
 		if uint64(engine.GetRandomInt())%eventJitterChance == 0 {

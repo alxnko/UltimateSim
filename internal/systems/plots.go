@@ -105,7 +105,12 @@ type plotTargetInfo struct {
 type PlotSystem struct {
 	hooks *engine.SparseHookGraph
 	tick  uint64
+	clock *engine.TickManager // shared persisted clock; nil in unit tests
 }
+
+// SetClock binds the shared TickManager clock so StartTick and discovery
+// seeds live in the persisted tick domain (survives save/load).
+func (s *PlotSystem) SetClock(tm *engine.TickManager) { s.clock = tm }
 
 func NewPlotSystem(world *ecs.World, hooks *engine.SparseHookGraph) *PlotSystem {
 	// Pre-register component IDs used by Update.
@@ -121,6 +126,9 @@ func (s *PlotSystem) IsExpensive() bool { return true }
 
 func (s *PlotSystem) Update(world *ecs.World) {
 	s.tick++
+	if s.clock != nil {
+		s.tick = s.clock.Ticks
+	}
 	if s.tick%PlotTickRate != 0 {
 		return
 	}

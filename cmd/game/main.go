@@ -137,7 +137,10 @@ func BuildSimulation(gridWidth, gridHeight int, seedVal byte, status *render.Loa
 	// Grand Strategy Phase: opinion/alliance/war-score diplomacy ledger,
 	// synced two-way with the macro WarTracker model. Registered right after
 	// ResourceWarSystem so macro declarations sync on the same cadence.
-	tickManager.AddSystem(systems.NewDiplomacySystem(world), engine.PhaseResolution)
+	// SetClock binds tick stamps (truces, cooldowns) to the persisted clock.
+	diploSys := systems.NewDiplomacySystem(world)
+	diploSys.SetClock(tickManager)
+	tickManager.AddSystem(diploSys, engine.PhaseResolution)
 
 	// Register Gossip
 	tickManager.AddSystem(systems.NewInformationTradeSystem(world, hookGraph), engine.PhaseResolution)
@@ -213,10 +216,14 @@ func BuildSimulation(gridWidth, gridHeight int, seedVal byte, status *render.Loa
 	tickManager.AddSystem(systems.NewStructureEffectSystem(), engine.PhaseResolution)
 	tickManager.AddSystem(systems.NewAmbitionSystem(hookGraph), engine.PhaseResolution)
 	// Grand Strategy P2.4/P2.5: intrigue plots + council bonuses.
-	tickManager.AddSystem(systems.NewPlotSystem(world, hookGraph), engine.PhaseResolution)
+	plotSys := systems.NewPlotSystem(world, hookGraph)
+	plotSys.SetClock(tickManager)
+	tickManager.AddSystem(plotSys, engine.PhaseResolution)
 	tickManager.AddSystem(systems.NewCouncilSystem(world), engine.PhaseResolution)
 	// Grand Strategy G1/G2/G6: interactive event director (drama engine).
-	tickManager.AddSystem(systems.NewEventDirectorSystem(world, hookGraph), engine.PhaseResolution)
+	eventSys := systems.NewEventDirectorSystem(world, hookGraph)
+	eventSys.SetClock(tickManager)
+	tickManager.AddSystem(eventSys, engine.PhaseResolution)
 	tickManager.AddSystem(systems.NewPlayerOrderSystem(hookGraph, bridge), engine.PhaseAI)
 
 	// --- PHASE: CLEANUP ---
