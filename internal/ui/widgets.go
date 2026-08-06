@@ -22,20 +22,63 @@ func PointIn(px, py, x, y, w, h int) bool {
 // BeginUIFrame captures the click during Update; drawn widgets consume it.
 // A click no widget consumed is promoted to a world click on the NEXT tick
 // (one 16ms frame of latency), so UI always has first claim.
+// Keyboard input (typed runes, backspace, list navigation, Esc) and the wheel
+// are captured on the same snapshot so kit widgets can consume them in Draw.
 var (
 	uiMX, uiMY        int  // cursor at the capturing Update tick
 	uiClick           bool // one unconsumed left click (widgets eat this)
 	worldMX, worldMY  int  // cursor where the surviving click happened
 	worldClickPending bool // click that survived a full widget pass
+
+	uiRunes     []rune  // characters typed this tick (text input)
+	uiBackspace bool    // backspace pressed (with key repeat)
+	uiUp        bool    // arrow-up pressed (with key repeat)
+	uiDown      bool    // arrow-down pressed (with key repeat)
+	uiEnter     bool    // enter / numpad-enter just pressed
+	uiEsc       bool    // one unconsumed Esc press (widgets eat this)
+	uiWheelY    float64 // wheel movement this tick (lists consume it)
+	uiFrameID   uint64  // increments each BeginUIFrame; lets Draw-side
+	// widgets self-update exactly once per tick even when FPS != TPS
+
+	modalSeen    bool // a ModalFrame was drawn since the last BeginUIFrame
+	modalWasSeen bool // ...and in the frame before that
 )
 
 // BeginUIFrame snapshots input state. Call once per Update tick before any
 // widget-bearing Draw runs.
 func BeginUIFrame() {
+	modalWasSeen = modalSeen
+	modalSeen = false
+	if modalWasSeen {
+		// A modal owned the last frame: clicks it left unclaimed die here
+		// instead of being promoted to world clicks behind the modal.
+		uiClick = false
+	}
 	worldClickPending = uiClick
 	worldMX, worldMY = uiMX, uiMY
 	uiMX, uiMY = ebiten.CursorPosition()
 	uiClick = inpututil.IsMouseButtonJustPressed(ebiten.MouseButtonLeft)
+
+	uiRunes = ebiten.AppendInputChars(uiRunes[:0])
+	uiBackspace = repeatingKeyPressed(ebiten.KeyBackspace)
+	uiUp = repeatingKeyPressed(ebiten.KeyArrowUp)
+	uiDown = repeatingKeyPressed(ebiten.KeyArrowDown)
+	uiEnter = inpututil.IsKeyJustPressed(ebiten.KeyEnter) ||
+		inpututil.IsKeyJustPressed(ebiten.KeyNumpadEnter)
+	uiEsc = inpututil.IsKeyJustPressed(ebiten.KeyEscape)
+	_, uiWheelY = ebiten.Wheel()
+	uiFrameID++
+	advanceHoverTip()
+}
+
+// repeatingKeyPressed reports a fresh press, then repeats after a hold
+// (~0.4s delay, ~15Hz repeat at 60 TPS) — standard text-editing feel.
+func repeatingKeyPressed(k ebiten.Key) bool {
+	d := inpututil.KeyPressDuration(k)
+	if d == 1 {
+		return true
+	}
+	return d >= 24 && (d-24)%4 == 0
 }
 
 // TakeWorldClick returns (and consumes) a left click no UI widget claimed.
@@ -56,9 +99,25 @@ func consumeClickIn(x, y, w, h int) bool {
 	return false
 }
 
+// consumeEsc eats the pending Esc press. First consumer wins, so draw the
+// topmost Esc-closable widget's frame before lower ones when stacking.
+func consumeEsc() bool {
+	if uiEsc {
+		uiEsc = false
+		return true
+	}
+	return false
+}
+
 // leftClicked reports a fresh, unconsumed left-button press this tick.
 func leftClicked() bool {
 	return uiClick
+}
+
+// ModalOpen reports whether a ModalFrame was drawn this frame or the last.
+// World/HUD click paths should stand down while it is true.
+func ModalOpen() bool {
+	return modalSeen || modalWasSeen
 }
 
 // DrawPanel draws a filled panel with a 1px border.

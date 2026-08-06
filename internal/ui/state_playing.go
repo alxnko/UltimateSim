@@ -442,6 +442,9 @@ func (s *StatePlaying) Draw(screen *ebiten.Image) {
 	// Popup menus on top.
 	s.PC.Menu.Draw(screen)
 	s.PC.SubMenu.Draw(screen)
+
+	// Queued tooltips render above everything.
+	FlushTooltips(screen)
 }
 
 // getBiomeColor maps a biome ID to its terrain color.

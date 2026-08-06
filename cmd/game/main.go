@@ -127,6 +127,11 @@ func BuildSimulation(gridWidth, gridHeight int, seedVal byte, status *render.Loa
 	// Phase 29.1: Geopolitical Resource Wars
 	tickManager.AddSystem(systems.NewResourceWarSystem(world, hookGraph), engine.PhaseResolution)
 
+	// Grand Strategy Phase: opinion/alliance/war-score diplomacy ledger,
+	// synced two-way with the macro WarTracker model. Registered right after
+	// ResourceWarSystem so macro declarations sync on the same cadence.
+	tickManager.AddSystem(systems.NewDiplomacySystem(world), engine.PhaseResolution)
+
 	// Register Gossip
 	tickManager.AddSystem(systems.NewInformationTradeSystem(world, hookGraph), engine.PhaseResolution)
 
