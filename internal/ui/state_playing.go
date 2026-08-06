@@ -197,6 +197,9 @@ func (s *StatePlaying) handleHotkeys() {
 	if inpututil.IsKeyJustPressed(ebiten.KeyM) {
 		s.toggleChromeTab(chromeTabMarket)
 	}
+	if inpututil.IsKeyJustPressed(ebiten.KeyY) {
+		s.toggleChromeTab(chromeTabDynasty)
+	}
 	if inpututil.IsKeyJustPressed(ebiten.KeyF5) {
 		showPerf = !showPerf
 	}
@@ -473,6 +476,7 @@ func (s *StatePlaying) Draw(screen *ebiten.Image) {
 	s.DrawCharPanel(screen)
 	s.DrawEventLog(screen)
 	s.DrawDiplomacy(screen)
+	s.DrawDynasty(screen)
 	s.DrawMarket(screen)
 	s.DrawOrderBar(screen)
 	s.DrawHeir(screen)

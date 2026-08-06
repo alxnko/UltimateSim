@@ -38,6 +38,14 @@ func (s *StatePlaying) openContextMenu(mx, my int, wx, wy float32) {
 					(*components.Affiliation)(world.Get(ent, affID)).CityID == cityID {
 					items = append(items, "Give Order")
 				}
+				if player != ent {
+					if canProposeMarriage(world, player, ent) {
+						items = append(items, "Propose Marriage")
+					}
+					if !world.Has(player, ecs.ComponentID[components.PlotComponent](world)) {
+						items = append(items, "Plot Against")
+					}
+				}
 			}
 		case TargetVillage:
 			items = []string{"Inspect", "Trade"}
@@ -91,6 +99,12 @@ func (s *StatePlaying) runContextAction(idx int) {
 		s.possessAs(ctx.entity, false)
 	case "Give Order":
 		s.openOrderMenu(ctx.entity)
+	case "Propose Marriage":
+		s.proposeMarriageTo(ctx.entity)
+	case "Plot Against":
+		mx, my := orderMenuPos()
+		pc.SubMenuKind = 3 // plot verbs
+		pc.SubMenu.Open(mx, my, []string{"Seize Rule", "Assassinate"})
 	case "Pick up":
 		s.doPickup(ctx.entity)
 	case "Work here":
@@ -173,9 +187,22 @@ func orderMenuPos() (int, int) {
 	return sw/2 - 60, sh/2 - 60
 }
 
-// runSubMenuAction handles order-verb selection.
+// runSubMenuAction handles order-verb and plot-verb selection.
 func (s *StatePlaying) runSubMenuAction(idx int) {
 	pc := s.PC
+	if pc.SubMenuKind == 3 { // plot verbs against s.menuCtx.entity
+		label := ""
+		if idx < len(pc.SubMenu.Items) {
+			label = pc.SubMenu.Items[idx]
+		}
+		switch label {
+		case "Seize Rule":
+			StartPlotAgainst(s, s.menuCtx.entity, components.PlotSeizeRule)
+		case "Assassinate":
+			StartPlotAgainst(s, s.menuCtx.entity, components.PlotAssassinate)
+		}
+		return
+	}
 	if pc.SubMenuKind != 1 {
 		return
 	}

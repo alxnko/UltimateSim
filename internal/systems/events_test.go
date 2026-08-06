@@ -506,6 +506,8 @@ func TestEventDirector_Deterministic(t *testing.T) {
 		bandit := makeEventNPC(f.world, 4000, 10, 1, 104, 100, 0, 60)
 		giveJob(f.world, bandit, components.JobBandit)
 		f.hooks.AddHook(3000, 1000, -40) // Grudge from a ghost: filtered (not alive)
+		f.hooks.AddHook(4000, 1000, 8)   // The bandit adores the player: marriage eligible
+		f.hooks.AddHook(4000, 2000, -25) // ...and resents the ruler: plot invite eligible
 		return f
 	}
 
@@ -527,5 +529,215 @@ func TestEventDirector_Deterministic(t *testing.T) {
 	}
 	if len(qa) == 0 {
 		t.Fatalf("director generated no events in 4 pulses with eligible generators")
+	}
+}
+
+// markMarried stamps a Married DynastyComponent on an NPC (test rig).
+func markMarried(world *ecs.World, e ecs.Entity) {
+	dynID := ecs.ComponentID[components.DynastyComponent](world)
+	if !world.Has(e, dynID) {
+		world.Add(e, dynID)
+	}
+	(*components.DynastyComponent)(world.Get(e, dynID)).Married = true
+}
+
+// TestEventDirector_MarriageProposal_Accept: the fondest eligible admirer
+// proposes (married admirers and lesser hooks lose the pick); accepting weds
+// both through the standard Marry path with its mutual affection bond.
+func TestEventDirector_MarriageProposal_Accept(t *testing.T) {
+	f := newEventFixture(11)
+	makeEventCity(f.world, 10, 1, 100)
+	f.player = makeEventNPC(f.world, 1000, 10, 1, 100, 100, 50, 50)
+	giveJob(f.world, f.player, components.JobFarmer) // Blocks the job-offer generator
+	possess(f.world, f.player)
+	suitor := makeEventNPC(f.world, 6000, 10, 1, 120, 120, 50, 40)
+	makeEventNPC(f.world, 7000, 10, 1, 130, 130, 50, 40) // Lesser hook: loses the pick
+	admirer := makeEventNPC(f.world, 8000, 10, 1, 140, 140, 50, 40)
+	markMarried(f.world, admirer) // Deepest hook but married: ineligible
+	f.hooks.AddHook(6000, 1000, 20)
+	f.hooks.AddHook(7000, 1000, 10)
+	f.hooks.AddHook(8000, 1000, 50)
+
+	runEventPulses(f, 1)
+
+	ev := queueKind(t, f.world, f.player, components.EventMarriageProposal)
+	if ev.ActorID != 6000 || ev.CityID != 10 {
+		t.Fatalf("proposal actor/city = %d/%d, want 6000/10", ev.ActorID, ev.CityID)
+	}
+
+	line := ResolveEvent(f.world, f.hooks, f.player, &ev, 0)
+	if line == "" {
+		t.Errorf("ResolveEvent(accept) should return a chronicle line")
+	}
+	dynID := ecs.ComponentID[components.DynastyComponent](f.world)
+	if !f.world.Has(f.player, dynID) {
+		t.Fatalf("accepting must add a DynastyComponent to the player")
+	}
+	pd := (*components.DynastyComponent)(f.world.Get(f.player, dynID))
+	if !pd.Married || pd.SpouseID != 6000 {
+		t.Errorf("player dynasty = %+v, want Married with SpouseID 6000", *pd)
+	}
+	sd := (*components.DynastyComponent)(f.world.Get(suitor, dynID))
+	if !sd.Married || sd.SpouseID != 1000 {
+		t.Errorf("suitor dynasty = %+v, want Married with SpouseID 1000", *sd)
+	}
+	// Marriage seals the mutual affection bond on top of the existing hook.
+	if got := f.hooks.GetHook(6000, 1000); got != 30 {
+		t.Errorf("suitor hook toward player = %d, want 30 (20 + wedding 10)", got)
+	}
+	if got := f.hooks.GetHook(1000, 6000); got != 10 {
+		t.Errorf("player hook toward suitor = %d, want 10 (wedding bond)", got)
+	}
+}
+
+// TestEventDirector_MarriageProposal_Decline: turning a suitor down costs
+// their affection and weds nobody.
+func TestEventDirector_MarriageProposal_Decline(t *testing.T) {
+	f := newEventFixture(12)
+	makeEventCity(f.world, 10, 1, 100)
+	f.player = makeEventNPC(f.world, 1000, 10, 1, 100, 100, 50, 50)
+	giveJob(f.world, f.player, components.JobFarmer)
+	possess(f.world, f.player)
+	suitor := makeEventNPC(f.world, 6000, 10, 1, 120, 120, 50, 40)
+	f.hooks.AddHook(6000, 1000, 20)
+
+	runEventPulses(f, 1)
+	ev := queueKind(t, f.world, f.player, components.EventMarriageProposal)
+
+	if line := ResolveEvent(f.world, f.hooks, f.player, &ev, 1); line == "" {
+		t.Errorf("ResolveEvent(decline) should return a chronicle line")
+	}
+	if got := f.hooks.GetHook(6000, 1000); got != 20-MarriageDeclineHookLoss {
+		t.Errorf("spurned suitor hook = %d, want %d", got, 20-MarriageDeclineHookLoss)
+	}
+	dynID := ecs.ComponentID[components.DynastyComponent](f.world)
+	if f.world.Has(f.player, dynID) && (*components.DynastyComponent)(f.world.Get(f.player, dynID)).Married {
+		t.Errorf("declining must not wed the player")
+	}
+	if f.world.Has(suitor, dynID) && (*components.DynastyComponent)(f.world.Get(suitor, dynID)).Married {
+		t.Errorf("declining must not wed the suitor")
+	}
+}
+
+// TestEventDirector_MarriageProposal_MarriedPlayerIneligible: a married
+// player never draws a proposal.
+func TestEventDirector_MarriageProposal_MarriedPlayerIneligible(t *testing.T) {
+	f := newEventFixture(14)
+	makeEventCity(f.world, 10, 1, 100)
+	f.player = makeEventNPC(f.world, 1000, 10, 1, 100, 100, 50, 50)
+	giveJob(f.world, f.player, components.JobFarmer)
+	markMarried(f.world, f.player)
+	possess(f.world, f.player)
+	makeEventNPC(f.world, 6000, 10, 1, 120, 120, 50, 40)
+	f.hooks.AddHook(6000, 1000, 20)
+
+	runEventPulses(f, 2)
+	if got := countKind(f.world, f.player, components.EventMarriageProposal); got != 0 {
+		t.Errorf("married player drew %d proposals, want 0", got)
+	}
+}
+
+// TestEventDirector_PlotInvitation: the ruler's bitterest enemy recruits the
+// player. Refusing changes nothing; joining creates the seize-rule plot plus
+// the conspirator hook (repeat joins only deepen the hook); betraying walks
+// the PlotSystem exposure path (Exposed flag, legitimacy dent, target grudge).
+func TestEventDirector_PlotInvitation(t *testing.T) {
+	f := newEventFixture(13)
+	makeEventCity(f.world, 10, 1, 100)
+	f.player = makeEventNPC(f.world, 1000, 10, 1, 100, 100, 50, 50)
+	giveJob(f.world, f.player, components.JobFarmer)
+	possess(f.world, f.player)
+	// Equal wealth blocks the tax-demand generator.
+	ruler := makeEventNPC(f.world, 2000, 10, 1, 105, 105, 50, 60)
+	makeRuler(f.world, ruler, 50)
+	plotter := makeEventNPC(f.world, 9000, 10, 1, 110, 110, 50, 40)
+	giveJob(f.world, plotter, components.JobGuard)
+	f.hooks.AddHook(9000, 2000, -30) // Strong grudge against the ruler
+
+	runEventPulses(f, 1)
+
+	ev := queueKind(t, f.world, f.player, components.EventPlotInvitation)
+	if ev.ActorID != 9000 || ev.TargetID != 2000 || ev.CityID != 10 {
+		t.Fatalf("invitation actor/target/city = %d/%d/%d, want 9000/2000/10",
+			ev.ActorID, ev.TargetID, ev.CityID)
+	}
+
+	plotID := ecs.ComponentID[components.PlotComponent](f.world)
+
+	// Refuse: nothing moves.
+	if line := ResolveEvent(f.world, f.hooks, f.player, &ev, 1); line == "" {
+		t.Errorf("ResolveEvent(refuse) should return a chronicle line")
+	}
+	if f.world.Has(plotter, plotID) {
+		t.Fatalf("refusing must not start a plot")
+	}
+	if got := f.hooks.GetHook(1000, 9000); got != 0 {
+		t.Errorf("refusing must not bond the player, hook = %d", got)
+	}
+
+	// Join: a fresh seize-rule plot on the ruler plus the conspirator hook.
+	if line := ResolveEvent(f.world, f.hooks, f.player, &ev, 0); line == "" {
+		t.Errorf("ResolveEvent(join) should return a chronicle line")
+	}
+	if !f.world.Has(plotter, plotID) {
+		t.Fatalf("joining must start the plotter's plot")
+	}
+	plot := (*components.PlotComponent)(f.world.Get(plotter, plotID))
+	if plot.TargetID != 2000 || plot.Kind != components.PlotSeizeRule {
+		t.Errorf("plot = %+v, want TargetID 2000 kind PlotSeizeRule", *plot)
+	}
+	if got := f.hooks.GetHook(1000, 9000); got != PlotJoinHookGain {
+		t.Errorf("conspirator hook = %d, want %d", got, PlotJoinHookGain)
+	}
+
+	// Join again: the existing plot stands, the bond only deepens.
+	ResolveEvent(f.world, f.hooks, f.player, &ev, 0)
+	if got := f.hooks.GetHook(1000, 9000); got != 2*PlotJoinHookGain {
+		t.Errorf("repeat-join hook = %d, want %d", got, 2*PlotJoinHookGain)
+	}
+
+	// Betray: exposure penalties via the PlotSystem discovery path.
+	legitID := ecs.ComponentID[components.LegitimacyComponent](f.world)
+	f.world.Add(plotter, legitID)
+	(*components.LegitimacyComponent)(f.world.Get(plotter, legitID)).Score = 30
+	if line := ResolveEvent(f.world, f.hooks, f.player, &ev, 2); line == "" {
+		t.Errorf("ResolveEvent(betray) should return a chronicle line")
+	}
+	plot = (*components.PlotComponent)(f.world.Get(plotter, plotID))
+	if !plot.Exposed {
+		t.Errorf("betrayal must mark the plot Exposed")
+	}
+	legit := (*components.LegitimacyComponent)(f.world.Get(plotter, legitID))
+	if legit.Score != 30-plotExposureLegitimacyLoss {
+		t.Errorf("plotter legitimacy = %d, want %d", legit.Score, 30-plotExposureLegitimacyLoss)
+	}
+	if got := f.hooks.GetHook(2000, 9000); got != plotExposureHookPenalty {
+		t.Errorf("target grudge hook = %d, want %d", got, plotExposureHookPenalty)
+	}
+}
+
+// TestEventDirector_PlotInvitation_BetrayWithoutPlot: betraying an invitation
+// whose plot never materialized still teaches the target who schemed, and
+// creates nothing.
+func TestEventDirector_PlotInvitation_BetrayWithoutPlot(t *testing.T) {
+	f := newEventFixture(15)
+	makeEventCity(f.world, 10, 1, 100)
+	f.player = makeEventNPC(f.world, 1000, 10, 1, 100, 100, 50, 50)
+	possess(f.world, f.player)
+	ruler := makeEventNPC(f.world, 2000, 10, 1, 105, 105, 50, 60)
+	makeRuler(f.world, ruler, 50)
+	plotter := makeEventNPC(f.world, 9000, 10, 1, 110, 110, 50, 40)
+
+	ev := components.GameEvent{
+		Kind: components.EventPlotInvitation, ActorID: 9000, TargetID: 2000, CityID: 10}
+	if line := ResolveEvent(f.world, f.hooks, f.player, &ev, 2); line == "" {
+		t.Errorf("ResolveEvent(betray) should return a chronicle line")
+	}
+	plotID := ecs.ComponentID[components.PlotComponent](f.world)
+	if f.world.Has(plotter, plotID) {
+		t.Errorf("betrayal must not create a plot")
+	}
+	if got := f.hooks.GetHook(2000, 9000); got != plotExposureHookPenalty {
+		t.Errorf("target grudge hook = %d, want %d", got, plotExposureHookPenalty)
 	}
 }

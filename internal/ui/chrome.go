@@ -25,15 +25,16 @@ const (
 // Chrome tab indices (order of chromeTabs).
 const (
 	chromeTabDiplomacy = 0
-	chromeTabMarket    = 1
-	chromeTabLaws      = 2
-	chromeTabGoals     = 3
-	chromeTabCharacter = 4
-	chromeTabChronicle = 5
+	chromeTabDynasty   = 1
+	chromeTabMarket    = 2
+	chromeTabLaws      = 3
+	chromeTabGoals     = 4
+	chromeTabCharacter = 5
+	chromeTabChronicle = 6
 )
 
 // chromeTabs is the fixed tab order of the strip.
-var chromeTabs = []string{"Diplomacy", "Market", "Laws", "Goals", "Character", "Chronicle"}
+var chromeTabs = []string{"Diplomacy", "Dynasty", "Market", "Laws", "Goals", "Character", "Chronicle"}
 
 // chromeTabW returns the uniform tab width: the widest label plus padding.
 func chromeTabW() int {
@@ -59,6 +60,8 @@ func chromeActiveTab(pc *PlayerContext) int {
 	switch {
 	case pc.DiploOpen:
 		return chromeTabDiplomacy
+	case pc.DynastyOpen:
+		return chromeTabDynasty
 	case pc.MarketOpen:
 		return chromeTabMarket
 	case pc.LawsOpen:
@@ -76,6 +79,7 @@ func chromeActiveTab(pc *PlayerContext) int {
 // closeChromePanels clears every chrome-toggled panel flag.
 func closeChromePanels(pc *PlayerContext) {
 	pc.DiploOpen = false
+	pc.DynastyOpen = false
 	pc.MarketOpen = false
 	pc.LawsOpen = false
 	pc.AmbitionsOpen = false
@@ -96,6 +100,8 @@ func (s *StatePlaying) toggleChromeTab(i int) {
 	switch i {
 	case chromeTabDiplomacy:
 		pc.DiploOpen = true
+	case chromeTabDynasty:
+		pc.DynastyOpen = true
 	case chromeTabMarket:
 		pc.MarketOpen = true
 	case chromeTabLaws:

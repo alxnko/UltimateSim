@@ -129,6 +129,10 @@ func eventTitle(kind uint8) string {
 		return "A Public Insult"
 	case components.EventFestival:
 		return "Festival!"
+	case components.EventMarriageProposal:
+		return "A Proposal of Marriage"
+	case components.EventPlotInvitation:
+		return "A Whispered Conspiracy"
 	case components.EventWarNews:
 		return "War!"
 	case components.EventPeaceNews:
@@ -176,6 +180,17 @@ func (s *StatePlaying) eventBody(ev *components.GameEvent) []string {
 			fmt.Sprintf("The granaries of %s overflow!", city),
 			"Music and firelight fill the streets.",
 		}
+	case components.EventMarriageProposal:
+		return []string{
+			fmt.Sprintf("%s takes your hands, eyes bright:", actor),
+			"\"Marry me. Let our days be one.\"",
+		}
+	case components.EventPlotInvitation:
+		return []string{
+			fmt.Sprintf("%s draws you into a doorway and whispers", actor),
+			fmt.Sprintf("of a plot against %s.", npcNameByID(world, ev.TargetID)),
+			"They want you in.",
+		}
 	case components.EventWarNews:
 		return []string{
 			"Heralds cry the news in every square:",
@@ -215,6 +230,10 @@ func eventChoices(ev *components.GameEvent) []string {
 		return []string{"Laugh it off", "Demand apology", "Strike them!"}
 	case components.EventFestival:
 		return []string{"Join the festival", "Keep working"}
+	case components.EventMarriageProposal:
+		return []string{"Accept", "Decline"}
+	case components.EventPlotInvitation:
+		return []string{"Join the plot", "Refuse", "Betray them"}
 	default: // War/peace news, ruler died
 		return []string{"Acknowledge"}
 	}

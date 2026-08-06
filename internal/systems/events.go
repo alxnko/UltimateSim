@@ -58,6 +58,13 @@ const (
 	FestivalRestGain      float32 = 20
 	FestivalHookGain              = 2 // Mutual hooks with 2 random citizens
 	FestivalWorkGold      float32 = 8
+
+	// Marriage proposal: the fondest unmarried adult proposes (spec G1).
+	MarriageDeclineHookLoss = 5 // Spurned affection curdles
+
+	// Plot invitation: a malcontent recruits the player (spec G1).
+	PlotInviteHookThreshold = -20 // Hook toward the ruler that marks a recruiter
+	PlotJoinHookGain        = 5   // Joining bonds the player to the plotter (conspirator hook)
 )
 
 // eventTradeJobs is the fixed job rotation a city can offer (genesis trades).
@@ -75,6 +82,7 @@ type eventNPC struct {
 	safety    float32
 	cityID    uint32
 	countryID uint32
+	age       uint16
 	strength  uint8
 	jobID     uint8
 	hasJob    bool
@@ -82,6 +90,7 @@ type eventNPC struct {
 	hasNeeds  bool
 	isRuler   bool
 	possessed bool
+	married   bool
 }
 
 // EventDirectorSystem generates interactive events. Register under
@@ -116,6 +125,7 @@ type EventDirectorSystem struct {
 	countryCompID ecs.ID
 	diploID       ecs.ID
 	pendID        ecs.ID
+	dynID         ecs.ID
 }
 
 // SetClock binds the shared TickManager clock so GameEvent.Tick stamps live
@@ -144,6 +154,7 @@ func NewEventDirectorSystem(world *ecs.World, hooks *engine.SparseHookGraph) *Ev
 		countryCompID: ecs.ComponentID[components.CountryComponent](world),
 		diploID:       ecs.ComponentID[components.DiplomacyComponent](world),
 		pendID:        ecs.ComponentID[components.PendingEventsComponent](world),
+		dynID:         ecs.ComponentID[components.DynastyComponent](world),
 	}
 }
 
@@ -184,7 +195,12 @@ func (s *EventDirectorSystem) runPulse(world *ecs.World) {
 	nq := world.Query(&nf)
 	for nq.Next() {
 		d := eventNPC{entity: nq.Entity()}
-		d.id = (*components.Identity)(nq.Get(s.identID)).ID
+		ident := (*components.Identity)(nq.Get(s.identID))
+		d.id = ident.ID
+		d.age = ident.Age
+		if nq.Has(s.dynID) {
+			d.married = (*components.DynastyComponent)(nq.Get(s.dynID)).Married
+		}
 		if nq.Has(s.posID) {
 			p := (*components.Position)(nq.Get(s.posID))
 			d.x, d.y, d.hasPos = p.X, p.Y, true
@@ -494,6 +510,72 @@ func (s *EventDirectorSystem) organicCandidates(npcs []eventNPC, playerIdx int,
 			Kind: components.EventFestival, CityID: p.cityID})
 	}
 
+	// Marriage proposal: the fondest unmarried adult proposes to an unmarried
+	// adult player (deterministic pick: highest hook, lowest id on ties).
+	if s.hooks != nil && p.id != 0 && !p.married && p.age >= MarriageAdultAge {
+		incoming := s.hooks.GetAllIncomingHooks(p.id)
+		ids := make([]uint64, 0, len(incoming))
+		for id := range incoming {
+			ids = append(ids, id)
+		}
+		slices.Sort(ids) // Map order is not deterministic; sorted scan is.
+		var bestID uint64
+		bestVal := 0
+		for _, id := range ids {
+			v := incoming[id]
+			if v <= 0 || id == p.id {
+				continue
+			}
+			i, ok := index[id]
+			if !ok {
+				continue // Not among the living
+			}
+			if npcs[i].married || npcs[i].age < MarriageAdultAge {
+				continue
+			}
+			if v > bestVal { // Ascending id scan: ties keep the lowest id
+				bestID, bestVal = id, v
+			}
+		}
+		if bestID != 0 {
+			out = append(out, components.GameEvent{
+				Kind: components.EventMarriageProposal, ActorID: bestID, CityID: p.cityID})
+		}
+	}
+
+	// Plot invitation: the bitterest living enemy of the player's city ruler
+	// (never the player, never the ruler) recruits the player as conspirator
+	// (deterministic pick: most negative hook, lowest id on ties).
+	if s.hooks != nil && p.cityID != 0 {
+		if rid := rulers[p.cityID]; rid != 0 && rid != p.id {
+			incoming := s.hooks.GetAllIncomingHooks(rid)
+			ids := make([]uint64, 0, len(incoming))
+			for id := range incoming {
+				ids = append(ids, id)
+			}
+			slices.Sort(ids)
+			var bestID uint64
+			bestVal := 0
+			for _, id := range ids {
+				v := incoming[id]
+				if v > PlotInviteHookThreshold || id == p.id || id == rid {
+					continue
+				}
+				if !alivenessOf(index, id) {
+					continue
+				}
+				if bestID == 0 || v < bestVal {
+					bestID, bestVal = id, v
+				}
+			}
+			if bestID != 0 {
+				out = append(out, components.GameEvent{
+					Kind: components.EventPlotInvitation, ActorID: bestID,
+					TargetID: rid, CityID: p.cityID})
+			}
+		}
+	}
+
 	return out
 }
 
@@ -569,11 +651,13 @@ func RemovePendingEvent(world *ecs.World, player ecs.Entity, id uint64) {
 //
 // Choice indexes per kind:
 //
-//	EventTaxDemand:       0 Pay, 1 Refuse
-//	EventBanditShakedown: 0 Pay, 1 Fight, 2 Flee
-//	EventJobOffer:        0 Accept, 1 Decline
-//	EventInsult:          0 Laugh it off, 1 Demand apology, 2 Strike them
-//	EventFestival:        0 Join, 1 Work through it
+//	EventTaxDemand:        0 Pay, 1 Refuse
+//	EventBanditShakedown:  0 Pay, 1 Fight, 2 Flee
+//	EventJobOffer:         0 Accept, 1 Decline
+//	EventInsult:           0 Laugh it off, 1 Demand apology, 2 Strike them
+//	EventFestival:         0 Join, 1 Work through it
+//	EventMarriageProposal: 0 Accept, 1 Decline
+//	EventPlotInvitation:   0 Join, 1 Refuse, 2 Betray
 //	EventWarNews/EventPeaceNews/EventRulerDied: 0 Acknowledge
 func ResolveEvent(world *ecs.World, hooks *engine.SparseHookGraph, player ecs.Entity,
 	ev *components.GameEvent, choice int) string {
@@ -776,6 +860,48 @@ func ResolveEvent(world *ecs.World, hooks *engine.SparseHookGraph, player ecs.En
 		}
 		return fmt.Sprintf("You work through the festival (+%d gold).", int(FestivalWorkGold))
 
+	case components.EventMarriageProposal:
+		if choice == 0 { // Accept: the standard marriage path seals it
+			actor, actorOK := findNPCByIdentity(world, ev.ActorID)
+			if !actorOK {
+				return fmt.Sprintf("%s is gone; the proposal dies unanswered.", actorName)
+			}
+			if err := Marry(world, hooks, player, actor); err != nil {
+				return fmt.Sprintf("The wedding falls through: %s.", err.Error())
+			}
+			return fmt.Sprintf("You wed %s. May your houses prosper.", actorName)
+		}
+		// Decline: spurned affection curdles.
+		if hooks != nil && ev.ActorID != 0 && playerID != 0 {
+			hooks.AddHook(ev.ActorID, playerID, -MarriageDeclineHookLoss)
+		}
+		return fmt.Sprintf("You decline %s's proposal as gently as you can.", actorName)
+
+	case components.EventPlotInvitation:
+		actor, actorOK := findNPCByIdentity(world, ev.ActorID)
+		switch choice {
+		case 0: // Join: the plotter gains a plot (if new) plus a conspirator hook
+			plotCompID := ecs.ComponentID[components.PlotComponent](world)
+			if actorOK && !world.Has(actor, plotCompID) {
+				if target, targetOK := findNPCByIdentity(world, ev.TargetID); targetOK {
+					if err := StartPlot(world, actor, target, components.PlotSeizeRule); err != nil {
+						return fmt.Sprintf("The conspiracy of %s collapses before it begins.", actorName)
+					}
+				}
+			}
+			// Conspirator bond: PlotSystem counts positive incoming hooks on
+			// the plotter as fellow conspirators (Power +5 each).
+			if hooks != nil && ev.ActorID != 0 && playerID != 0 {
+				hooks.AddHook(playerID, ev.ActorID, PlotJoinHookGain)
+			}
+			return fmt.Sprintf("You join %s's conspiracy in the shadows.", actorName)
+		case 1: // Refuse: you keep your hands — and the secret — to yourself.
+			return fmt.Sprintf("You want no part of %s's scheming.", actorName)
+		default: // Betray: the same exposure path PlotSystem walks on discovery
+			exposePlotter(world, hooks, actor, actorOK, ev.ActorID, ev.TargetID)
+			return fmt.Sprintf("You betray %s's plot to its target.", actorName)
+		}
+
 	case components.EventWarNews:
 		return fmt.Sprintf("War! Your realm now fights Realm %d.", ev.Amount)
 
@@ -820,6 +946,39 @@ func findNPCByIdentity(world *ecs.World, id uint64) (ecs.Entity, bool) {
 		}
 	}
 	return found, ok
+}
+
+// exposePlotter applies the discovery penalties PlotSystem levies on an
+// exposed plot — same constants, same channels: the plot is marked Exposed
+// (PlotSystem unravels it next cycle), a plot-carrying plotter loses
+// plotExposureLegitimacyLoss legitimacy, and the target puts the
+// plotExposureHookPenalty grudge hook on the plotter. A betrayed invitation
+// with no live plot still teaches the target who schemed (hook only).
+func exposePlotter(world *ecs.World, hooks *engine.SparseHookGraph,
+	plotter ecs.Entity, plotterOK bool, plotterID, targetID uint64) {
+
+	hadPlot := false
+	if plotterOK {
+		plotCompID := ecs.ComponentID[components.PlotComponent](world)
+		if world.Has(plotter, plotCompID) {
+			(*components.PlotComponent)(world.Get(plotter, plotCompID)).Exposed = true
+			hadPlot = true
+		}
+	}
+	if hadPlot {
+		legitID := ecs.ComponentID[components.LegitimacyComponent](world)
+		if world.Has(plotter, legitID) {
+			legit := (*components.LegitimacyComponent)(world.Get(plotter, legitID))
+			if legit.Score > plotExposureLegitimacyLoss {
+				legit.Score -= plotExposureLegitimacyLoss
+			} else {
+				legit.Score = 0
+			}
+		}
+	}
+	if hooks != nil && plotterID != 0 && targetID != 0 {
+		hooks.AddHook(targetID, plotterID, plotExposureHookPenalty)
+	}
 }
 
 // attachCombatMarker starts combat via the existing CombatSystem path: the
