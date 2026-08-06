@@ -1,0 +1,277 @@
+package systems
+
+import (
+	"sort"
+	"strconv"
+
+	"github.com/ALXNKO/UltimateSim/internal/components"
+	"github.com/ALXNKO/UltimateSim/internal/engine"
+	"github.com/mlange-42/arche/ecs"
+)
+
+// Grand Strategy Phase: genesis civilization seeding. A grand-strategy start
+// needs an already-political world — cities, countries, rulers, jobs — like an
+// EU/CK start date, instead of 100 wanderers who might found a village an hour
+// in. SeedCivilization runs ONCE from the engine build, after map generation
+// and before the first tick. Fully deterministic through the seeded GlobalRNG.
+
+// ID namespaces: keep genesis IDs disjoint from NPCSpawnerSystem (starts at 1)
+// and organically-founded villages (inherit NPC identity IDs).
+const (
+	genesisNPCIDBase    uint64 = 100000
+	genesisCityIDBase   uint64 = 900000
+	genesisFamilyIDBase uint32 = 1000
+)
+
+// GenesisConfig sizes the seeded civilization.
+type GenesisConfig struct {
+	Villages          int
+	Countries         int
+	FamiliesPerCity   int
+	NPCsPerFamily     int
+	MinSiteSeparation float32
+	// NameFn names people (id, culture). Nil falls back to "NPC-<id>".
+	NameFn func(id uint64, culture uint8) string
+}
+
+// DefaultGenesis is the standard 1024x1024 civilization.
+func DefaultGenesis() GenesisConfig {
+	return GenesisConfig{
+		Villages:          12,
+		Countries:         4,
+		FamiliesPerCity:   6,
+		NPCsPerFamily:     4,
+		MinSiteSeparation: 80,
+	}
+}
+
+type genesisSite struct {
+	x, y  int
+	score int
+}
+
+// SeedCivilization plants villages, countries, capitals, rulers and employed,
+// city-bound families. Returns the number of villages and NPCs created.
+func SeedCivilization(world *ecs.World, grid *engine.MapGrid, cfg GenesisConfig) (int, int) {
+	sites := pickGenesisSites(grid, cfg)
+	if len(sites) == 0 {
+		return 0, 0
+	}
+	countries := cfg.Countries
+	if countries > len(sites) {
+		countries = len(sites)
+	}
+	if countries < 1 {
+		countries = 1
+	}
+
+	// Component IDs.
+	posID := ecs.ComponentID[components.Position](world)
+	velID := ecs.ComponentID[components.Velocity](world)
+	idID := ecs.ComponentID[components.Identity](world)
+	genID := ecs.ComponentID[components.GenomeComponent](world)
+	legID := ecs.ComponentID[components.Legacy](world)
+	needsID := ecs.ComponentID[components.Needs](world)
+	pathID := ecs.ComponentID[components.Path](world)
+	npcID := ecs.ComponentID[components.NPC](world)
+	slID := ecs.ComponentID[components.SettlementLogic](world)
+	affID := ecs.ComponentID[components.Affiliation](world)
+	jobID := ecs.ComponentID[components.JobComponent](world)
+	villageID := ecs.ComponentID[components.Village](world)
+	storageID := ecs.ComponentID[components.StorageComponent](world)
+	popID := ecs.ComponentID[components.PopulationComponent](world)
+	marketID := ecs.ComponentID[components.MarketComponent](world)
+	treasuryID := ecs.ComponentID[components.TreasuryComponent](world)
+	capitalID := ecs.ComponentID[components.CapitalComponent](world)
+	adminID := ecs.ComponentID[components.AdministrationMarker](world)
+	legitID := ecs.ComponentID[components.LegitimacyComponent](world)
+
+	// The first `countries` sites (highest scored, spaced) become capitals.
+	// Every other village joins the nearest capital's country.
+	countryOf := func(i int) uint32 {
+		if i < countries {
+			return uint32(i + 1)
+		}
+		best, bestD := 0, float32(0)
+		for c := 0; c < countries; c++ {
+			dx := float32(sites[i].x - sites[c].x)
+			dy := float32(sites[i].y - sites[c].y)
+			d := dx*dx + dy*dy
+			if c == 0 || d < bestD {
+				best, bestD = c, d
+			}
+		}
+		return uint32(best + 1)
+	}
+
+	name := cfg.NameFn
+	if name == nil {
+		name = func(id uint64, _ uint8) string { return "NPC-" + strconv.FormatUint(id, 10) }
+	}
+
+	nextNPC := genesisNPCIDBase
+	nextFam := genesisFamilyIDBase
+	npcCount := 0
+
+	jobs := []uint8{
+		components.JobFarmer, components.JobLumberjack, components.JobArtisan,
+		components.JobGuard, components.JobBuilder, components.JobMiner,
+	}
+
+	for i, site := range sites {
+		cityID := genesisCityIDBase + uint64(i)
+		country := countryOf(i)
+		culture := uint8(country)
+
+		// Village entity (mirrors settlement_rule.go recipe + political layer).
+		v := world.NewEntity(villageID, posID, storageID, popID, marketID, idID, genID, legID, affID, treasuryID)
+		vp := (*components.Position)(world.Get(v, posID))
+		vp.X, vp.Y = float32(site.x), float32(site.y)
+		vid := (*components.Identity)(world.Get(v, idID))
+		vid.ID = cityID
+		vid.Name = "Settlement-" + strconv.Itoa(i+1)
+		vid.Age = 0
+		st := (*components.StorageComponent)(world.Get(v, storageID))
+		st.Wood, st.Food, st.Stone, st.Iron = 300, 500, 150, 50
+		pop := (*components.PopulationComponent)(world.Get(v, popID))
+		pop.Count = uint32(cfg.FamiliesPerCity * cfg.NPCsPerFamily)
+		mk := (*components.MarketComponent)(world.Get(v, marketID))
+		mk.FoodPrice, mk.WoodPrice, mk.StonePrice, mk.IronPrice = 1.0, 1.0, 1.0, 1.0
+		va := (*components.Affiliation)(world.Get(v, affID))
+		va.CityID = uint32(cityID)
+		va.CountryID = country
+		tr := (*components.TreasuryComponent)(world.Get(v, treasuryID))
+		tr.Wealth = 500
+		if i < countries {
+			world.Add(v, capitalID)
+		}
+
+		// Families around the village.
+		var bestRuler ecs.Entity
+		bestScore := -1
+		for f := 0; f < cfg.FamiliesPerCity; f++ {
+			famID := nextFam
+			nextFam++
+			clan := uint32(engine.GetRandomInt() % 100)
+			for m := 0; m < cfg.NPCsPerFamily; m++ {
+				e := world.NewEntity(posID, velID, idID, genID, legID, needsID, pathID, npcID, slID, affID)
+				p := (*components.Position)(world.Get(e, posID))
+				jx := site.x + engine.GetRandomInt()%13 - 6
+				jy := site.y + engine.GetRandomInt()%13 - 6
+				if jx < 0 || jx >= grid.Width || jy < 0 || jy >= grid.Height ||
+					grid.GetTile(jx, jy).BiomeID == engine.BiomeOcean {
+					jx, jy = site.x, site.y
+				}
+				p.X, p.Y = float32(jx), float32(jy)
+
+				ident := (*components.Identity)(world.Get(e, idID))
+				ident.ID = nextNPC
+				nextNPC++
+				ident.BaseTraits = uint32(engine.GetRandomInt())
+				if m == 0 || engine.GetRandomInt()%4 != 0 {
+					ident.Age = uint16(18 + engine.GetRandomInt()%40) // adult
+				} else {
+					ident.Age = uint16(6 + engine.GetRandomInt()%10) // child
+				}
+				ident.Name = name(ident.ID, culture)
+
+				g := (*components.GenomeComponent)(world.Get(e, genID))
+				g.Strength = uint8((engine.GetRandomInt()%101 + engine.GetRandomInt()%101 + engine.GetRandomInt()%101) / 3)
+				g.Beauty = uint8((engine.GetRandomInt()%101 + engine.GetRandomInt()%101 + engine.GetRandomInt()%101) / 3)
+				g.Health = uint8((engine.GetRandomInt()%101 + engine.GetRandomInt()%101 + engine.GetRandomInt()%101) / 3)
+				g.Intellect = uint8((engine.GetRandomInt()%101 + engine.GetRandomInt()%101 + engine.GetRandomInt()%101) / 3)
+				g.Dominant = uint32(engine.GetRandomInt())
+				g.Recessive = uint32(engine.GetRandomInt())
+
+				n := (*components.Needs)(world.Get(e, needsID))
+				n.Food, n.Rest, n.Safety, n.Wealth = 1000, 100, 100, float32(50+engine.GetRandomInt()%150)
+
+				a := (*components.Affiliation)(world.Get(e, affID))
+				a.FamilyID = famID
+				a.ClanID = clan
+				a.CityID = uint32(cityID)
+				a.CountryID = country
+
+				// Adults get trades; the eldest family member stays flexible.
+				if ident.Age >= 18 && m > 0 {
+					world.Add(e, jobID)
+					j := (*components.JobComponent)(world.Get(e, jobID))
+					j.JobID = jobs[(f+m)%len(jobs)]
+				}
+				npcCount++
+
+				if score := int(g.Strength) + int(g.Intellect); ident.Age >= 18 && score > bestScore {
+					bestScore = score
+					bestRuler = e
+				}
+			}
+		}
+
+		// Crown the strongest adult as city ruler (capital ruler = sovereign).
+		if bestScore >= 0 {
+			world.Add(bestRuler, adminID)
+			world.Add(bestRuler, legitID)
+			lg := (*components.LegitimacyComponent)(world.Get(bestRuler, legitID))
+			lg.Score = 50
+		}
+	}
+	return len(sites), npcCount
+}
+
+// pickGenesisSites scores the map and greedily picks spaced, fertile,
+// coast-favoring village sites. Deterministic: fixed scan order + stable sort.
+func pickGenesisSites(grid *engine.MapGrid, cfg GenesisConfig) []genesisSite {
+	var cands []genesisSite
+	step := grid.Width / 128
+	if step < 1 {
+		step = 1
+	}
+	for y := step; y < grid.Height-step; y += step {
+		for x := step; x < grid.Width-step; x += step {
+			t := grid.GetTile(x, y)
+			score := 0
+			switch t.BiomeID {
+			case engine.BiomeGrassland, engine.BiomeTemperateDeciduousForest:
+				score = 30
+			case engine.BiomeShrubland, engine.BiomeTropicalSeasonalForest:
+				score = 20
+			case engine.BiomeBeach:
+				score = 10
+			default:
+				continue // ocean, mountains, snow, desert: no genesis city
+			}
+			r := grid.Resources[y*grid.Width+x]
+			score += int(r.FoodValue) + int(r.WoodValue)
+			// Coastal bonus: ocean within 5 tiles on an axis.
+			for _, d := range [4][2]int{{5, 0}, {-5, 0}, {0, 5}, {0, -5}} {
+				if grid.GetTile(x+d[0], y+d[1]).BiomeID == engine.BiomeOcean {
+					score += 25
+					break
+				}
+			}
+			cands = append(cands, genesisSite{x: x, y: y, score: score})
+		}
+	}
+	// Stable order: score desc, then scan order.
+	sort.SliceStable(cands, func(i, j int) bool { return cands[i].score > cands[j].score })
+	minSep := cfg.MinSiteSeparation * cfg.MinSiteSeparation
+	var picked []genesisSite
+	for _, c := range cands {
+		if len(picked) >= cfg.Villages {
+			break
+		}
+		ok := true
+		for _, p := range picked {
+			dx := float32(c.x - p.x)
+			dy := float32(c.y - p.y)
+			if dx*dx+dy*dy < minSep {
+				ok = false
+				break
+			}
+		}
+		if ok {
+			picked = append(picked, c)
+		}
+	}
+	return picked
+}

@@ -21,7 +21,9 @@ func NewCityBinderSystem() *CityBinderSystem {
 
 func (s *CityBinderSystem) Update(world *ecs.World) {
 	s.TicksElapsed++
-	if s.TicksElapsed%10000 != 0 {
+	// Grand Strategy Phase: 1000-tick cadence (was 10000) so citizens bind to
+	// cities within the first warmup window instead of minutes into a run.
+	if s.TicksElapsed%1000 != 0 {
 		return
 	}
 

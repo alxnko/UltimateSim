@@ -211,6 +211,13 @@ func BuildSimulation(gridWidth, gridHeight int, seedVal byte, status *render.Loa
 	// Phase 03.2: Genesis Spawner (Runs once at tick 0)
 	tickManager.AddSystem(systems.NewNPCSpawnerSystem(world, grid), engine.PhaseCleanup)
 
+	// Grand Strategy Phase: plant an already-political world — cities,
+	// countries, capitals, rulers, employed families — before the first tick,
+	// the way a grand-strategy start date works. The wilderness spawner above
+	// still adds organic wanderers on tick 1.
+	update(0.9, "Founding Civilizations...")
+	systems.SeedCivilization(world, grid, systems.DefaultGenesis())
+
 	update(1.0, "Engine Assembly Complete.")
 
 	status.Mutex.Lock()
