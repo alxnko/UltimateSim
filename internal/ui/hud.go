@@ -85,7 +85,7 @@ func (s *StatePlaying) DrawHUD(screen *ebiten.Image) {
 	season := []string{"Spring", "Summer", "Autumn", "Winter"}[(tick/3600)%4]
 	year := tick/14400 + 1
 	timeStr := fmt.Sprintf("Y%d %s D%d", year, season, day%6+1)
-	tx := sw - 470
+	tx := sw - 640
 	DrawText(screen, timeStr, tx, y+6, TextCol)
 
 	pauseLabel := "Pause"
@@ -95,12 +95,22 @@ func (s *StatePlaying) DrawHUD(screen *ebiten.Image) {
 	if Button(screen, pauseLabel, tx, y+24, 64, 18) {
 		s.Status.TM.TogglePause()
 	}
-	ffLabel := "1x"
-	if s.Status.TM.IsFastForward {
-		ffLabel = "4x"
+	// Grand Strategy Phase: speed buttons mirror keys 1-4 (ticks per frame).
+	speeds := [4]int{1, 2, 4, 8}
+	cur := s.Status.TM.Speed
+	if cur < 1 {
+		cur = 1
 	}
-	if Button(screen, ffLabel, tx+68, y+24, 36, 18) {
-		s.Status.TM.IsFastForward = !s.Status.TM.IsFastForward
+	sx := tx + 68
+	for _, sp := range speeds {
+		label := fmt.Sprintf("%dx", sp)
+		if sp == cur {
+			label = ">" + label
+		}
+		if Button(screen, label, sx, y+24, 34, 18) {
+			s.Status.TM.Speed = sp
+		}
+		sx += 38
 	}
 
 	// --- Tool buttons ---
